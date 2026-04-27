@@ -10,27 +10,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS users (
-  id SERIAL PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  name TEXT NOT NULL DEFAULT '',
-  password_hash TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
-);
 
-CREATE TABLE IF NOT EXISTS portfolio_holdings (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  symbol TEXT NOT NULL,
-  name TEXT NOT NULL DEFAULT '',
-  quantity INTEGER NOT NULL DEFAULT 0,
-  buy_price NUMERIC(12,2) NOT NULL DEFAULT 0,
-  current_price NUMERIC(12,2) NOT NULL DEFAULT 0,
-  sector TEXT NOT NULL DEFAULT 'Others',
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_portfolio_user ON portfolio_holdings(user_id);
 
 CREATE TABLE IF NOT EXISTS news (
   id SERIAL PRIMARY KEY,

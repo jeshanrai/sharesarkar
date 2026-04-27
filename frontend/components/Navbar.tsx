@@ -15,7 +15,6 @@ const navItems: NavItem[] = [
   { label: "IPO", href: "/ipo" },
   { label: "Mutual Funds", href: "/mutual-funds" },
   { label: "Technical Analysis", href: "/technical" },
-  { label: "Portfolio", href: "/portfolio" },
 ];
 
 export default function Navbar() {

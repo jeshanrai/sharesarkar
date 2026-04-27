@@ -84,7 +84,7 @@ export default function NewsPage() {
           setCategories(["All", ...cats]);
         }
       } catch {
-        setCategories(["All", "Market", "Banking", "Hydropower", "IPO", "Insurance", "Analysis", "Education"]);
+        setCategories(["All"]);
       }
     }
     loadCategories();

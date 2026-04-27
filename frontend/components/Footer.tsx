@@ -16,7 +16,6 @@ const footerLinks = {
     { label: "Mutual Funds", href: "/learn/mutual-funds" },
   ],
   tools: [
-    { label: "Portfolio Tracker", href: "/portfolio" },
     { label: "Stock Screener", href: "/screener" },
     { label: "IPO Calculator", href: "/ipo-calculator" },
     { label: "Dividend Calculator", href: "/dividend-calculator" },

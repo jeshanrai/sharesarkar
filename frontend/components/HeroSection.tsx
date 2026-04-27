@@ -21,40 +21,6 @@ interface HeroStory {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-const fallbackHero: HeroNews = {
-  id: 0,
-  title: "NEPSE Hits 6-Month High as Foreign Investors Return to Nepal Market",
-  excerpt:
-    "The Nepal Stock Exchange index reached its highest level in six months today, driven by renewed interest from foreign institutional investors and strong performance across all major sectors.",
-  image_url:
-    "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1200&q=80",
-  category: "Breaking",
-};
-
-const fallbackStories: HeroStory[] = [
-  {
-    id: 1,
-    title: "Banking Sector Rally Continues",
-    image_url:
-      "https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?w=800&q=80",
-    category: "Banking",
-  },
-  {
-    id: 2,
-    title: "Hydropower Stocks Surge on Export Deal",
-    image_url:
-      "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&q=80",
-    category: "Hydropower",
-  },
-  {
-    id: 3,
-    title: "New IPO Opens for Subscription",
-    image_url:
-      "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&q=80",
-    category: "IPO",
-  },
-];
-
 const quickStats = [
   { label: "Advances", value: "156", color: "text-brand-green" },
   { label: "Declines", value: "89", color: "text-brand-red" },
@@ -69,9 +35,8 @@ const trendingStocks = [
 ];
 
 export default function HeroSection() {
-  const [featuredNews, setFeaturedNews] = useState<HeroNews>(fallbackHero);
-  const [featuredStories, setFeaturedStories] =
-    useState<HeroStory[]>(fallbackStories);
+  const [featuredNews, setFeaturedNews] = useState<HeroNews | null>(null);
+  const [featuredStories, setFeaturedStories] = useState<HeroStory[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -109,29 +74,31 @@ export default function HeroSection() {
         {/* Left side - Featured News */}
         <div className="lg:col-span-3 space-y-5">
           {/* Featured Article */}
-          <article className="group cursor-pointer">
-            <div className="relative h-72 rounded-lg overflow-hidden bg-gray-900">
-              <Image
-                src={featuredNews.image_url}
-                alt={featuredNews.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-              <div className="absolute bottom-5 left-5 right-5">
-                <span className="inline-block px-2.5 py-1 bg-brand-red text-white text-xs font-semibold rounded mb-2">
-                  {featuredNews.category}
-                </span>
-                <h1 className="text-xl md:text-2xl font-bold text-white mb-1.5 leading-tight">
-                  {featuredNews.title}
-                </h1>
-                <p className="text-gray-300 text-sm line-clamp-2 hidden md:block">
-                  {featuredNews.excerpt}
-                </p>
+          {featuredNews && (
+            <article className="group cursor-pointer">
+              <div className="relative h-72 rounded-lg overflow-hidden bg-gray-900">
+                <Image
+                  src={featuredNews.image_url}
+                  alt={featuredNews.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-5 left-5 right-5">
+                  <span className="inline-block px-2.5 py-1 bg-brand-red text-white text-xs font-semibold rounded mb-2">
+                    {featuredNews.category}
+                  </span>
+                  <h1 className="text-xl md:text-2xl font-bold text-white mb-1.5 leading-tight">
+                    {featuredNews.title}
+                  </h1>
+                  <p className="text-gray-300 text-sm line-clamp-2 hidden md:block">
+                    {featuredNews.excerpt}
+                  </p>
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
+          )}
 
           {/* Quick Market Stats */}
           <div className="bg-gray-900 rounded-lg p-5">
