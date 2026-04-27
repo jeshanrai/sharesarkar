@@ -66,15 +66,15 @@ export default function Navbar() {
           </button>
 
           {/* Wordmark */}
-          <Link href="/" className="flex items-center gap-2 mr-auto lg:mr-0">
-            <div className="hidden sm:flex w-8 h-8 bg-[#d32027] items-center justify-center">
-              <span className="text-white font-black text-sm">S</span>
+          <Link href="/" className="flex items-center gap-3 mr-auto lg:mr-0 group">
+            <div className="hidden sm:flex w-9 h-9 bg-[#d32027] items-center justify-center group-hover:rotate-3 transition-transform">
+              <span className="text-white font-serif font-black text-lg leading-none">S</span>
             </div>
             <div className="leading-none">
-              <h1 className="font-serif font-black text-2xl tracking-tight text-gray-900">
+              <h1 className="font-serif font-black text-[1.6rem] tracking-tight text-gray-900 leading-none">
                 ShareSanskar
               </h1>
-              <p className="hidden md:block text-[9px] uppercase tracking-[0.2em] text-gray-500 mt-0.5">
+              <p className="hidden md:block text-[9px] uppercase tracking-[0.22em] font-semibold text-gray-500 mt-1.5">
                 Nepal Markets · Daily
               </p>
             </div>

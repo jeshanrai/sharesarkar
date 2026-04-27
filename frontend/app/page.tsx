@@ -18,7 +18,7 @@ export default function Home() {
       <Navbar />
       <StockTicker />
 
-      <main>
+      <main id="main" tabIndex={-1}>
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
           <HeroSection />
         </div>

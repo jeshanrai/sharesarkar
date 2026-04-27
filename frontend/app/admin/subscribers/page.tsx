@@ -41,7 +41,7 @@ export default function AdminSubscribersPage() {
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
 
-  function authHeaders() {
+  function authHeaders(): Record<string, string> {
     const token = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null;
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
