@@ -1,4 +1,5 @@
 import NewsCard from "./NewsCard";
+import SectionHeader from "./SectionHeader";
 
 interface NewsItem {
   id: number;
@@ -46,18 +47,13 @@ export default async function NewsSection() {
   if (mainNews.length === 0 && sidebarNews.length === 0) return null;
 
   return (
-    <section className="py-10 border-b border-gray-200">
-      <div className="flex items-end justify-between mb-6 pb-2 border-b-2 border-black">
-        <div>
-          <h2 className="eyebrow section-rule text-gray-900">Latest News</h2>
-          <p className="font-serif text-3xl md:text-4xl font-bold text-gray-900 mt-2 leading-tight">
-            What&apos;s moving Nepal&apos;s markets
-          </p>
-        </div>
-        <button className="hidden sm:inline text-[11px] uppercase tracking-widest text-gray-500 hover:text-[#d32027]">
-          View All →
-        </button>
-      </div>
+    <section className="py-12 border-b border-gray-200">
+      <SectionHeader
+        eyebrow="Latest News"
+        title="What's moving Nepal's markets"
+        description="Hand-picked reporting and analysis from the ShareSanskar newsroom — updated through the trading day."
+        href="/news"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">

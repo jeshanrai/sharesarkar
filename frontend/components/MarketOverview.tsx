@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import SectionHeader from "./SectionHeader";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -65,19 +66,14 @@ export default function MarketOverview() {
       : Number(r.transactions).toLocaleString("en-IN");
 
   return (
-    <section className="py-10 border-b border-gray-200">
-      {/* Section header */}
-      <div className="flex items-end justify-between mb-6 pb-2 border-b-2 border-black">
-        <div>
-          <h2 className="eyebrow section-rule text-gray-900">Markets</h2>
-          <p className="font-serif text-3xl md:text-4xl font-bold text-gray-900 mt-2 leading-tight">
-            Live across NEPSE
-          </p>
-        </div>
-        <Link href="/market" className="text-[11px] uppercase tracking-widest text-gray-500 hover:text-[#d32027] hidden sm:inline">
-          Full Coverage →
-        </Link>
-      </div>
+    <section className="py-12 border-b border-gray-200">
+      <SectionHeader
+        eyebrow="Markets"
+        title="Live across NEPSE"
+        description="Real-time index movements, sector breadth, and the day's most-traded scrips."
+        href="/market"
+        hrefLabel="Full Coverage →"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* ── Sub-indices: 2-column dense list ──────────────────── */}
@@ -104,9 +100,9 @@ export default function MarketOverview() {
                       {s.index_name}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 tabular-nums">
-                    <span className="text-sm text-gray-700">{fmtNum(s.close)}</span>
-                    <span className={`text-xs font-bold w-16 text-right ${up ? "text-emerald-600" : "text-red-600"}`}>
+                  <div className="flex items-center gap-3">
+                    <span className="numeric text-sm text-gray-700">{fmtNum(s.close)}</span>
+                    <span className={`numeric text-xs font-bold w-16 text-right ${up ? "text-emerald-600" : "text-red-600"}`}>
                       {up ? "+" : ""}{fmtNum(s.change_pct)}%
                     </span>
                   </div>
@@ -155,13 +151,13 @@ export default function MarketOverview() {
                   key={r.symbol}
                   className="grid grid-cols-12 gap-2 py-2.5 border-b border-gray-100 hover:bg-gray-50 transition-colors text-sm group"
                 >
-                  <div className="col-span-1 text-xs text-gray-400 tabular-nums">{i + 1}</div>
-                  <div className="col-span-4 font-bold text-gray-900 group-hover:text-[#d32027] transition-colors">{r.symbol}</div>
-                  <div className="col-span-3 text-right text-gray-700 tabular-nums">{fmtNum(r.ltp)}</div>
-                  <div className={`col-span-2 text-right font-semibold tabular-nums ${up ? "text-emerald-600" : "text-red-600"}`}>
+                  <div className="col-span-1 text-xs text-gray-400 numeric">{i + 1}</div>
+                  <div className="col-span-4 font-bold text-gray-900 tracking-tight group-hover:text-[#d32027] transition-colors">{r.symbol}</div>
+                  <div className="col-span-3 text-right text-gray-700 numeric">{fmtNum(r.ltp)}</div>
+                  <div className={`col-span-2 text-right font-semibold numeric ${up ? "text-emerald-600" : "text-red-600"}`}>
                     {up ? "+" : ""}{fmtNum(r.diff_pct)}%
                   </div>
-                  <div className="col-span-2 text-right text-xs text-gray-600 tabular-nums">{formatMetric(r)}</div>
+                  <div className="col-span-2 text-right text-xs text-gray-600 numeric">{formatMetric(r)}</div>
                 </div>
               );
             })}
