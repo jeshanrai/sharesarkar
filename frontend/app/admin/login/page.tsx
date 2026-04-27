@@ -34,6 +34,10 @@ export default function AdminLoginPage() {
 
       localStorage.setItem("admin_token", data.token);
       localStorage.setItem("admin_user", data.username);
+      localStorage.setItem("admin_role", data.role);
+      if (data.permissions) {
+        localStorage.setItem("admin_permissions", JSON.stringify(data.permissions));
+      }
       router.push("/admin");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Login failed");
@@ -82,7 +86,7 @@ export default function AdminLoginPage() {
             Share<span className="text-[#009429]">Sanskar</span>
           </h1>
           <p className="text-gray-400 text-sm font-medium tracking-wide uppercase letter-spacing-2">
-            Secure Admin Portal
+            Admin &amp; Author Portal
           </p>
         </div>
 
@@ -162,7 +166,7 @@ export default function AdminLoginPage() {
                 </span>
               ) : (
                 <span className="flex items-center gap-2 z-10">
-                  Sign In to Dashboard
+                  Sign In
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
               )}

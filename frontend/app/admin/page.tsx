@@ -5,8 +5,10 @@ import Link from "next/link";
 import {
   FileText, TrendingUp, Users, BarChart3, Eye, Clock,
   ArrowUpRight, ArrowDownRight, Plus, Newspaper, CalendarDays,
-  ListChecks, Activity, Mail
+  ListChecks, Activity, Mail, UserPen
 } from "lucide-react";
+
+type UserRole = "admin" | "author";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -32,22 +34,33 @@ export default function AdminDashboard() {
   const [ipos, setIpos] = useState<IPOItem[]>([]);
   const [subscribers, setSubscribers] = useState<{ id: number; email: string; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<UserRole>("admin");
 
   useEffect(() => {
     async function load() {
       const token = localStorage.getItem("admin_token");
       if (!token) return;
+      const storedRole = localStorage.getItem("admin_role") as UserRole;
+      setRole(storedRole || "admin");
 
       try {
-        const [newsRes, ipoRes, subRes] = await Promise.all([
+        const promises: Promise<Response>[] = [
           fetch(`${API_URL}/api/news/admin/all`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_URL}/api/ipo/admin/all`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_URL}/api/subscribers/admin/all`, { headers: { Authorization: `Bearer ${token}` } }),
-        ]);
+        ];
+        // Only fetch IPO/subscribers for admins
+        if (storedRole === "admin") {
+          promises.push(
+            fetch(`${API_URL}/api/ipo/admin/all`, { headers: { Authorization: `Bearer ${token}` } }),
+            fetch(`${API_URL}/api/subscribers/admin/all`, { headers: { Authorization: `Bearer ${token}` } }),
+          );
+        }
 
-        if (newsRes.ok) setNews(await newsRes.json());
-        if (ipoRes.ok) setIpos(await ipoRes.json());
-        if (subRes.ok) setSubscribers(await subRes.json());
+        const results = await Promise.all(promises);
+        if (results[0].ok) setNews(await results[0].json());
+        if (storedRole === "admin") {
+          if (results[1]?.ok) setIpos(await results[1].json());
+          if (results[2]?.ok) setSubscribers(await results[2].json());
+        }
       } catch {
         // API may be down
       } finally {
@@ -120,13 +133,23 @@ export default function AdminDashboard() {
     );
   }
 
+  const isAdmin = role === "admin";
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Welcome back! Here&apos;s an overview of your portal.</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {isAdmin ? "Welcome back! Here's an overview of your portal." : "Welcome back! Here's an overview of your articles."}
+          </p>
+          {!isAdmin && (
+            <div className="flex items-center gap-1.5 mt-2 text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg w-fit">
+              <UserPen className="w-3.5 h-3.5" />
+              Author Dashboard
+            </div>
+          )}
         </div>
         <Link
           href="/admin/news/new"
@@ -137,7 +160,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-2'} gap-4`}>
         <Link href="/admin/news" className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-all group">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -146,7 +169,7 @@ export default function AdminDashboard() {
             <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
           </div>
           <p className="text-2xl font-bold text-gray-900">{stats.totalArticles}</p>
-          <p className="text-xs text-gray-500 mt-1">Total Articles</p>
+          <p className="text-xs text-gray-500 mt-1">{isAdmin ? 'Total Articles' : 'My Articles'}</p>
           <div className="flex items-center gap-2 mt-2 text-[10px]">
             <span className="text-green-600 font-medium">{stats.published} published</span>
             <span className="text-gray-300">•</span>
@@ -167,33 +190,37 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <Link href="/admin/ipo" className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-all group">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <BarChart3 className="w-5 h-5 text-green-600" />
+        {isAdmin && (
+          <Link href="/admin/ipo" className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-all group">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <BarChart3 className="w-5 h-5 text-green-600" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-green-500 transition-colors" />
             </div>
-            <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-green-500 transition-colors" />
-          </div>
-          <p className="text-2xl font-bold text-gray-900">{stats.totalIPOs}</p>
-          <p className="text-xs text-gray-500 mt-1">IPO Listings</p>
-          <div className="flex items-center gap-1 mt-2 text-[10px] text-green-600 font-medium">
-            {stats.openIPOs} currently open
-          </div>
-        </Link>
+            <p className="text-2xl font-bold text-gray-900">{stats.totalIPOs}</p>
+            <p className="text-xs text-gray-500 mt-1">IPO Listings</p>
+            <div className="flex items-center gap-1 mt-2 text-[10px] text-green-600 font-medium">
+              {stats.openIPOs} currently open
+            </div>
+          </Link>
+        )}
 
-        <Link href="/admin/subscribers" className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-all group">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Mail className="w-5 h-5 text-orange-600" />
+        {isAdmin && (
+          <Link href="/admin/subscribers" className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-all group">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Mail className="w-5 h-5 text-orange-600" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-orange-500 transition-colors" />
             </div>
-            <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-orange-500 transition-colors" />
-          </div>
-          <p className="text-2xl font-bold text-gray-900">{stats.totalSubscribers}</p>
-          <p className="text-xs text-gray-500 mt-1">Subscribers</p>
-          <div className="flex items-center gap-1 mt-2 text-[10px] text-blue-600 font-medium">
-            Newsletter signups
-          </div>
-        </Link>
+            <p className="text-2xl font-bold text-gray-900">{stats.totalSubscribers}</p>
+            <p className="text-xs text-gray-500 mt-1">Subscribers</p>
+            <div className="flex items-center gap-1 mt-2 text-[10px] text-blue-600 font-medium">
+              Newsletter signups
+            </div>
+          </Link>
+        )}
       </div>
 
       {/* Content Breakdown + Recent Articles */}
@@ -263,19 +290,32 @@ export default function AdminDashboard() {
                 <FileText className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Manage News</p>
-                <p className="text-[10px] text-gray-500">Edit, reorder, or delete</p>
+                <p className="text-sm font-medium text-gray-900">{isAdmin ? 'Manage All News' : 'My Articles'}</p>
+                <p className="text-[10px] text-gray-500">{isAdmin ? 'Edit, reorder, or delete' : 'Edit your articles'}</p>
               </div>
             </Link>
-            <Link href="/admin/ipo" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group">
-              <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                <BarChart3 className="w-4 h-4 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Manage IPOs</p>
-                <p className="text-[10px] text-gray-500">Add or update IPO listings</p>
-              </div>
-            </Link>
+            {isAdmin && (
+              <Link href="/admin/authors" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group">
+                <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                  <UserPen className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Manage Authors</p>
+                  <p className="text-[10px] text-gray-500">Create and manage author accounts</p>
+                </div>
+              </Link>
+            )}
+            {isAdmin && (
+              <Link href="/admin/ipo" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group">
+                <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                  <BarChart3 className="w-4 h-4 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Manage IPOs</p>
+                  <p className="text-[10px] text-gray-500">Add or update IPO listings</p>
+                </div>
+              </Link>
+            )}
             <Link href="/" target="_blank" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group">
               <div className="w-9 h-9 rounded-lg bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
                 <Eye className="w-4 h-4 text-orange-600" />

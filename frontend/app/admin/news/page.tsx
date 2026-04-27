@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, FileText, CheckCircle2, Clock, Eye, Image as ImageIcon, Search } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, FileText, CheckCircle2, Clock, Eye, Image as ImageIcon, Search, UserPen } from "lucide-react";
+
+type UserRole = "admin" | "author";
+
+interface Permissions {
+  can_create_news: boolean;
+  can_edit_own_news: boolean;
+  can_publish: boolean;
+  can_manage_videos: boolean;
+}
 
 interface NewsItem {
   id: number;
@@ -16,6 +25,7 @@ interface NewsItem {
   is_published: number;
   read_time: string | null;
   views: number;
+  author_name: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +47,8 @@ export default function AdminNewsPage() {
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [role, setRole] = useState<UserRole>("admin");
+  const [permissions, setPermissions] = useState<Permissions>({ can_create_news: true, can_edit_own_news: true, can_publish: false, can_manage_videos: false });
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,6 +57,13 @@ export default function AdminNewsPage() {
   async function loadNews() {
     const token = localStorage.getItem("admin_token");
     if (!token) return;
+
+    const storedRole = localStorage.getItem("admin_role") as UserRole;
+    setRole(storedRole || "admin");
+    try {
+      const perms = localStorage.getItem("admin_permissions");
+      if (perms) setPermissions(JSON.parse(perms));
+    } catch { /* ignore */ }
 
     try {
       const res = await fetch(`${API_URL}/api/news/admin/all`, {
@@ -89,6 +108,9 @@ export default function AdminNewsPage() {
   }
 
   async function handleTogglePublish(item: NewsItem) {
+    // Authors without can_publish cannot toggle
+    if (role === "author" && !permissions.can_publish) return;
+
     const token = localStorage.getItem("admin_token");
     if (!token) return;
 
@@ -173,20 +195,35 @@ export default function AdminNewsPage() {
     );
   }
 
+  const canCreate = role === "admin" || permissions.can_create_news;
+  const canDelete = role === "admin";
+  const canReorder = role === "admin";
+  const canPublish = role === "admin" || permissions.can_publish;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">News Management</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage and organize your news articles.</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {role === "author" ? "Manage your articles." : "Manage and organize all news articles."}
+          </p>
+          {role === "author" && (
+            <div className="flex items-center gap-1.5 mt-2 text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg w-fit">
+              <UserPen className="w-3.5 h-3.5" />
+              Author mode — showing your articles only
+            </div>
+          )}
         </div>
-        <Link
-          href="/admin/news/new"
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#009429] text-white rounded-xl text-sm font-medium hover:bg-[#007a22] hover:-translate-y-0.5 transition-all w-full sm:w-auto shadow-sm hover:shadow-md"
-        >
-          <Plus className="w-4 h-4" />
-          Create New Article
-        </Link>
+        {canCreate && (
+          <Link
+            href="/admin/news/new"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#009429] text-white rounded-xl text-sm font-medium hover:bg-[#007a22] hover:-translate-y-0.5 transition-all w-full sm:w-auto shadow-sm hover:shadow-md"
+          >
+            <Plus className="w-4 h-4" />
+            Create New Article
+          </Link>
+        )}
       </div>
 
       {/* Tools / Filters */}
@@ -246,9 +283,11 @@ export default function AdminNewsPage() {
                 <th className="text-center px-6 py-4 font-semibold text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
+                {canReorder && (
                 <th className="text-center px-6 py-4 font-semibold text-gray-500 uppercase tracking-wider">
                   Order
                 </th>
+                )}
                 <th className="text-right px-6 py-4 font-semibold text-gray-500 uppercase tracking-wider rounded-tr-2xl">
                   Actions
                 </th>
@@ -298,21 +337,37 @@ export default function AdminNewsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <button
-                      onClick={() => handleTogglePublish(item)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all shadow-sm
+                    {canPublish ? (
+                      <button
+                        onClick={() => handleTogglePublish(item)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all shadow-sm
+                          ${item.is_published
+                            ? "bg-green-50 text-green-700 hover:bg-green-100 ring-1 ring-inset ring-green-600/20"
+                            : "bg-orange-50 text-orange-700 hover:bg-orange-100 ring-1 ring-inset ring-orange-600/20"
+                          }`}
+                      >
+                        {item.is_published ? (
+                          <><CheckCircle2 className="w-3.5 h-3.5" /> Live</>
+                        ) : (
+                          <><Clock className="w-3.5 h-3.5" /> Draft</>
+                        )}
+                      </button>
+                    ) : (
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold
                         ${item.is_published
-                          ? "bg-green-50 text-green-700 hover:bg-green-100 ring-1 ring-inset ring-green-600/20"
-                          : "bg-orange-50 text-orange-700 hover:bg-orange-100 ring-1 ring-inset ring-orange-600/20"
+                          ? "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20"
+                          : "bg-orange-50 text-orange-700 ring-1 ring-inset ring-orange-600/20"
                         }`}
-                    >
-                      {item.is_published ? (
-                        <><CheckCircle2 className="w-3.5 h-3.5" /> Live</>
-                      ) : (
-                        <><Clock className="w-3.5 h-3.5" /> Draft</>
-                      )}
-                    </button>
+                      >
+                        {item.is_published ? (
+                          <><CheckCircle2 className="w-3.5 h-3.5" /> Live</>
+                        ) : (
+                          <><Clock className="w-3.5 h-3.5" /> Draft</>
+                        )}
+                      </span>
+                    )}
                   </td>
+                  {canReorder && (
                   <td className="px-6 py-4 text-center">
                     {filter !== "all" ? (
                       <div className="inline-flex items-center gap-1 bg-gray-50 border border-gray-100 rounded-lg p-1">
@@ -338,6 +393,7 @@ export default function AdminNewsPage() {
                        <span className="text-[11px] text-gray-400 italic">Filter section to reorder</span>
                     )}
                   </td>
+                  )}
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <Link
@@ -355,14 +411,16 @@ export default function AdminNewsPage() {
                       >
                         <Edit className="w-4 h-4" />
                       </Link>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        disabled={deleting === item.id}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          disabled={deleting === item.id}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

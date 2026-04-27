@@ -16,18 +16,37 @@ function slugify(text: string): string {
 }
 
 async function seed() {
-  // Run schema
+  // For existing databases: add new columns before running schema (so indexes don't fail)
+  try {
+    // Check if news table exists first
+    const { rows: tableCheck } = await pool.query(
+      "SELECT 1 FROM information_schema.tables WHERE table_name = 'news'"
+    );
+    if (tableCheck.length > 0) {
+      await pool.query("ALTER TABLE news ADD COLUMN IF NOT EXISTS slug TEXT UNIQUE");
+      await pool.query("ALTER TABLE news ADD COLUMN IF NOT EXISTS content TEXT DEFAULT ''");
+      await pool.query("ALTER TABLE news ADD COLUMN IF NOT EXISTS author TEXT DEFAULT 'ShareSanskar Team'");
+      await pool.query("ALTER TABLE news ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0");
+    }
+  } catch {
+    // Table may not exist yet - that's fine, schema.sql will create it
+  }
+
+  // Run full schema (creates tables and indexes if they don't exist)
   const schema = fs.readFileSync(path.join(__dirname, "../schema.sql"), "utf-8");
   await pool.query(schema);
 
-  // Try to add new columns if they don't exist (for existing databases)
+  // Post-schema migration: add author_id if missing (depends on authors table existing)
   try {
-    await pool.query("ALTER TABLE news ADD COLUMN IF NOT EXISTS slug TEXT UNIQUE");
-    await pool.query("ALTER TABLE news ADD COLUMN IF NOT EXISTS content TEXT DEFAULT ''");
-    await pool.query("ALTER TABLE news ADD COLUMN IF NOT EXISTS author TEXT DEFAULT 'ShareSanskar Team'");
-    await pool.query("ALTER TABLE news ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0");
+    await pool.query("ALTER TABLE news ADD COLUMN IF NOT EXISTS author_id INTEGER REFERENCES authors(id) ON DELETE SET NULL");
   } catch {
-    // Columns may already exist
+    // Column may already exist
+  }
+  // Ensure the index exists
+  try {
+    await pool.query("CREATE INDEX IF NOT EXISTS idx_news_author ON news(author_id)");
+  } catch {
+    // Index may already exist
   }
 
   // --- Seed admin user ---
@@ -38,6 +57,20 @@ async function seed() {
     console.log("Admin user created -> username: admin | password: admin123");
   } else {
     console.log("Admin user already exists, skipping.");
+  }
+
+  // --- Seed demo author ---
+  const { rows: existingAuthor } = await pool.query("SELECT id FROM authors WHERE username = $1", ["author1"]);
+  if (existingAuthor.length === 0) {
+    const authorPwHash = bcrypt.hashSync("author123", 10);
+    await pool.query(
+      `INSERT INTO authors (username, full_name, email, password_hash, can_create_news, can_edit_own_news, can_publish, can_manage_videos)
+       VALUES ($1, $2, $3, $4, TRUE, TRUE, FALSE, FALSE)`,
+      ["author1", "Demo Author", "author@sharesanskar.com", authorPwHash]
+    );
+    console.log("Demo author created -> username: author1 | password: author123");
+  } else {
+    console.log("Demo author already exists, skipping.");
   }
 
   // --- Seed news ---

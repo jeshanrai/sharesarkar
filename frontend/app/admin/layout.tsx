@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LogOut, LayoutDashboard, FileText, Settings, ExternalLink, Menu, Bell, Search, ShieldCheck, BarChart3, Users, Clock } from "lucide-react";
+import { LogOut, LayoutDashboard, FileText, Settings, ExternalLink, Menu, Bell, Search, ShieldCheck, BarChart3, Users, UserPen } from "lucide-react";
+
+type UserRole = "admin" | "author";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<string | null>(null);
+  const [role, setRole] = useState<UserRole>("admin");
   const [checking, setChecking] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -21,17 +24,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     const token = localStorage.getItem("admin_token");
     const username = localStorage.getItem("admin_user");
+    const storedRole = localStorage.getItem("admin_role") as UserRole;
     if (!token) {
       router.push("/admin/login");
       return;
     }
     setUser(username);
+    setRole(storedRole || "admin");
     setChecking(false);
   }, [router, isLoginRoute]);
 
   function handleLogout() {
     localStorage.removeItem("admin_token");
     localStorage.removeItem("admin_user");
+    localStorage.removeItem("admin_role");
+    localStorage.removeItem("admin_permissions");
     router.push("/admin/login");
   }
 
@@ -50,13 +57,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  const navItems = [
+  // Build nav items based on role
+  const navItems: { href: string; label: string; icon: typeof LayoutDashboard }[] = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/news", label: "News Management", icon: FileText },
-    { href: "/admin/ipo", label: "IPO Listings", icon: BarChart3 },
-    { href: "/admin/subscribers", label: "Subscribers", icon: Users },
-    { href: "/admin/settings", label: "Platform Settings", icon: Settings },
   ];
+
+  if (role === "admin") {
+    navItems.push(
+      { href: "/admin/authors", label: "Authors", icon: UserPen },
+      { href: "/admin/ipo", label: "IPO Listings", icon: BarChart3 },
+      { href: "/admin/subscribers", label: "Subscribers", icon: Users },
+      { href: "/admin/settings", label: "Platform Settings", icon: Settings },
+    );
+  }
+
+  const roleLabel = role === "admin" ? "Administrator" : "Author";
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex">
@@ -160,12 +176,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
 
             <div className="flex items-center gap-3 ml-2">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-gray-100 to-gray-200 border border-gray-300 flex items-center justify-center font-bold text-gray-600 shadow-sm">
+              <div className={`w-9 h-9 rounded-full border flex items-center justify-center font-bold shadow-sm ${
+                role === "admin" 
+                  ? "bg-gradient-to-tr from-gray-100 to-gray-200 border-gray-300 text-gray-600"
+                  : "bg-gradient-to-tr from-blue-50 to-blue-100 border-blue-200 text-blue-600"
+              }`}>
                 {user ? user.charAt(0).toUpperCase() : "A"}
               </div>
               <div className="hidden sm:block text-sm">
                 <p className="font-semibold text-gray-900 leading-none">{user}</p>
-                <p className="text-gray-500 text-xs mt-1">Administrator</p>
+                <p className={`text-xs mt-1 ${role === "admin" ? "text-gray-500" : "text-blue-500"}`}>{roleLabel}</p>
               </div>
             </div>
 

@@ -3,6 +3,7 @@
 -- 2. Run schema:       psql -d sharesanskar -f schema.sql
 -- 3. Seed data:        npm run seed
 
+-- ─── Admin users (super-admin role) ─────────────────────────────
 CREATE TABLE IF NOT EXISTS admin_users (
   id SERIAL PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
@@ -10,8 +11,26 @@ CREATE TABLE IF NOT EXISTS admin_users (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ─── Authors (created & managed by admins) ──────────────────────
+CREATE TABLE IF NOT EXISTS authors (
+  id SERIAL PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  full_name TEXT NOT NULL DEFAULT '',
+  email TEXT DEFAULT '',
+  password_hash TEXT NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  -- granular permissions managed by admin
+  can_create_news BOOLEAN NOT NULL DEFAULT TRUE,
+  can_edit_own_news BOOLEAN NOT NULL DEFAULT TRUE,
+  can_publish BOOLEAN NOT NULL DEFAULT FALSE,
+  can_manage_videos BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
 
+CREATE INDEX IF NOT EXISTS idx_authors_active ON authors(is_active);
 
+-- ─── News ───────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS news (
   id SERIAL PRIMARY KEY,
   title TEXT NOT NULL,
@@ -19,6 +38,7 @@ CREATE TABLE IF NOT EXISTS news (
   excerpt TEXT NOT NULL,
   content TEXT DEFAULT '',
   author TEXT DEFAULT 'ShareSanskar Team',
+  author_id INTEGER REFERENCES authors(id) ON DELETE SET NULL,
   image_url TEXT NOT NULL DEFAULT '',
   category TEXT NOT NULL DEFAULT 'Market',
   section TEXT NOT NULL DEFAULT 'latest',
@@ -38,6 +58,7 @@ CREATE INDEX IF NOT EXISTS idx_news_sort ON news(section, sort_order);
 CREATE INDEX IF NOT EXISTS idx_news_slug ON news(slug);
 CREATE INDEX IF NOT EXISTS idx_news_category ON news(category);
 
+-- ─── IPO listings ───────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS ipo_listings (
   id SERIAL PRIMARY KEY,
   company_name TEXT NOT NULL,
@@ -59,6 +80,7 @@ CREATE TABLE IF NOT EXISTS ipo_listings (
 -- status values: upcoming, open, closed, listed
 CREATE INDEX IF NOT EXISTS idx_ipo_status ON ipo_listings(status);
 
+-- ─── Subscribers ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS subscribers (
   id SERIAL PRIMARY KEY,
   email TEXT,

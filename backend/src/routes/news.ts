@@ -1,6 +1,6 @@
 import { Router } from "express";
 import pool from "../db.js";
-import { requireAuth, AuthRequest } from "../middleware/auth.js";
+import { requireAuth, requireAuthor, requireAnyAuth, AuthRequest } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -15,11 +15,26 @@ function slugify(text: string): string {
 
 // --- Admin routes (defined before /:id to avoid conflicts) ---
 
-router.get("/admin/all", requireAuth, async (_req: AuthRequest, res) => {
-  const { rows } = await pool.query(
-    "SELECT * FROM news ORDER BY section, sort_order ASC, created_at DESC"
-  );
-  res.json(rows);
+// Admin: get ALL news (admin sees everything, author sees own)
+router.get("/admin/all", requireAnyAuth, async (req: AuthRequest, res) => {
+  if (req.userRole === "admin") {
+    const { rows } = await pool.query(
+      `SELECT n.*, a.full_name as author_name FROM news n
+       LEFT JOIN authors a ON n.author_id = a.id
+       ORDER BY n.section, n.sort_order ASC, n.created_at DESC`
+    );
+    res.json(rows);
+  } else {
+    // Author: only their own articles
+    const { rows } = await pool.query(
+      `SELECT n.*, a.full_name as author_name FROM news n
+       LEFT JOIN authors a ON n.author_id = a.id
+       WHERE n.author_id = $1
+       ORDER BY n.section, n.sort_order ASC, n.created_at DESC`,
+      [req.userId]
+    );
+    res.json(rows);
+  }
 });
 
 router.put("/admin/reorder", requireAuth, async (req: AuthRequest, res) => {
@@ -137,14 +152,43 @@ router.get("/:idOrSlug", async (req, res) => {
   res.json({ ...rows[0], related });
 });
 
-// --- Admin CRUD ---
+// --- Create news (admin or author with can_create_news) ---
 
-router.post("/", requireAuth, async (req: AuthRequest, res) => {
+router.post("/", requireAnyAuth, async (req: AuthRequest, res) => {
+  // Permission check for authors
+  if (req.userRole === "author") {
+    const { rows: authorRows } = await pool.query("SELECT * FROM authors WHERE id = $1", [req.userId]);
+    if (authorRows.length === 0 || !authorRows[0].can_create_news) {
+      res.status(403).json({ error: "You do not have permission to create news" });
+      return;
+    }
+  }
+
   const { title, excerpt, content, author, image_url, category, section, sort_order, is_published, read_time } = req.body;
 
   if (!title || !excerpt) {
     res.status(400).json({ error: "Title and excerpt are required" });
     return;
+  }
+
+  // Authors without can_publish always create as draft
+  let publishState = is_published ?? true;
+  if (req.userRole === "author") {
+    const { rows: authorRows } = await pool.query("SELECT can_publish FROM authors WHERE id = $1", [req.userId]);
+    if (authorRows.length > 0 && !authorRows[0].can_publish) {
+      publishState = false;
+    }
+  }
+
+  // Determine author_id
+  let authorId: number | null = null;
+  let authorName = author || "ShareSanskar Team";
+  if (req.userRole === "author") {
+    authorId = req.userId!;
+    const { rows: authorRows } = await pool.query("SELECT full_name FROM authors WHERE id = $1", [req.userId]);
+    if (authorRows.length > 0 && authorRows[0].full_name) {
+      authorName = authorRows[0].full_name;
+    }
   }
 
   // Generate unique slug
@@ -155,19 +199,20 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
   }
 
   const { rows } = await pool.query(
-    `INSERT INTO news (title, slug, excerpt, content, author, image_url, category, section, sort_order, is_published, read_time)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+    `INSERT INTO news (title, slug, excerpt, content, author, author_id, image_url, category, section, sort_order, is_published, read_time)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
     [
       title,
       slug,
       excerpt,
       content || "",
-      author || "ShareSanskar Team",
+      authorName,
+      authorId,
       image_url || "",
       category || "Market",
       section || "latest",
       sort_order ?? 0,
-      is_published ?? true,
+      publishState,
       read_time || null,
     ]
   );
@@ -175,9 +220,9 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
   res.status(201).json(rows[0]);
 });
 
-router.put("/:id", requireAuth, async (req: AuthRequest, res) => {
-  const { title, excerpt, content, author, image_url, category, section, sort_order, is_published, read_time } = req.body;
+// --- Update news (admin can edit all, author can edit own if permitted) ---
 
+router.put("/:id", requireAnyAuth, async (req: AuthRequest, res) => {
   const { rows: existing } = await pool.query("SELECT * FROM news WHERE id = $1", [req.params.id]);
   if (existing.length === 0) {
     res.status(404).json({ error: "News not found" });
@@ -185,6 +230,30 @@ router.put("/:id", requireAuth, async (req: AuthRequest, res) => {
   }
 
   const old = existing[0];
+
+  // Author permission checks
+  if (req.userRole === "author") {
+    if (old.author_id !== req.userId) {
+      res.status(403).json({ error: "You can only edit your own articles" });
+      return;
+    }
+    const { rows: authorRows } = await pool.query("SELECT * FROM authors WHERE id = $1", [req.userId]);
+    if (authorRows.length === 0 || !authorRows[0].can_edit_own_news) {
+      res.status(403).json({ error: "You do not have permission to edit articles" });
+      return;
+    }
+  }
+
+  const { title, excerpt, content, author, image_url, category, section, sort_order, is_published, read_time } = req.body;
+
+  // Authors without can_publish cannot change publish state
+  let publishState = is_published ?? old.is_published;
+  if (req.userRole === "author") {
+    const { rows: authorRows } = await pool.query("SELECT can_publish FROM authors WHERE id = $1", [req.userId]);
+    if (authorRows.length > 0 && !authorRows[0].can_publish) {
+      publishState = old.is_published; // Keep existing state
+    }
+  }
 
   // Re-generate slug if title changed
   let slug = old.slug;
@@ -195,6 +264,10 @@ router.put("/:id", requireAuth, async (req: AuthRequest, res) => {
       slug = `${slug}-${Date.now()}`;
     }
   }
+
+  // Authors cannot change section or sort_order
+  const finalSection = req.userRole === "author" ? old.section : (section ?? old.section);
+  const finalSortOrder = req.userRole === "author" ? old.sort_order : (sort_order ?? old.sort_order);
 
   const { rows } = await pool.query(
     `UPDATE news SET title = $1, slug = $2, excerpt = $3, content = $4, author = $5, image_url = $6, category = $7, section = $8,
@@ -208,9 +281,9 @@ router.put("/:id", requireAuth, async (req: AuthRequest, res) => {
       author ?? old.author,
       image_url ?? old.image_url,
       category ?? old.category,
-      section ?? old.section,
-      sort_order ?? old.sort_order,
-      is_published ?? old.is_published,
+      finalSection,
+      finalSortOrder,
+      publishState,
       read_time !== undefined ? read_time : old.read_time,
       req.params.id,
     ]
@@ -218,6 +291,8 @@ router.put("/:id", requireAuth, async (req: AuthRequest, res) => {
 
   res.json(rows[0]);
 });
+
+// --- Delete news (admin only) ---
 
 router.delete("/:id", requireAuth, async (req: AuthRequest, res) => {
   const { rows } = await pool.query("SELECT * FROM news WHERE id = $1", [req.params.id]);
