@@ -1,81 +1,159 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Search, Menu, X } from "lucide-react";
 
-interface NavItem {
-  label: string;
-  href: string;
-}
-
-const navItems: NavItem[] = [
-  { label: "Home", href: "/" },
-  { label: "Market", href: "/market" },
+const primaryNav = [
+  { label: "Markets", href: "/market" },
   { label: "News", href: "/news" },
   { label: "IPO", href: "/ipo" },
   { label: "Mutual Funds", href: "/mutual-funds" },
-  { label: "Technical Analysis", href: "/technical" },
+  { label: "Technical", href: "/technical" },
+  { label: "Portfolio", href: "/portfolio" },
 ];
+
+function useNow() {
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
+}
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const now = useNow();
+
+  const dateStr = now
+    ? now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
+    : "";
+  const timeStr = now
+    ? now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })
+    : "";
 
   return (
-    <nav className="bg-white sticky top-0 z-50 border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between items-center h-14">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand-green rounded flex items-center justify-center">
-              <span className="text-white font-bold text-sm">S</span>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">ShareSanskar</h1>
-            </div>
+    <header className="sticky top-[37px] z-50 bg-white border-b border-gray-200">
+      {/* Utility row */}
+      <div className="bg-black text-white text-[11px]">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 h-7 flex items-center justify-between">
+          <div className="flex items-center gap-4 text-white/70">
+            <span className="hidden sm:inline">{dateStr}</span>
+            <span className="hidden md:inline text-white/40">|</span>
+            <span className="hidden md:inline tabular-nums">Kathmandu {timeStr} NPT</span>
           </div>
-
-          <div className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="px-3 py-2 text-gray-600 hover:text-gray-900 text-sm font-medium"
-              >
-                {item.label}
-              </Link>
-            ))}
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="text-white/80 hover:text-white">Sign In</Link>
+            <span className="text-white/30">|</span>
+            <Link href="/admin" className="text-white/80 hover:text-white">Subscribe</Link>
           </div>
+        </div>
+      </div>
 
+      {/* Masthead row */}
+      <div className="border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-6">
+          {/* Mobile menu trigger */}
           <button
-            className="md:hidden p-2"
+            className="lg:hidden p-2 -ml-2"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Menu"
           >
-            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {isMobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
+
+          {/* Wordmark */}
+          <Link href="/" className="flex items-center gap-2 mr-auto lg:mr-0">
+            <div className="hidden sm:flex w-8 h-8 bg-[#d32027] items-center justify-center">
+              <span className="text-white font-black text-sm">S</span>
+            </div>
+            <div className="leading-none">
+              <h1 className="font-serif font-black text-2xl tracking-tight text-gray-900">
+                ShareSanskar
+              </h1>
+              <p className="hidden md:block text-[9px] uppercase tracking-[0.2em] text-gray-500 mt-0.5">
+                Nepal Markets · Daily
+              </p>
+            </div>
+          </Link>
+
+          {/* Search + actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSearchOpen((v) => !v)}
+              className="p-2 text-gray-600 hover:text-gray-900"
+              aria-label="Search"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+            <Link
+              href="/portfolio"
+              className="hidden sm:inline-block px-3 py-1.5 bg-black text-white text-xs font-semibold tracking-wide hover:bg-[#d32027] transition-colors"
+            >
+              MY PORTFOLIO
+            </Link>
+          </div>
         </div>
 
-        {isMobileMenuOpen && (
-          <div className="md:hidden py-3 border-t border-gray-100">
-            <div className="flex flex-col">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="px-4 py-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-50 font-medium text-sm"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
+        {searchOpen && (
+          <div className="border-t border-gray-100 bg-gray-50">
+            <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Search NEPSE symbols, news, IPOs…"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 text-sm focus:outline-none focus:border-[#d32027]"
+                />
+              </div>
             </div>
           </div>
         )}
       </div>
-    </nav>
+
+      {/* Primary nav row */}
+      <div className="border-b border-gray-200 bg-white">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 hidden lg:flex items-center h-10 gap-1 overflow-x-auto">
+          <Link
+            href="/"
+            className="text-[11px] font-bold uppercase tracking-widest px-3 py-2 text-gray-900 border-b-2 border-[#d32027] -mb-px"
+          >
+            Latest
+          </Link>
+          {primaryNav.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="text-[11px] font-bold uppercase tracking-widest px-3 py-2 text-gray-700 hover:text-[#d32027] border-b-2 border-transparent hover:border-[#d32027] -mb-px transition-colors"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile drawer */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden border-t border-gray-100 bg-white">
+          <nav className="max-w-7xl mx-auto px-4 py-2 flex flex-col">
+            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-3 text-sm font-semibold border-b border-gray-100">Latest</Link>
+            {primaryNav.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-2 py-3 text-sm font-semibold border-b border-gray-100 text-gray-700 hover:text-[#d32027]"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
+    </header>
   );
 }

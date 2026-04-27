@@ -46,23 +46,26 @@ export default async function NewsSection() {
   if (mainNews.length === 0 && sidebarNews.length === 0) return null;
 
   return (
-    <section className="py-10">
-      <div className="flex items-center justify-between mb-6">
+    <section className="py-10 border-b border-gray-200">
+      <div className="flex items-end justify-between mb-6 pb-2 border-b-2 border-black">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Latest News</h2>
-          <p className="text-gray-500 text-xs mt-0.5">Stay updated with Nepal stock market</p>
+          <h2 className="eyebrow section-rule text-gray-900">Latest News</h2>
+          <p className="font-serif text-3xl md:text-4xl font-bold text-gray-900 mt-2 leading-tight">
+            What&apos;s moving Nepal&apos;s markets
+          </p>
         </div>
-        <button className="px-4 py-1.5 text-gray-600 text-sm font-medium hover:text-gray-900 transition-colors">
-          View All
+        <button className="hidden sm:inline text-[11px] uppercase tracking-widest text-gray-500 hover:text-[#d32027]">
+          View All →
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
             {mainNews.map((news) => (
               <NewsCard
                 key={news.id}
+                id={news.id}
                 title={news.title}
                 excerpt={news.excerpt}
                 imageUrl={news.image_url}
@@ -74,23 +77,22 @@ export default async function NewsSection() {
           </div>
         </div>
 
-        <div className="lg:col-span-1">
-          <div className="bg-gray-50 rounded-lg p-5">
-            <h3 className="font-semibold text-gray-900 mb-4 text-sm">Trending Stories</h3>
-            <div className="space-y-4">
-              {sidebarNews.map((news) => (
-                <NewsCard
-                  key={news.id}
-                  title={news.title}
-                  excerpt={news.excerpt}
-                  imageUrl={news.image_url}
-                  category={news.category}
-                  date={timeAgo(news.created_at)}
-                />
-              ))}
-            </div>
+        <aside className="lg:col-span-1 lg:border-l lg:border-gray-200 lg:pl-8">
+          <h3 className="eyebrow text-gray-900 section-rule mb-4">Trending</h3>
+          <div className="border-t border-gray-200">
+            {sidebarNews.map((news) => (
+              <NewsCard
+                key={news.id}
+                id={news.id}
+                title={news.title}
+                excerpt={news.excerpt}
+                imageUrl={news.image_url}
+                category={news.category}
+                date={timeAgo(news.created_at)}
+              />
+            ))}
           </div>
-        </div>
+        </aside>
       </div>
     </section>
   );

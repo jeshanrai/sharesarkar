@@ -1,185 +1,176 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 
-interface MarketStat {
-  label: string;
-  value: string;
-  change?: string;
-  changeType?: "positive" | "negative" | "neutral";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+interface Mover {
+  symbol: string; ltp: number; diff_pct: number;
+}
+interface Summary {
+  tradeDate: string | null;
+  index: {
+    value: number; change: number; changePercent: number;
+    high: number; low: number; prevClose: number;
+    turnover: number; transactions: number; volume: number;
+    advances: number; declines: number; unchanged: number;
+  };
 }
 
-const marketStats: MarketStat[] = [
-  { label: "NEPSE Index", value: "2,156.78", change: "+18.45 (0.86%)", changeType: "positive" },
-  { label: "Total Turnover", value: "Rs. 4.52 B", changeType: "neutral" },
-  { label: "Total Traded Shares", value: "12,45,678", changeType: "neutral" },
-  { label: "Total Transactions", value: "45,234", changeType: "neutral" },
-  { label: "Total Scrips Traded", value: "245", changeType: "neutral" },
-  { label: "Market Cap", value: "Rs. 3,245.67 B", change: "+0.45%", changeType: "positive" },
-];
-
-const topGainers = [
-  { symbol: "SHIVM", change: "+10.00%", price: "Rs. 634" },
-  { symbol: "UPPER", change: "+8.50%", price: "Rs. 398" },
-  { symbol: "NTC", change: "+6.25%", price: "Rs. 785" },
-  { symbol: "NABIL", change: "+5.80%", price: "Rs. 1,245" },
-  { symbol: "SBL", change: "+4.50%", price: "Rs. 412" },
-];
-
-const topLosers = [
-  { symbol: "CHCL", change: "-8.20%", price: "Rs. 567" },
-  { symbol: "NLICL", change: "-6.50%", price: "Rs. 945" },
-  { symbol: "NICA", change: "-5.30%", price: "Rs. 892" },
-  { symbol: "HIDCL", change: "-4.80%", price: "Rs. 456" },
-  { symbol: "GBIME", change: "-3.90%", price: "Rs. 378" },
-];
-
-const chartData = [
-  2100, 2120, 2115, 2140, 2135, 2150, 2145, 2160, 2155, 2148, 2165, 2170, 2156,
-];
+const fmtNum = (n: number, d = 2) =>
+  Number(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtMoney = (n: number) => {
+  const v = Number(n ?? 0);
+  if (v >= 1e9) return `Rs. ${(v / 1e9).toFixed(2)} B`;
+  if (v >= 1e7) return `Rs. ${(v / 1e7).toFixed(2)} Cr`;
+  if (v >= 1e5) return `Rs. ${(v / 1e5).toFixed(2)} L`;
+  return `Rs. ${Math.round(v).toLocaleString("en-IN")}`;
+};
+const fmtInt = (n: number) => Number(n ?? 0).toLocaleString("en-IN");
 
 export default function StockChart() {
-  const [activeTab, setActiveTab] = useState<"gainers" | "losers">("gainers");
-  const [timeRange, setTimeRange] = useState<"1D" | "1W" | "1M" | "3M" | "1Y">("1D");
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [gainers, setGainers] = useState<Mover[]>([]);
+  const [losers, setLosers] = useState<Mover[]>([]);
 
-  const maxValue = Math.max(...chartData);
-  const minValue = Math.min(...chartData);
-  const range = maxValue - minValue;
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [s, g, l] = await Promise.all([
+          fetch(`${API_URL}/api/nepse/summary`).then((r) => r.json()),
+          fetch(`${API_URL}/api/nepse/gainers`).then((r) => r.json()),
+          fetch(`${API_URL}/api/nepse/losers`).then((r) => r.json()),
+        ]);
+        if (cancelled) return;
+        setSummary(s);
+        setGainers((g.data ?? []).slice(0, 5));
+        setLosers((l.data ?? []).slice(0, 5));
+      } catch { /* ignore */ }
+    }
+    load();
+    const id = setInterval(load, 60_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
 
-  const generatePath = () => {
-    const width = 100;
-    const height = 100;
-    const points = chartData.map((value, index) => {
-      const x = (index / (chartData.length - 1)) * width;
-      const y = height - ((value - minValue) / range) * height;
-      return `${x},${y}`;
-    });
-    return `M ${points.join(" L ")}`;
-  };
+  const idx = summary?.index;
+  const isUp = (idx?.change ?? 0) >= 0;
+  const breadthTotal = (idx?.advances ?? 0) + (idx?.declines ?? 0) + (idx?.unchanged ?? 0) || 1;
+  const adv = ((idx?.advances ?? 0) / breadthTotal) * 100;
+  const dec = ((idx?.declines ?? 0) / breadthTotal) * 100;
+  const unc = ((idx?.unchanged ?? 0) / breadthTotal) * 100;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-      <div className="p-5 border-b border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">NEPSE Index</h2>
-            <p className="text-gray-500 text-xs">Nepal Stock Exchange</p>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-gray-900">2,156.78</p>
-            <p className="text-brand-green font-medium text-sm">+18.45 (0.86%)</p>
-          </div>
-        </div>
-
-        <div className="flex gap-1 mb-4">
-          {(["1D", "1W", "1M", "3M", "1Y"] as const).map((r) => (
-            <button
-              key={r}
-              onClick={() => setTimeRange(r)}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                timeRange === r
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-
-        <div className="relative h-40 bg-gray-50 rounded p-3">
-          <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#009429" stopOpacity="0.2" />
-                <stop offset="100%" stopColor="#009429" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <path
-              d={`${generatePath()} L 100,100 L 0,100 Z`}
-              fill="url(#chartGradient)"
-            />
-            <path
-              d={generatePath()}
-              fill="none"
-              stroke="#009429"
-              strokeWidth="2"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
-          <div className="absolute bottom-1 left-3 text-[10px] text-gray-400">
-            Last updated: {new Date().toLocaleTimeString()}
-          </div>
-        </div>
+    <div className="border-y-2 border-black bg-white">
+      <div className="px-5 lg:px-8 py-3 border-b border-gray-200 flex items-center justify-between">
+        <h2 className="eyebrow text-gray-900 section-rule">Markets Snapshot</h2>
+        <Link href="/market" className="text-[11px] uppercase tracking-widest text-gray-500 hover:text-[#d32027]">
+          Full Market →
+        </Link>
       </div>
 
-      <div className="p-5 border-b border-gray-100">
-        <h3 className="font-semibold text-gray-900 mb-3 text-sm">Today&apos;s Summary</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {marketStats.map((stat, index) => (
-            <div key={index} className="bg-gray-50 rounded p-3">
-              <p className="text-[10px] text-gray-500 mb-0.5">{stat.label}</p>
-              <p className="font-semibold text-gray-900 text-sm">{stat.value}</p>
-              {stat.change && (
-                <p className={`text-[10px] mt-0.5 ${
-                  stat.changeType === "positive" ? "text-brand-green" :
-                  stat.changeType === "negative" ? "text-brand-red" :
-                  "text-gray-500"
-                }`}>
-                  {stat.change}
-                </p>
-              )}
+      <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
+        {/* NEPSE composite */}
+        <div className="lg:col-span-3 px-5 lg:px-8 py-5">
+          <p className="eyebrow text-gray-500 mb-2">NEPSE Index</p>
+          <p className="font-serif font-black text-4xl tabular-nums text-gray-900 leading-none">
+            {fmtNum(idx?.value ?? 0)}
+          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <span className={`text-sm font-bold tabular-nums ${isUp ? "text-emerald-600" : "text-red-600"}`}>
+              {isUp ? "▲" : "▼"} {isUp ? "+" : ""}{fmtNum(idx?.change ?? 0)}
+            </span>
+            <span className={`text-sm font-semibold tabular-nums ${isUp ? "text-emerald-600" : "text-red-600"}`}>
+              ({isUp ? "+" : ""}{fmtNum(idx?.changePercent ?? 0)}%)
+            </span>
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-2 text-[10px]">
+            <div>
+              <p className="uppercase tracking-wider text-gray-500">High</p>
+              <p className="font-semibold tabular-nums text-gray-900 mt-0.5">{fmtNum(idx?.high ?? 0)}</p>
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="p-5">
-        <div className="flex gap-2 mb-3">
-          <button
-            onClick={() => setActiveTab("gainers")}
-            className={`flex-1 py-2 rounded text-sm font-medium transition-colors ${
-              activeTab === "gainers"
-                ? "bg-brand-green text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            Top Gainers
-          </button>
-          <button
-            onClick={() => setActiveTab("losers")}
-            className={`flex-1 py-2 rounded text-sm font-medium transition-colors ${
-              activeTab === "losers"
-                ? "bg-brand-red text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            Top Losers
-          </button>
+            <div>
+              <p className="uppercase tracking-wider text-gray-500">Low</p>
+              <p className="font-semibold tabular-nums text-gray-900 mt-0.5">{fmtNum(idx?.low ?? 0)}</p>
+            </div>
+            <div>
+              <p className="uppercase tracking-wider text-gray-500">Prev</p>
+              <p className="font-semibold tabular-nums text-gray-900 mt-0.5">{fmtNum(idx?.prevClose ?? 0)}</p>
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-2">
-          {(activeTab === "gainers" ? topGainers : topLosers).map((stock, index) => (
-            <div
-              key={stock.symbol}
-              className="flex items-center justify-between p-2.5 bg-gray-50 rounded hover:bg-gray-100 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-600">
-                  {index + 1}
+        {/* Activity stats */}
+        <div className="lg:col-span-3 px-5 lg:px-8 py-5">
+          <p className="eyebrow text-gray-500 mb-3">Today&apos;s Activity</p>
+          <dl className="space-y-2 text-sm">
+            <div className="flex items-baseline justify-between">
+              <dt className="text-gray-600">Turnover</dt>
+              <dd className="font-bold tabular-nums">{fmtMoney(idx?.turnover ?? 0)}</dd>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <dt className="text-gray-600">Volume</dt>
+              <dd className="font-bold tabular-nums">{fmtInt(idx?.volume ?? 0)}</dd>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <dt className="text-gray-600">Trades</dt>
+              <dd className="font-bold tabular-nums">{fmtInt(idx?.transactions ?? 0)}</dd>
+            </div>
+          </dl>
+          <div className="mt-4">
+            <p className="eyebrow text-gray-500 mb-2">Breadth</p>
+            <div className="flex h-1.5 w-full bg-gray-100 overflow-hidden">
+              <div className="bg-emerald-500" style={{ width: `${adv}%` }} />
+              <div className="bg-gray-400" style={{ width: `${unc}%` }} />
+              <div className="bg-red-500" style={{ width: `${dec}%` }} />
+            </div>
+            <div className="flex justify-between text-[10px] mt-1.5 tabular-nums">
+              <span className="text-emerald-600 font-semibold">{idx?.advances ?? 0} adv</span>
+              <span className="text-gray-500">{idx?.unchanged ?? 0} unch</span>
+              <span className="text-red-600 font-semibold">{idx?.declines ?? 0} dec</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Top gainers */}
+        <div className="lg:col-span-3 px-5 lg:px-8 py-5">
+          <p className="eyebrow text-emerald-700 mb-3">Top Gainers</p>
+          <ol className="space-y-1.5 text-sm">
+            {gainers.length === 0 && (
+              <li className="text-xs text-gray-400 py-2">Loading…</li>
+            )}
+            {gainers.map((s, i) => (
+              <li key={s.symbol} className="flex items-baseline gap-2">
+                <span className="text-[10px] text-gray-400 w-3 tabular-nums">{i + 1}</span>
+                <span className="font-bold text-gray-900 flex-1">{s.symbol}</span>
+                <span className="text-xs text-gray-600 tabular-nums">{fmtNum(s.ltp)}</span>
+                <span className="text-xs font-bold text-emerald-600 tabular-nums w-14 text-right">
+                  +{fmtNum(s.diff_pct)}%
                 </span>
-                <span className="font-medium text-gray-900 text-sm">{stock.symbol}</span>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-500">{stock.price}</p>
-                <p className={`text-xs font-semibold ${
-                  activeTab === "gainers" ? "text-brand-green" : "text-brand-red"
-                }`}>
-                  {stock.change}
-                </p>
-              </div>
-            </div>
-          ))}
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        {/* Top losers */}
+        <div className="lg:col-span-3 px-5 lg:px-8 py-5">
+          <p className="eyebrow text-red-700 mb-3">Top Losers</p>
+          <ol className="space-y-1.5 text-sm">
+            {losers.length === 0 && (
+              <li className="text-xs text-gray-400 py-2">Loading…</li>
+            )}
+            {losers.map((s, i) => (
+              <li key={s.symbol} className="flex items-baseline gap-2">
+                <span className="text-[10px] text-gray-400 w-3 tabular-nums">{i + 1}</span>
+                <span className="font-bold text-gray-900 flex-1">{s.symbol}</span>
+                <span className="text-xs text-gray-600 tabular-nums">{fmtNum(s.ltp)}</span>
+                <span className="text-xs font-bold text-red-600 tabular-nums w-14 text-right">
+                  {fmtNum(s.diff_pct)}%
+                </span>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
     </div>
