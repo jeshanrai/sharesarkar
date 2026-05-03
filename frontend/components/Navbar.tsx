@@ -45,11 +45,7 @@ export default function Navbar() {
             <span className="hidden md:inline text-white/40">|</span>
             <span className="hidden md:inline tabular-nums">Kathmandu {timeStr} NPT</span>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="text-white/80 hover:text-white">Sign In</Link>
-            <span className="text-white/30">|</span>
-            <Link href="/admin" className="text-white/80 hover:text-white">Subscribe</Link>
-          </div>
+          <div className="flex items-center gap-4" />
         </div>
       </div>
 
@@ -90,10 +86,10 @@ export default function Navbar() {
               <Search className="w-4 h-4" />
             </button>
             <Link
-              href="/portfolio"
+              href="/#subscribe"
               className="hidden sm:inline-block px-3 py-1.5 bg-black text-white text-xs font-semibold tracking-wide hover:bg-[#d32027] transition-colors"
             >
-              MY PORTFOLIO
+              SUBSCRIBE
             </Link>
           </div>
         </div>
