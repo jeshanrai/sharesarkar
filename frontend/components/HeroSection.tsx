@@ -38,20 +38,17 @@ export default function HeroSection() {
   useEffect(() => {
     async function load() {
       try {
-        const [heroRes, storiesRes] = await Promise.all([
-          fetch(`${API_URL}/api/news?section=hero_main`),
-          fetch(`${API_URL}/api/news?section=hero_stories`),
-        ]);
-        if (heroRes.ok) {
-          const j = await heroRes.json();
-          const arr = Array.isArray(j) ? j : (j.data || []);
-          if (arr[0]) setLead(arr[0]);
-        }
-        if (storiesRes.ok) {
-          const j = await storiesRes.json();
-          const arr = Array.isArray(j) ? j : (j.data || []);
-          setStories(arr.slice(0, 5));
-        }
+        const res = await fetch(`${API_URL}/api/news?limit=10`);
+        if (!res.ok) return;
+        const j = await res.json();
+        const arr = (Array.isArray(j) ? j : (j.data || [])) as HeroNews[];
+        const sorted = [...arr].sort(
+          (a, b) =>
+            new Date(b.created_at || 0).getTime() -
+            new Date(a.created_at || 0).getTime()
+        );
+        if (sorted[0]) setLead(sorted[0]);
+        setStories(sorted.slice(1, 6));
       } catch { /* ignore */ }
     }
     load();
@@ -80,10 +77,10 @@ export default function HeroSection() {
                   <span className="h-px flex-1 bg-gray-200" />
                   <span className="byline text-gray-500">{timeAgo(lead.created_at)}</span>
                 </div>
-                <h1 className="headline-hero text-gray-900 mb-5 group-hover:text-[#d32027] transition-colors max-w-[22ch]">
+                <h1 className="headline-hero text-gray-900 mb-5 group-hover:text-[#d32027] transition-colors max-w-[22ch] break-words [overflow-wrap:anywhere]">
                   {lead.title}
                 </h1>
-                <p className="lead text-gray-600 line-clamp-3">
+                <p className="lead text-gray-600 line-clamp-3 break-words [overflow-wrap:anywhere]">
                   {lead.excerpt}
                 </p>
                 <p className="byline text-gray-400 mt-5">
@@ -137,7 +134,7 @@ export default function HeroSection() {
                       <span className="eyebrow text-[#d32027]">{s.category}</span>
                       <span className="byline text-gray-400">· {timeAgo(s.created_at)}</span>
                     </div>
-                    <h3 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-3">
+                    <h3 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-3 break-words [overflow-wrap:anywhere]">
                       {s.title}
                     </h3>
                   </div>

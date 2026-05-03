@@ -1,5 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ImageIcon } from "lucide-react";
+
+const PLACEHOLDER = (
+  <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+    <ImageIcon className="w-6 h-6 text-gray-300" />
+  </div>
+);
 
 interface NewsCardProps {
   id?: number | string;
@@ -19,12 +26,16 @@ export default function NewsCard({ id, title, excerpt, imageUrl, category, date,
       <Link href={href} className="block group cursor-pointer">
         <article>
           <div className="relative aspect-[4/3] overflow-hidden mb-3 bg-gray-100">
-            <Image
-              src={imageUrl}
-              alt={title}
-              fill
-              className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            />
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={title}
+                fill
+                className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
+              />
+            ) : (
+              PLACEHOLDER
+            )}
           </div>
           <div className="flex items-center gap-2 mb-2">
             <span className="eyebrow text-[#d32027]">{category}</span>
@@ -43,13 +54,17 @@ export default function NewsCard({ id, title, excerpt, imageUrl, category, date,
     <Link href={href} className="block group cursor-pointer">
       <article className="flex gap-3 py-3 border-b border-gray-100 last:border-b-0">
         <div className="relative w-20 h-20 flex-shrink-0 overflow-hidden bg-gray-100">
-          <Image
-            src={imageUrl}
-            alt={title}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="80px"
-          />
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              sizes="80px"
+            />
+          ) : (
+            PLACEHOLDER
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">

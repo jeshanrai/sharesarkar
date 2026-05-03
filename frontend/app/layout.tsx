@@ -45,8 +45,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${jetbrainsMono.variable} ${playfair.variable} antialiased text-gray-900 bg-white`}>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className={`${inter.variable} ${jetbrainsMono.variable} ${playfair.variable} antialiased text-gray-900 bg-white`}
+      >
         <a href="#main" className="skip-link">Skip to content</a>
         {children}
       </body>
