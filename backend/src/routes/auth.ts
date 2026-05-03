@@ -96,6 +96,73 @@ router.get("/me", requireAnyAuth, async (req: AuthRequest, res) => {
   res.json({ ...rows[0], role: "author" });
 });
 
+// ─── Update own profile (admin or author) ───────────────────────
+router.put("/me", requireAnyAuth, async (req: AuthRequest, res) => {
+  const { full_name, email } = req.body || {};
+
+  if (req.userRole === "admin") {
+    // Admin profile is just username for now; nothing to update besides password.
+    res.json({ success: true });
+    return;
+  }
+
+  // Author can update full_name and email
+  const { rows: existing } = await pool.query(
+    "SELECT * FROM authors WHERE id = $1",
+    [req.userId]
+  );
+  if (existing.length === 0) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  const old = existing[0];
+
+  const { rows } = await pool.query(
+    `UPDATE authors SET full_name = $1, email = $2, updated_at = NOW()
+     WHERE id = $3
+     RETURNING id, username, full_name, email, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos, created_at, updated_at`,
+    [full_name ?? old.full_name, email ?? old.email, req.userId]
+  );
+  res.json({ ...rows[0], role: "author" });
+});
+
+// ─── Change own password (admin or author) ──────────────────────
+router.post("/me/password", requireAnyAuth, async (req: AuthRequest, res) => {
+  const { current_password, new_password } = req.body || {};
+
+  if (!current_password || !new_password) {
+    res.status(400).json({ error: "Current and new passwords are required" });
+    return;
+  }
+  if (String(new_password).length < 6) {
+    res.status(400).json({ error: "New password must be at least 6 characters" });
+    return;
+  }
+
+  const table = req.userRole === "admin" ? "admin_users" : "authors";
+  const { rows } = await pool.query(
+    `SELECT id, password_hash FROM ${table} WHERE id = $1`,
+    [req.userId]
+  );
+  if (rows.length === 0) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  if (!bcrypt.compareSync(current_password, rows[0].password_hash)) {
+    res.status(401).json({ error: "Current password is incorrect" });
+    return;
+  }
+
+  const newHash = bcrypt.hashSync(new_password, 10);
+  await pool.query(
+    `UPDATE ${table} SET password_hash = $1${req.userRole === "author" ? ", updated_at = NOW()" : ""} WHERE id = $2`,
+    [newHash, req.userId]
+  );
+
+  res.json({ success: true, message: "Password updated successfully" });
+});
+
 // ─── Author management (admin only) ────────────────────────────
 
 // List all authors

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, FileText, CheckCircle2, Clock, Eye, Image as ImageIcon, Search, UserPen } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, FileText, CheckCircle2, Clock, Eye, Image as ImageIcon, Search, UserPen, Check, X } from "lucide-react";
 
 type UserRole = "admin" | "author";
 
@@ -53,6 +53,10 @@ export default function AdminNewsPage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkProcessing, setBulkProcessing] = useState(false);
 
   async function loadNews() {
     const token = localStorage.getItem("admin_token");
@@ -133,6 +137,77 @@ export default function AdminNewsPage() {
     }
   }
 
+  function toggleSelect(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll(ids: number[]) {
+    setSelectedIds((prev) => {
+      const allSelected = ids.every((id) => prev.has(id));
+      if (allSelected) {
+        const next = new Set(prev);
+        ids.forEach((id) => next.delete(id));
+        return next;
+      }
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  async function handleBulkPublish(publish: boolean) {
+    const token = localStorage.getItem("admin_token");
+    if (!token || selectedIds.size === 0) return;
+
+    setBulkProcessing(true);
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) =>
+          fetch(`${API_URL}/api/news/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ is_published: publish ? 1 : 0 }),
+          })
+        )
+      );
+      await loadNews();
+      setSelectedIds(new Set());
+    } catch {
+      alert("Bulk action partially failed");
+    } finally {
+      setBulkProcessing(false);
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (!confirm(`Delete ${selectedIds.size} selected article(s)?`)) return;
+    const token = localStorage.getItem("admin_token");
+    if (!token || selectedIds.size === 0) return;
+
+    setBulkProcessing(true);
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) =>
+          fetch(`${API_URL}/api/news/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        )
+      );
+      setNews((prev) => prev.filter((n) => !selectedIds.has(n.id)));
+      setSelectedIds(new Set());
+    } catch {
+      alert("Bulk delete partially failed");
+    } finally {
+      setBulkProcessing(false);
+    }
+  }
+
   async function handleMove(item: NewsItem, direction: "up" | "down") {
     const token = localStorage.getItem("admin_token");
     if (!token) return;
@@ -177,12 +252,6 @@ export default function AdminNewsPage() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-
-  const stats = {
-    total: news.length,
-    published: news.filter((n) => n.is_published).length,
-    draft: news.filter((n) => !n.is_published).length,
-  };
 
   if (loading) {
     return (
@@ -265,13 +334,68 @@ export default function AdminNewsPage() {
         </div>
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-[#009429]/5 border border-[#009429]/20 rounded-2xl p-3 px-4">
+          <p className="text-sm font-medium text-[#009429]">
+            {selectedIds.size} article{selectedIds.size > 1 ? "s" : ""} selected
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {canPublish && (
+              <>
+                <button
+                  onClick={() => handleBulkPublish(true)}
+                  disabled={bulkProcessing}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-semibold hover:bg-green-100 disabled:opacity-50 transition-colors"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Publish all
+                </button>
+                <button
+                  onClick={() => handleBulkPublish(false)}
+                  disabled={bulkProcessing}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-700 rounded-lg text-xs font-semibold hover:bg-orange-100 disabled:opacity-50 transition-colors"
+                >
+                  <Clock className="w-3.5 h-3.5" /> Move to draft
+                </button>
+              </>
+            )}
+            {canDelete && (
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkProcessing}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-xs font-semibold hover:bg-red-100 disabled:opacity-50 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete selected
+              </button>
+            )}
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" /> Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Modern Data Table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-280px)] min-h-[500px]">
         <div className="overflow-x-auto flex-1">
           <table className="w-full whitespace-nowrap text-sm">
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-100 sticky top-0 z-10 backdrop-blur-sm">
-                <th className="text-left px-6 py-4 font-semibold text-gray-500 uppercase tracking-wider rounded-tl-2xl">
+                <th className="px-4 py-4 rounded-tl-2xl w-10">
+                  <input
+                    type="checkbox"
+                    checked={
+                      currentItems.length > 0 &&
+                      currentItems.every((i) => selectedIds.has(i.id))
+                    }
+                    onChange={() => toggleSelectAll(currentItems.map((i) => i.id))}
+                    className="w-4 h-4 rounded border-gray-300 text-[#009429] focus:ring-[#009429]/30 cursor-pointer"
+                  />
+                </th>
+                <th className="text-left px-6 py-4 font-semibold text-gray-500 uppercase tracking-wider">
                   Article Details
                 </th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-500 uppercase tracking-wider">
@@ -297,8 +421,18 @@ export default function AdminNewsPage() {
               {currentItems.map((item) => (
                 <tr
                   key={item.id}
-                  className="hover:bg-blue-50/30 transition-colors group"
+                  className={`hover:bg-blue-50/30 transition-colors group ${
+                    selectedIds.has(item.id) ? "bg-[#009429]/5" : ""
+                  }`}
                 >
+                  <td className="px-4 py-4 w-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(item.id)}
+                      onChange={() => toggleSelect(item.id)}
+                      className="w-4 h-4 rounded border-gray-300 text-[#009429] focus:ring-[#009429]/30 cursor-pointer"
+                    />
+                  </td>
                   <td className="px-6 py-4 w-[40%]">
                     <div className="flex items-start gap-4">
                       {item.image_url ? (
@@ -428,7 +562,7 @@ export default function AdminNewsPage() {
               {currentItems.length === 0 && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={canReorder ? 7 : 6}
                     className="px-6 py-12 text-center text-gray-500"
                   >
                     <div className="flex flex-col items-center justify-center gap-3">
