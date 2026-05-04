@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(curl -s http://localhost:5000/api/health)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(git -C d:/ntcs/sharesanskar-main ls-files)",
+      "Bash(grep -E \"\\\\.env$|\\\\.env\\\\.\")",
+      "Bash(git -C d:/ntcs/sharesanskar-main log --all --diff-filter=A -- backend/.env)",
+      "Bash(git -C d:/ntcs/sharesanskar-main check-ignore backend/.env)",
+      "Bash(git -C d:/ntcs/sharesanskar-main log --oneline backend/package.json)",
+      "Bash(git -C d:/ntcs/sharesanskar-main show HEAD:backend/tsconfig.json)"
     ]
   }
 }

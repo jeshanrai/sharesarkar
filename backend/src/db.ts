@@ -1,7 +1,13 @@
 import pg from "pg";
 
+const useDatabaseUrl = !!process.env.DATABASE_URL;
+
+const connectionString = process.env.DATABASE_URL
+  || `postgresql://${process.env.DB_USER || "postgres"}:${process.env.DB_PASSWORD || ""}@${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || "sharesanskar"}`;
+
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL || `postgresql://${process.env.DB_USER || "postgres"}:${process.env.DB_PASSWORD || ""}@${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || "sharesanskar"}`,
+  connectionString,
+  ssl: useDatabaseUrl ? { rejectUnauthorized: false } : undefined,
 });
 
 export default pool;
