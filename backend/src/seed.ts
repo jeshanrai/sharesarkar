@@ -32,9 +32,18 @@ async function seed() {
     // Table may not exist yet - that's fine, schema.sql will create it
   }
 
-  // Run full schema (creates tables and indexes if they don't exist)
+  // Run full schema (creates tables and indexes if they don't exist).
+  // Split on semicolons and run statement-by-statement — some pg/Neon
+  // combos throw "Cannot read properties of undefined (reading 'map')"
+  // when handed a single multi-statement DDL string.
   const schema = fs.readFileSync(path.join(__dirname, "../schema.sql"), "utf-8");
-  await pool.query(schema);
+  const statements = schema
+    .split(/;\s*\r?\n/)
+    .map((s) => s.replace(/^\s*--.*$/gm, "").trim())
+    .filter((s) => s.length > 0);
+  for (const stmt of statements) {
+    await pool.query(stmt);
+  }
 
   // Post-schema migration: add author_id if missing (depends on authors table existing)
   try {

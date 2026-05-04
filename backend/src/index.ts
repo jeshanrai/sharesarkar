@@ -13,9 +13,10 @@ import { startNepseScheduler } from "./services/nepse.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const stripSlash = (s: string) => s.replace(/\/+$/, "");
 const allowedOrigins = (process.env.FRONTEND_URL || "")
   .split(",")
-  .map((o) => o.trim())
+  .map((o) => stripSlash(o.trim()))
   .filter(Boolean);
 
 app.use(
@@ -23,7 +24,7 @@ app.use(
     origin: (origin, cb) => {
       if (!origin) return cb(null, true);
       if (allowedOrigins.length === 0) return cb(null, true);
-      if (allowedOrigins.includes(origin)) return cb(null, true);
+      if (allowedOrigins.includes(stripSlash(origin))) return cb(null, true);
       return cb(new Error(`CORS: origin ${origin} not allowed`));
     },
     credentials: true,
