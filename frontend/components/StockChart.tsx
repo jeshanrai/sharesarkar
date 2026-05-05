@@ -65,7 +65,7 @@ export default function StockChart() {
     <div className="border-y-2 border-black bg-white">
       <div className="px-5 lg:px-8 py-3 border-b border-gray-200 flex items-center justify-between">
         <h2 className="eyebrow text-gray-900 section-rule">Markets Snapshot</h2>
-        <Link href="/market" className="text-[11px] uppercase tracking-widest text-gray-500 hover:text-[#d32027]">
+        <Link href="/market" className="nav-link text-gray-500 hover:text-[#d32027]">
           Full Market →
         </Link>
       </div>
@@ -74,29 +74,29 @@ export default function StockChart() {
         {/* NEPSE composite */}
         <div className="lg:col-span-3 px-5 lg:px-8 py-5">
           <p className="eyebrow text-gray-500 mb-2">NEPSE Index</p>
-          <p className="font-serif font-black text-4xl tabular-nums text-gray-900 leading-none">
+          <p className="numeric font-bold text-4xl text-gray-900 leading-none">
             {fmtNum(idx?.value ?? 0)}
           </p>
           <div className="flex items-center gap-2 mt-2">
-            <span className={`text-sm font-bold tabular-nums ${isUp ? "text-emerald-600" : "text-red-600"}`}>
+            <span className={`price ${isUp ? "text-emerald-600" : "text-red-600"}`}>
               {isUp ? "▲" : "▼"} {isUp ? "+" : ""}{fmtNum(idx?.change ?? 0)}
             </span>
-            <span className={`text-sm font-semibold tabular-nums ${isUp ? "text-emerald-600" : "text-red-600"}`}>
+            <span className={`percent ${isUp ? "text-emerald-600" : "text-red-600"}`}>
               ({isUp ? "+" : ""}{fmtNum(idx?.changePercent ?? 0)}%)
             </span>
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-2 text-[10px]">
+          <div className="mt-4 grid grid-cols-3 gap-2">
             <div>
-              <p className="uppercase tracking-wider text-gray-500">High</p>
-              <p className="font-semibold tabular-nums text-gray-900 mt-0.5">{fmtNum(idx?.high ?? 0)}</p>
+              <p className="eyebrow text-gray-500">High</p>
+              <p className="table-num text-gray-900 mt-0.5">{fmtNum(idx?.high ?? 0)}</p>
             </div>
             <div>
-              <p className="uppercase tracking-wider text-gray-500">Low</p>
-              <p className="font-semibold tabular-nums text-gray-900 mt-0.5">{fmtNum(idx?.low ?? 0)}</p>
+              <p className="eyebrow text-gray-500">Low</p>
+              <p className="table-num text-gray-900 mt-0.5">{fmtNum(idx?.low ?? 0)}</p>
             </div>
             <div>
-              <p className="uppercase tracking-wider text-gray-500">Prev</p>
-              <p className="font-semibold tabular-nums text-gray-900 mt-0.5">{fmtNum(idx?.prevClose ?? 0)}</p>
+              <p className="eyebrow text-gray-500">Prev</p>
+              <p className="table-num text-gray-900 mt-0.5">{fmtNum(idx?.prevClose ?? 0)}</p>
             </div>
           </div>
         </div>
@@ -104,18 +104,18 @@ export default function StockChart() {
         {/* Activity stats */}
         <div className="lg:col-span-3 px-5 lg:px-8 py-5">
           <p className="eyebrow text-gray-500 mb-3">Today&apos;s Activity</p>
-          <dl className="space-y-2 text-sm">
+          <dl className="space-y-2">
             <div className="flex items-baseline justify-between">
-              <dt className="text-gray-600">Turnover</dt>
-              <dd className="font-bold tabular-nums">{fmtMoney(idx?.turnover ?? 0)}</dd>
+              <dt className="meta text-gray-600">Turnover</dt>
+              <dd className="table-num text-gray-900">{fmtMoney(idx?.turnover ?? 0)}</dd>
             </div>
             <div className="flex items-baseline justify-between">
-              <dt className="text-gray-600">Volume</dt>
-              <dd className="font-bold tabular-nums">{fmtInt(idx?.volume ?? 0)}</dd>
+              <dt className="meta text-gray-600">Volume</dt>
+              <dd className="table-num text-gray-900">{fmtInt(idx?.volume ?? 0)}</dd>
             </div>
             <div className="flex items-baseline justify-between">
-              <dt className="text-gray-600">Trades</dt>
-              <dd className="font-bold tabular-nums">{fmtInt(idx?.transactions ?? 0)}</dd>
+              <dt className="meta text-gray-600">Trades</dt>
+              <dd className="table-num text-gray-900">{fmtInt(idx?.transactions ?? 0)}</dd>
             </div>
           </dl>
           <div className="mt-4">
@@ -125,10 +125,10 @@ export default function StockChart() {
               <div className="bg-gray-400" style={{ width: `${unc}%` }} />
               <div className="bg-red-500" style={{ width: `${dec}%` }} />
             </div>
-            <div className="flex justify-between text-[10px] mt-1.5 tabular-nums">
-              <span className="text-emerald-600 font-semibold">{idx?.advances ?? 0} adv</span>
-              <span className="text-gray-500">{idx?.unchanged ?? 0} unch</span>
-              <span className="text-red-600 font-semibold">{idx?.declines ?? 0} dec</span>
+            <div className="flex justify-between mt-1.5">
+              <span className="meta text-emerald-600">{idx?.advances ?? 0} adv</span>
+              <span className="meta text-gray-500">{idx?.unchanged ?? 0} unch</span>
+              <span className="meta text-red-600">{idx?.declines ?? 0} dec</span>
             </div>
           </div>
         </div>
@@ -136,16 +136,16 @@ export default function StockChart() {
         {/* Top gainers */}
         <div className="lg:col-span-3 px-5 lg:px-8 py-5">
           <p className="eyebrow text-emerald-700 mb-3">Top Gainers</p>
-          <ol className="space-y-1.5 text-sm">
+          <ol className="space-y-1.5">
             {gainers.length === 0 && (
-              <li className="text-xs text-gray-400 py-2">Loading…</li>
+              <li className="meta text-gray-400 py-2">Loading…</li>
             )}
             {gainers.map((s, i) => (
               <li key={s.symbol} className="flex items-baseline gap-2">
-                <span className="text-[10px] text-gray-400 w-3 tabular-nums">{i + 1}</span>
-                <span className="font-bold text-gray-900 flex-1">{s.symbol}</span>
-                <span className="text-xs text-gray-600 tabular-nums">{fmtNum(s.ltp)}</span>
-                <span className="text-xs font-bold text-emerald-600 tabular-nums w-14 text-right">
+                <span className="table-num table-num--regular text-gray-400 w-3">{i + 1}</span>
+                <span className="ticker-symbol text-gray-900 flex-1">{s.symbol}</span>
+                <span className="price text-gray-600">{fmtNum(s.ltp)}</span>
+                <span className="percent text-emerald-600 w-14 text-right">
                   +{fmtNum(s.diff_pct)}%
                 </span>
               </li>
@@ -156,16 +156,16 @@ export default function StockChart() {
         {/* Top losers */}
         <div className="lg:col-span-3 px-5 lg:px-8 py-5">
           <p className="eyebrow text-red-700 mb-3">Top Losers</p>
-          <ol className="space-y-1.5 text-sm">
+          <ol className="space-y-1.5">
             {losers.length === 0 && (
-              <li className="text-xs text-gray-400 py-2">Loading…</li>
+              <li className="meta text-gray-400 py-2">Loading…</li>
             )}
             {losers.map((s, i) => (
               <li key={s.symbol} className="flex items-baseline gap-2">
-                <span className="text-[10px] text-gray-400 w-3 tabular-nums">{i + 1}</span>
-                <span className="font-bold text-gray-900 flex-1">{s.symbol}</span>
-                <span className="text-xs text-gray-600 tabular-nums">{fmtNum(s.ltp)}</span>
-                <span className="text-xs font-bold text-red-600 tabular-nums w-14 text-right">
+                <span className="table-num table-num--regular text-gray-400 w-3">{i + 1}</span>
+                <span className="ticker-symbol text-gray-900 flex-1">{s.symbol}</span>
+                <span className="price text-gray-600">{fmtNum(s.ltp)}</span>
+                <span className="percent text-red-600 w-14 text-right">
                   {fmtNum(s.diff_pct)}%
                 </span>
               </li>

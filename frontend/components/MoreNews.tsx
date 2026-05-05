@@ -35,10 +35,10 @@ export default async function MoreNews() {
     <section className="py-10 border-t border-gray-100">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Featured Articles</h2>
-          <p className="text-gray-500 text-xs mt-0.5">In-depth analysis and educational content</p>
+          <h2 className="headline-md text-gray-900">Featured Articles</h2>
+          <p className="meta text-gray-500 mt-0.5">In-depth analysis and educational content</p>
         </div>
-        <button className="px-4 py-1.5 text-gray-600 text-sm font-medium hover:text-gray-900 transition-colors">
+        <button className="btn-text px-4 py-1.5 text-gray-600 hover:text-gray-900 transition-colors">
           View All
         </button>
       </div>
@@ -57,18 +57,18 @@ export default async function MoreNews() {
               </div>
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-medium rounded">
+                  <span className="meta inline-block px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
                     {item.category}
                   </span>
                   {item.read_time && (
-                    <span className="text-gray-400 text-[10px]">{item.read_time}</span>
+                    <span className="meta text-gray-400">{item.read_time}</span>
                   )}
                 </div>
-                <h3 className="font-semibold text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-2 text-sm mb-1.5">
+                <h3 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-2 mb-1.5">
                   {item.title}
                 </h3>
-                <p className="text-gray-500 text-xs line-clamp-2 mb-2">{item.excerpt}</p>
-                <p className="text-gray-400 text-[10px]">
+                <p className="text-gray-500 line-clamp-2 mb-2">{item.excerpt}</p>
+                <p className="meta text-gray-400">
                   {new Date(item.created_at + "Z").toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",

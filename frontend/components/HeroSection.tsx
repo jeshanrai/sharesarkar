@@ -106,7 +106,7 @@ export default function HeroSection() {
             <h2 className="eyebrow section-rule">Top Stories</h2>
             <Link
               href="/news"
-              className="text-[11px] uppercase tracking-[0.18em] font-semibold text-gray-500 hover:text-[#d32027] transition-colors"
+              className="nav-link text-gray-500 hover:text-[#d32027] transition-colors"
             >
               All News →
             </Link>

@@ -27,7 +27,7 @@ export default function SectionHeader({
       {href && (
         <Link
           href={href}
-          className="text-[11px] uppercase tracking-[0.18em] font-semibold text-gray-500 hover:text-[#d32027] transition-colors whitespace-nowrap"
+          className="nav-link text-gray-500 hover:text-[#d32027] transition-colors whitespace-nowrap"
         >
           {hrefLabel}
         </Link>
