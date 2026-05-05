@@ -83,7 +83,7 @@ export default function Footer() {
                 <h3 className="font-bold">ShareSanskar</h3>
               </div>
             </div>
-            <p className="text-gray-400 text-xs mb-4">
+            <p className="footer-text text-gray-400 mb-4">
               Your trusted source for Nepal stock market news and analysis.
             </p>
             <div className="flex gap-2">
@@ -103,11 +103,11 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-medium mb-3 text-sm">Market</h4>
+            <h4 className="footer-heading mb-3 text-white">Market</h4>
             <ul className="space-y-2">
               {footerLinks.market.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-gray-400 hover:text-white text-xs transition-colors">
+                  <Link href={link.href} className="footer-text text-gray-400 hover:text-white transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -116,11 +116,11 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-medium mb-3 text-sm">Learn</h4>
+            <h4 className="footer-heading mb-3 text-white">Learn</h4>
             <ul className="space-y-2">
               {footerLinks.learn.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-gray-400 hover:text-white text-xs transition-colors">
+                  <Link href={link.href} className="footer-text text-gray-400 hover:text-white transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -129,11 +129,11 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-medium mb-3 text-sm">Tools</h4>
+            <h4 className="footer-heading mb-3 text-white">Tools</h4>
             <ul className="space-y-2">
               {footerLinks.tools.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-gray-400 hover:text-white text-xs transition-colors">
+                  <Link href={link.href} className="footer-text text-gray-400 hover:text-white transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -142,11 +142,11 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-medium mb-3 text-sm">Company</h4>
+            <h4 className="footer-heading mb-3 text-white">Company</h4>
             <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-gray-400 hover:text-white text-xs transition-colors">
+                  <Link href={link.href} className="footer-text text-gray-400 hover:text-white transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -157,10 +157,10 @@ export default function Footer() {
 
         <div className="border-t border-gray-800 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-3">
-            <p className="text-gray-500 text-xs">
+            <p className="footer-text text-gray-500">
               &copy; {new Date().getFullYear()} ShareSanskar. All rights reserved.
             </p>
-            <p className="text-gray-600 text-[10px]">
+            <p className="meta text-gray-600">
               Disclaimer: Stock market investments are subject to market risks.
             </p>
           </div>

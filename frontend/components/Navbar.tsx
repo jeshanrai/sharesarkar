@@ -87,9 +87,9 @@ export default function Navbar() {
             </button>
             <Link
               href="/#subscribe"
-              className="hidden sm:inline-block px-3 py-1.5 bg-black text-white text-xs font-semibold tracking-wide hover:bg-[#d32027] transition-colors"
+              className="btn-text hidden sm:inline-block px-3 py-1.5 bg-black text-white hover:bg-[#d32027] transition-colors"
             >
-              SUBSCRIBE
+              Subscribe
             </Link>
           </div>
         </div>
@@ -116,7 +116,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 lg:px-8 hidden lg:flex items-center h-10 gap-1 overflow-x-auto">
           <Link
             href="/"
-            className="text-[11px] font-bold uppercase tracking-widest px-3 py-2 text-gray-900 border-b-2 border-[#d32027] -mb-px"
+            className="nav-link px-3 py-2 text-gray-900 border-b-2 border-[#d32027] -mb-px"
           >
             Latest
           </Link>
@@ -124,7 +124,7 @@ export default function Navbar() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-[11px] font-bold uppercase tracking-widest px-3 py-2 text-gray-700 hover:text-[#d32027] border-b-2 border-transparent hover:border-[#d32027] -mb-px transition-colors"
+              className="nav-link px-3 py-2 text-gray-700 hover:text-[#d32027] border-b-2 border-transparent hover:border-[#d32027] -mb-px transition-colors"
             >
               {item.label}
             </Link>
@@ -136,13 +136,13 @@ export default function Navbar() {
       {isMobileMenuOpen && (
         <div className="lg:hidden border-t border-gray-100 bg-white">
           <nav className="max-w-7xl mx-auto px-4 py-2 flex flex-col">
-            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-3 text-sm font-semibold border-b border-gray-100">Latest</Link>
+            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="nav-link px-2 py-3 border-b border-gray-100 text-gray-900">Latest</Link>
             {primaryNav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-2 py-3 text-sm font-semibold border-b border-gray-100 text-gray-700 hover:text-[#d32027]"
+                className="nav-link px-2 py-3 border-b border-gray-100 text-gray-700 hover:text-[#d32027]"
               >
                 {item.label}
               </Link>

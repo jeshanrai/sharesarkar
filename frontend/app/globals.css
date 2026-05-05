@@ -14,19 +14,20 @@
   --rule-strong: #111827;
 
   /* Type system */
-  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
-  --font-body: var(--font-sans), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-numeric: var(--font-mono), "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-display: "Supreme", "Switzer", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Switzer", system-ui, -apple-system, "Segoe UI", "Inter", sans-serif;
+  --font-numeric: var(--font-mono), "Azeret Mono", ui-monospace, "SFMono-Regular", monospace;
 
   /* Editorial type scale (fluid: clamp(min, fluid, max)) */
-  --type-hero:     clamp(2.25rem, 1.6rem + 3.2vw, 4.25rem);  /* 36 → 68 */
-  --type-display:  clamp(1.875rem, 1.4rem + 2.4vw, 3rem);    /* 30 → 48 */
-  --type-h2:       clamp(1.5rem, 1.2rem + 1.4vw, 2.125rem);  /* 24 → 34 */
+  --type-hero:     clamp(3.5rem, 2.6rem + 4vw, 4.5rem);      /* 56 → 72 — Supreme */
+  --type-display:  clamp(2.25rem, 1.6rem + 2.6vw, 3.5rem);   /* 36 → 56 — Supreme */
+  --type-h2:       clamp(1.375rem, 1rem + 1.6vw, 2.25rem);   /* 22 → 36 — card headline */
   --type-h3:       clamp(1.125rem, 1rem + 0.6vw, 1.375rem);  /* 18 → 22 */
+  --type-sidebar:  clamp(0.9375rem, 0.85rem + 0.4vw, 1.125rem); /* 15 → 18 — sidebar headline */
   --type-lead:     clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);  /* 17 → 20 */
-  --type-body:     1rem;
-  --type-small:    0.8125rem;
-  --type-eyebrow:  0.6875rem;
+  --type-body:     1.0625rem;   /* 17px — Switzer body */
+  --type-small:    0.8125rem;   /* 13px — meta / footer */
+  --type-eyebrow:  0.6875rem;   /* 11px — buttons / eyebrows */
 }
 
 @theme inline {
@@ -51,12 +52,67 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body);
-  font-size: var(--type-body);
+  font-size: var(--type-body);    /* 17px Switzer 400 */
+  font-weight: 400;
   line-height: 1.6;
   letter-spacing: -0.005em;
 }
 
 p { text-wrap: pretty; }
+
+/* ── Switzer role classes (per spec) ──────────────────────────── */
+.nav-link {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+@media (min-width: 1024px) {
+  .nav-link { font-size: 13px; }
+}
+
+.meta {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: var(--ink-muted);
+}
+@media (min-width: 768px) {
+  .meta { font-size: 13px; }
+}
+
+.footer-text {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.55;
+}
+@media (min-width: 768px) {
+  .footer-text { font-size: 14px; }
+}
+
+.footer-heading {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+@media (min-width: 768px) {
+  .footer-heading { font-size: 14px; }
+}
+
+.btn-text {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+@media (min-width: 768px) {
+  .btn-text { font-size: 12px; }
+}
 
 /* ── Brand colors ────────────────────────────────────────────── */
 .text-brand-green { color: var(--brand-green); }
@@ -66,54 +122,59 @@ p { text-wrap: pretty; }
 .border-brand-green { border-color: var(--brand-green); }
 .border-brand-red { border-color: var(--brand-red); }
 
-/* ── Editorial type system ───────────────────────────────────── */
+/* ── Editorial type system (Supreme — Fontshare) ────────────── */
 .font-serif {
   font-family: var(--font-display);
   letter-spacing: -0.015em;
 }
 
+/* Article hero title — 56–72px, weight 900 */
 .headline-hero {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 900;
   font-size: var(--type-hero);
   line-height: 1.02;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.025em;
   text-wrap: balance;
 }
 
+/* Larger card / section title — 36–56px, weight 800 */
 .headline-xl {
   font-family: var(--font-display);
   font-weight: 800;
   font-size: var(--type-display);
   line-height: 1.05;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.022em;
   text-wrap: balance;
 }
 
+/* Card headline — 22–36px, weight 800 */
 .headline-lg {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 800;
   font-size: var(--type-h2);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  line-height: 1.15;
+  letter-spacing: -0.018em;
   text-wrap: balance;
 }
 
+/* Smaller card / list headline — 18–22px, weight 700 */
 .headline-md {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: var(--type-h3);
   line-height: 1.2;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.012em;
   text-wrap: balance;
 }
 
+/* Sidebar headline — 15–18px, weight 700 */
 .headline-sm {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.0625rem;
+  font-size: var(--type-sidebar);
   line-height: 1.25;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.008em;
   text-wrap: balance;
 }
 
@@ -227,7 +288,7 @@ p { text-wrap: pretty; }
   color: var(--ink-strong);
 }
 
-/* ── Tabular numerals ────────────────────────────────────────── */
+/* ── Market data / tabular numerals (Azeret Mono) ────────────── */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
@@ -237,6 +298,47 @@ p { text-wrap: pretty; }
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
+
+/* Ticker symbol — 12px / 700 */
+.ticker-symbol {
+  font-family: var(--font-numeric);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Price — 12–13px / 500–600 */
+.price {
+  font-family: var(--font-numeric);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 768px) {
+  .price { font-size: 13px; }
+}
+
+/* Percentage — 12px / 600 */
+.percent {
+  font-family: var(--font-numeric);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Market table cells — 13px / 400–500 */
+.table-num {
+  font-family: var(--font-numeric);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+}
+.table-num--regular { font-weight: 400; }
 
 /* ── Skip link (a11y) ────────────────────────────────────────── */
 .skip-link {

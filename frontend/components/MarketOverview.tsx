@@ -101,8 +101,8 @@ export default function MarketOverview() {
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="numeric text-sm text-gray-700">{fmtNum(s.close)}</span>
-                    <span className={`numeric text-xs font-bold w-16 text-right ${up ? "text-emerald-600" : "text-red-600"}`}>
+                    <span className="table-num text-gray-700">{fmtNum(s.close)}</span>
+                    <span className={`percent w-16 text-right ${up ? "text-emerald-600" : "text-red-600"}`}>
                       {up ? "+" : ""}{fmtNum(s.change_pct)}%
                     </span>
                   </div>
@@ -151,13 +151,13 @@ export default function MarketOverview() {
                   key={r.symbol}
                   className="grid grid-cols-12 gap-2 py-2.5 border-b border-gray-100 hover:bg-gray-50 transition-colors text-sm group"
                 >
-                  <div className="col-span-1 text-xs text-gray-400 numeric">{i + 1}</div>
-                  <div className="col-span-4 font-bold text-gray-900 tracking-tight group-hover:text-[#d32027] transition-colors">{r.symbol}</div>
-                  <div className="col-span-3 text-right text-gray-700 numeric">{fmtNum(r.ltp)}</div>
-                  <div className={`col-span-2 text-right font-semibold numeric ${up ? "text-emerald-600" : "text-red-600"}`}>
+                  <div className="col-span-1 table-num table-num--regular text-gray-400">{i + 1}</div>
+                  <div className="col-span-4 ticker-symbol text-gray-900 group-hover:text-[#d32027] transition-colors">{r.symbol}</div>
+                  <div className="col-span-3 text-right table-num text-gray-700">{fmtNum(r.ltp)}</div>
+                  <div className={`col-span-2 text-right percent ${up ? "text-emerald-600" : "text-red-600"}`}>
                     {up ? "+" : ""}{fmtNum(r.diff_pct)}%
                   </div>
-                  <div className="col-span-2 text-right text-xs text-gray-600 numeric">{formatMetric(r)}</div>
+                  <div className="col-span-2 text-right table-num table-num--regular text-gray-600">{formatMetric(r)}</div>
                 </div>
               );
             })}

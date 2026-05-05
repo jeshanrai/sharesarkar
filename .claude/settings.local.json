@@ -8,7 +8,8 @@
       "Bash(git -C d:/ntcs/sharesanskar-main log --all --diff-filter=A -- backend/.env)",
       "Bash(git -C d:/ntcs/sharesanskar-main check-ignore backend/.env)",
       "Bash(git -C d:/ntcs/sharesanskar-main log --oneline backend/package.json)",
-      "Bash(git -C d:/ntcs/sharesanskar-main show HEAD:backend/tsconfig.json)"
+      "Bash(git -C d:/ntcs/sharesanskar-main show HEAD:backend/tsconfig.json)",
+      "Bash(node --input-type=module -e \"import bcrypt from 'bcryptjs'; console.log\\('admin123 ->', bcrypt.hashSync\\('admin123',10\\)\\); console.log\\('author123 ->', bcrypt.hashSync\\('author123',10\\)\\);\")"
     ]
   }
 }

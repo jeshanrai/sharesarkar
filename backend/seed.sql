@@ -9,15 +9,15 @@
 --   author1  / author123
 
 -- ─── Admin user (admin / admin123) ───────────────────────────────
--- bcrypt hash of 'admin123' with cost 10
+-- bcryptjs hash of 'admin123' with cost 10
 INSERT INTO admin_users (username, password_hash) VALUES
-  ('admin', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy')
+  ('admin', '$2a$10$5ISyLRkmj8g/pT0NH5o69u9656z3Rhylv7/Covjiu3enfUW4fpG2i')
 ON CONFLICT (username) DO NOTHING;
 
 -- ─── Demo author (author1 / author123) ───────────────────────────
--- bcrypt hash of 'author123' with cost 10
+-- bcryptjs hash of 'author123' with cost 10
 INSERT INTO authors (username, full_name, email, password_hash, can_create_news, can_edit_own_news, can_publish, can_manage_videos) VALUES
-  ('author1', 'Demo Author', 'author@sharesanskar.com', '$2b$10$8K1p/a0dCOC5vPqg0wQ6iuW/fb4q3K3F/GvU/3Vw8O0vP3bV6mZGS', TRUE, TRUE, FALSE, FALSE)
+  ('author1', 'Demo Author', 'author@sharesanskar.com', '$2a$10$0rMMRkskKyDV3as9OR4qQ.OrmuBipg4Q0ctXL803U28vHZtsRnOO6', TRUE, TRUE, FALSE, FALSE)
 ON CONFLICT (username) DO NOTHING;
 
 -- ─── App settings ────────────────────────────────────────────────

@@ -73,9 +73,9 @@ export default function StockTicker() {
                   key={`${stock.symbol}-${index}`}
                   className="flex items-center gap-2 whitespace-nowrap px-5 border-r border-white/5"
                 >
-                  <span className="font-bold text-amber-400 text-sm tracking-wide">{stock.symbol}</span>
-                  <span className="text-white/80 text-sm tabular-nums">Rs. {Number(stock.ltp).toFixed(2)}</span>
-                  <span className={`flex items-center gap-1 text-xs font-semibold tabular-nums ${up ? "text-emerald-400" : "text-red-400"}`}>
+                  <span className="ticker-symbol text-amber-400">{stock.symbol}</span>
+                  <span className="price text-white/80">Rs. {Number(stock.ltp).toFixed(2)}</span>
+                  <span className={`percent flex items-center gap-1 ${up ? "text-emerald-400" : "text-red-400"}`}>
                     {up ? (
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />

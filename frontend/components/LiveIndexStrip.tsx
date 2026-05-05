@@ -79,8 +79,8 @@ export default function LiveIndexStrip() {
           <div className="border-l border-white/10 pl-3">
             <div className="text-[9px] uppercase tracking-widest text-white/50">NEPSE</div>
             <div className="flex items-baseline gap-2">
-              <span className="text-base font-bold tabular-nums">{fmt(idx?.value ?? 0)}</span>
-              <span className={`text-[11px] font-semibold tabular-nums ${idxUp ? "text-emerald-400" : "text-red-400"}`}>
+              <span className="price text-base font-bold">{fmt(idx?.value ?? 0)}</span>
+              <span className={`percent ${idxUp ? "text-emerald-400" : "text-red-400"}`}>
                 {idxUp ? "+" : ""}{fmt(idx?.changePercent ?? 0)}%
               </span>
             </div>
@@ -94,9 +94,9 @@ export default function LiveIndexStrip() {
               const up = Number(s.change_pct) >= 0;
               return (
                 <div key={`${s.index_id}-${i}`} className="flex items-center gap-2 px-5 py-2.5 border-r border-white/5 whitespace-nowrap">
-                  <span className="text-[11px] uppercase tracking-wider text-white/60">{s.alias}</span>
-                  <span className="text-sm font-semibold tabular-nums">{fmt(s.close)}</span>
-                  <span className={`text-[11px] font-semibold tabular-nums ${up ? "text-emerald-400" : "text-red-400"}`}>
+                  <span className="ticker-symbol text-white/60">{s.alias}</span>
+                  <span className="price text-white">{fmt(s.close)}</span>
+                  <span className={`percent ${up ? "text-emerald-400" : "text-red-400"}`}>
                     {up ? "▲" : "▼"} {up ? "+" : ""}{fmt(s.change_pct)}%
                   </span>
                 </div>
