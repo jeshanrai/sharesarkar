@@ -56,6 +56,7 @@ body {
   font-weight: 400;
   line-height: 1.6;
   letter-spacing: -0.005em;
+  overflow-x: clip;               /* prevent rogue horizontal scroll on mobile; safe with sticky */
 }
 
 p { text-wrap: pretty; }
@@ -136,6 +137,8 @@ p { text-wrap: pretty; }
   line-height: 1.02;
   letter-spacing: -0.025em;
   text-wrap: balance;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Larger card / section title — 36–56px, weight 800 */
@@ -146,6 +149,8 @@ p { text-wrap: pretty; }
   line-height: 1.05;
   letter-spacing: -0.022em;
   text-wrap: balance;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Card headline — 22–36px, weight 800 */
@@ -156,6 +161,7 @@ p { text-wrap: pretty; }
   line-height: 1.15;
   letter-spacing: -0.018em;
   text-wrap: balance;
+  overflow-wrap: break-word;
 }
 
 /* Smaller card / list headline — 18–22px, weight 700 */
@@ -166,6 +172,7 @@ p { text-wrap: pretty; }
   line-height: 1.2;
   letter-spacing: -0.012em;
   text-wrap: balance;
+  overflow-wrap: break-word;
 }
 
 /* Sidebar headline — 15–18px, weight 700 */
@@ -176,6 +183,7 @@ p { text-wrap: pretty; }
   line-height: 1.25;
   letter-spacing: -0.008em;
   text-wrap: balance;
+  overflow-wrap: break-word;
 }
 
 .lead {
@@ -277,15 +285,20 @@ p { text-wrap: pretty; }
   margin-bottom: 0.4em;
 }
 
-/* Drop cap on first paragraph after the lead */
+/* Drop cap on first paragraph after the lead — smaller on mobile */
 .prose-editorial > p:first-of-type::first-letter {
   font-family: var(--font-display);
   font-weight: 800;
   float: left;
-  font-size: 4.5em;
+  font-size: 3.25em;
   line-height: 0.85;
-  margin: 0.05em 0.1em 0 -0.05em;
+  margin: 0.08em 0.1em 0 -0.02em;
   color: var(--ink-strong);
+}
+@media (min-width: 640px) {
+  .prose-editorial > p:first-of-type::first-letter {
+    font-size: 4.25em;
+  }
 }
 
 /* ── Market data / tabular numerals (Azeret Mono) ────────────── */

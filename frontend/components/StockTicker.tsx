@@ -63,15 +63,15 @@ export default function StockTicker() {
           )}
         </div>
 
-        <div className="ticker-container flex-1 overflow-hidden">
-          <div className="ticker-content animate-ticker flex">
+        <div className="ticker-container flex-1 min-w-0 overflow-hidden">
+          <div className="ticker-content animate-ticker flex w-max">
             {[...stocks, ...stocks].map((stock, index) => {
               const abs = Number(stock.ltp) - Number(stock.prev_close);
               const up = abs >= 0;
               return (
                 <div
                   key={`${stock.symbol}-${index}`}
-                  className="flex items-center gap-2 whitespace-nowrap px-5 border-r border-white/5"
+                  className="shrink-0 flex items-center gap-2 whitespace-nowrap px-4 sm:px-5 border-r border-white/5"
                 >
                   <span className="ticker-symbol text-amber-400">{stock.symbol}</span>
                   <span className="price text-white/80">Rs. {Number(stock.ltp).toFixed(2)}</span>
