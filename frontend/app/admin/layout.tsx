@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   LogOut, LayoutDashboard, FileText, Settings, ExternalLink, Menu, Bell,
-  Search, ShieldCheck, BarChart3, Users, UserPen, X, Clock, Mail,
+  Search, BarChart3, Users, UserPen, X, Clock, Mail,
   TrendingUp, AlertCircle,
 } from "lucide-react";
 
@@ -335,9 +335,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               sidebarOpen ? "opacity-100" : "opacity-0 w-0"
             }`}
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#009429] to-[#005a19] flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-4 h-4 text-white" />
-            </div>
             <span className="font-bold text-gray-900 tracking-tight whitespace-nowrap">
               Admin<span className="text-[#009429]">Pro</span>
             </span>
