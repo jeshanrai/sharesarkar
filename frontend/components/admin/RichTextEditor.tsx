@@ -29,9 +29,17 @@ interface RichTextEditorProps {
   onChange: (html: string) => void;
   placeholder?: string;
   minHeight?: number;
-  /** Cap for inline image uploads (base64). Default 4 MB. */
+  /**
+   * Cap for inline image uploads (base64). Default 1 MB — base64 inflates
+   * by ~33 %, so a 1 MB file becomes ~1.4 MB inside the article HTML.
+   * Authors should host larger media externally and use the URL tab.
+   */
   imageMaxMB?: number;
-  /** Cap for inline video uploads (base64). Default 25 MB. */
+  /**
+   * Cap for inline video uploads (base64). Default 1 MB — videos quickly
+   * overflow the article content budget; recommend using the URL tab
+   * (YouTube / Vimeo embed) instead.
+   */
   videoMaxMB?: number;
 }
 
@@ -106,8 +114,8 @@ export default function RichTextEditor({
   onChange,
   placeholder = "Write your article…",
   minHeight = 360,
-  imageMaxMB = 4,
-  videoMaxMB = 25,
+  imageMaxMB = 1,
+  videoMaxMB = 1,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const savedRangeRef = useRef<Range | null>(null);

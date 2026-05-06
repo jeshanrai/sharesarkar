@@ -7,6 +7,8 @@ import { ArrowLeft, Save } from "lucide-react";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import SlugField, { finalizeSlug, softSlug } from "@/components/admin/SlugField";
 import ImagePicker from "@/components/admin/ImagePicker";
+import ContentSizeMeter from "@/components/admin/ContentSizeMeter";
+import { ARTICLE_LIMITS, validateArticleSizes } from "@/lib/articleLimits";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -57,6 +59,14 @@ export default function NewArticlePage() {
     e.preventDefault();
     const token = localStorage.getItem("admin_token");
     if (!token) return;
+
+    // Pre-flight size check — same caps as the backend, so we fail early
+    // with a friendly message instead of waiting for a 413.
+    const sizeError = validateArticleSizes(form);
+    if (sizeError) {
+      alert(sizeError);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -113,9 +123,13 @@ export default function NewArticlePage() {
               value={form.title}
               onChange={(e) => updateTitle(e.target.value)}
               placeholder="Enter a compelling headline..."
+              maxLength={ARTICLE_LIMITS.title}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
               required
             />
+            <p className="text-[11px] text-gray-400 mt-1.5 text-right">
+              {form.title.length} / {ARTICLE_LIMITS.title}
+            </p>
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
@@ -129,9 +143,13 @@ export default function NewArticlePage() {
               onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
               placeholder="Write a brief summary..."
               rows={3}
+              maxLength={ARTICLE_LIMITS.excerpt}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429] resize-none"
               required
             />
+            <p className="text-[11px] text-gray-400 mt-1.5 text-right">
+              {form.excerpt.length} / {ARTICLE_LIMITS.excerpt}
+            </p>
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
@@ -142,7 +160,8 @@ export default function NewArticlePage() {
               placeholder="Write the full article body — use the toolbar to format headings, links, lists, and more."
               minHeight={420}
             />
-            <p className="text-xs text-gray-400 mt-2">Tip: paste plain text to avoid pulling in foreign styles.</p>
+            <ContentSizeMeter value={form.content} className="mt-3" />
+            <p className="text-xs text-gray-400 mt-2">Tip: for very large media, host externally and insert a URL — keeps articles fast.</p>
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-6">

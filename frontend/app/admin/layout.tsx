@@ -380,26 +380,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-100">
-          <div
-            className={`p-4 bg-gradient-to-br from-[#009429] to-[#007a22] rounded-2xl text-white relative overflow-hidden transition-all duration-300 ${
-              sidebarOpen ? "opacity-100" : "opacity-0 w-0 h-0 hidden"
-            }`}
-          >
-            <div className="relative z-10">
-              <h4 className="font-semibold text-sm mb-1">Need help?</h4>
-              <p className="text-white/80 text-xs mb-3">Check the documentation for setup guides.</p>
-              <Link
-                href="/"
-                target="_blank"
-                className="inline-block bg-white text-[#009429] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-colors w-full text-center"
-              >
-                View Docs
-              </Link>
-            </div>
-            <div className="absolute right-0 bottom-0 w-16 h-16 bg-white/10 rounded-tl-full" />
-          </div>
-        </div>
       </aside>
 
       {/* Main Content Area */}

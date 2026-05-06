@@ -13,6 +13,71 @@ function slugify(text: string): string {
     .slice(0, 120);
 }
 
+// --- Size limits for article fields ----------------------------
+// Caps are enforced server-side so a single article can never blow out the
+// db row, the JSON parser, or downstream pages. The content cap accommodates
+// inline base64 media uploaded via the rich-text editor; for very large media
+// authors should host externally and link instead.
+const LIMITS = {
+  title: 200,
+  slug: 120,
+  excerpt: 500,
+  read_time: 32,
+  author: 120,
+  // ~2 MB of HTML — enough room for a few inline images at reasonable size.
+  content: 2 * 1024 * 1024,
+  // ~8 MB to allow a base64 hero image.
+  image_url: 8 * 1024 * 1024,
+};
+
+function byteLength(s: string): number {
+  return Buffer.byteLength(s, "utf8");
+}
+
+function lenError(field: string, max: number, actual: number, unit: "chars" | "bytes" = "chars"): string {
+  if (unit === "bytes") {
+    const mb = (max / (1024 * 1024)).toFixed(1);
+    const actualMB = (actual / (1024 * 1024)).toFixed(2);
+    return `${field} is too large (${actualMB} MB) — maximum is ${mb} MB.`;
+  }
+  return `${field} is too long (${actual} chars) — maximum is ${max}.`;
+}
+
+/**
+ * Validate field sizes. Returns null on success, or an error message string.
+ * Uses byte length for free-form HTML and image fields (they may contain
+ * base64 data) and character length for short metadata fields.
+ */
+function validateArticleSizes(body: {
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  content?: string;
+  read_time?: string;
+  author?: string;
+  image_url?: string;
+}): string | null {
+  if (typeof body.title === "string" && body.title.length > LIMITS.title)
+    return lenError("Title", LIMITS.title, body.title.length);
+  if (typeof body.slug === "string" && body.slug.length > LIMITS.slug)
+    return lenError("Slug", LIMITS.slug, body.slug.length);
+  if (typeof body.excerpt === "string" && body.excerpt.length > LIMITS.excerpt)
+    return lenError("Excerpt", LIMITS.excerpt, body.excerpt.length);
+  if (typeof body.read_time === "string" && body.read_time.length > LIMITS.read_time)
+    return lenError("Read time", LIMITS.read_time, body.read_time.length);
+  if (typeof body.author === "string" && body.author.length > LIMITS.author)
+    return lenError("Author", LIMITS.author, body.author.length);
+  if (typeof body.content === "string") {
+    const n = byteLength(body.content);
+    if (n > LIMITS.content) return lenError("Article content", LIMITS.content, n, "bytes");
+  }
+  if (typeof body.image_url === "string") {
+    const n = byteLength(body.image_url);
+    if (n > LIMITS.image_url) return lenError("Featured image", LIMITS.image_url, n, "bytes");
+  }
+  return null;
+}
+
 // --- Admin routes (defined before /:id to avoid conflicts) ---
 
 // Admin: get ALL news (admin sees everything, author sees own)
@@ -171,6 +236,12 @@ router.post("/", requireAnyAuth, async (req: AuthRequest, res) => {
     return;
   }
 
+  const sizeError = validateArticleSizes({ title, slug: requestedSlug, excerpt, content, read_time, author, image_url });
+  if (sizeError) {
+    res.status(413).json({ error: sizeError });
+    return;
+  }
+
   // Authors without can_publish always create as draft
   let publishState = is_published ?? true;
   if (req.userRole === "author") {
@@ -247,6 +318,12 @@ router.put("/:id", requireAnyAuth, async (req: AuthRequest, res) => {
   }
 
   const { title, slug: requestedSlug, excerpt, content, author, image_url, category, section, sort_order, is_published, read_time } = req.body;
+
+  const sizeError = validateArticleSizes({ title, slug: requestedSlug, excerpt, content, read_time, author, image_url });
+  if (sizeError) {
+    res.status(413).json({ error: sizeError });
+    return;
+  }
 
   // Authors without can_publish cannot change publish state
   let publishState = is_published ?? old.is_published;

@@ -19,7 +19,9 @@ const allowedOrigins = (process.env.FRONTEND_URL || "")
   .map((o) => stripSlash(o.trim()))
   .filter(Boolean);
 
-const bodyLimit = process.env.BODY_LIMIT || "50mb";
+// Sized to comfortably exceed our per-field article caps (~10 MB total) with
+// headroom. Override via BODY_LIMIT if you ever need to accept larger payloads.
+const bodyLimit = process.env.BODY_LIMIT || "12mb";
 
 app.use(
   cors({
@@ -46,6 +48,23 @@ app.use("/api/nepse", nepseRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+
+// Convert body-parser's "PayloadTooLargeError" into a clean JSON 413 so the
+// admin UI can show the API's error message instead of an HTML stack trace.
+app.use((err: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (
+    err &&
+    typeof err === "object" &&
+    "type" in err &&
+    (err as { type?: string }).type === "entity.too.large"
+  ) {
+    res.status(413).json({
+      error: `Request body is too large. Limit: ${bodyLimit}. Try shortening the article or hosting media externally.`,
+    });
+    return;
+  }
+  next(err);
 });
 
 app.listen(PORT, () => {
