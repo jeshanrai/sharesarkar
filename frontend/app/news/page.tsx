@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
 import Breadcrumb from "@/components/Breadcrumb";
-import { Search, Filter, Clock, ArrowRight, TrendingUp } from "lucide-react";
+import { Search, Filter, Clock, ArrowRight, TrendingUp, X } from "lucide-react";
 
 interface NewsItem {
   id: number;
@@ -43,13 +44,43 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function NewsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Seed state from URL so deep-links like /news?search=ipo&category=Banking
+  // (e.g. coming from the navbar search) load with the right filters applied.
+  const initialSearch = searchParams.get("search") || "";
+  const initialCategory = searchParams.get("category") || "All";
+
   const [news, setNews] = useState<NewsItem[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 12, total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchInput, setSearchInput] = useState("");
+  const [activeCategory, setActiveCategory] = useState(initialCategory);
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [searchInput, setSearchInput] = useState(initialSearch);
+
+  // Keep state in sync when the URL query string changes (e.g. user navigates
+  // back/forward, or another nav button rewrites the query).
+  useEffect(() => {
+    setSearchQuery(searchParams.get("search") || "");
+    setSearchInput(searchParams.get("search") || "");
+    setActiveCategory(searchParams.get("category") || "All");
+  }, [searchParams]);
+
+  // Reflect filter changes back into the URL so the page is shareable.
+  function syncUrl(next: { search?: string; category?: string }) {
+    const params = new URLSearchParams(searchParams.toString());
+    const search = next.search ?? searchQuery;
+    const category = next.category ?? activeCategory;
+    if (search) params.set("search", search);
+    else params.delete("search");
+    if (category && category !== "All") params.set("category", category);
+    else params.delete("category");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
 
   const fetchNews = useCallback(async (page: number, category: string, search: string) => {
     setLoading(true);
@@ -92,8 +123,17 @@ export default function NewsPage() {
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    setSearchQuery(searchInput);
+    const trimmed = searchInput.trim();
+    setSearchQuery(trimmed);
     setPagination((p) => ({ ...p, page: 1 }));
+    syncUrl({ search: trimmed });
+  }
+
+  function clearSearch() {
+    setSearchInput("");
+    setSearchQuery("");
+    setPagination((p) => ({ ...p, page: 1 }));
+    syncUrl({ search: "" });
   }
 
   return (
@@ -109,24 +149,37 @@ export default function NewsPage() {
 
         {/* Search + Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <form onSubmit={handleSearch} className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <form onSubmit={handleSearch} className="flex-1 relative" role="search">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <input
-              type="text"
+              type="search"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search news articles..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green transition-all"
+              aria-label="Search news"
+              className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green transition-all"
             />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                aria-label="Clear search"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </form>
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
             <Filter className="w-4 h-4 text-gray-400 shrink-0" />
             {categories.map((cat) => (
               <button
                 key={cat}
+                type="button"
                 onClick={() => {
                   setActiveCategory(cat);
                   setPagination((p) => ({ ...p, page: 1 }));
+                  syncUrl({ category: cat });
                 }}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                   activeCategory === cat

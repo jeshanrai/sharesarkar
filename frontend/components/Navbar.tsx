@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Search, Menu, X } from "lucide-react";
 
 const primaryNav = [
@@ -24,10 +25,21 @@ function useNow() {
 }
 
 export default function Navbar() {
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
   const [logoFailed, setLogoFailed] = useState(false);
   const now = useNow();
+
+  function submitSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const q = searchValue.trim();
+    if (!q) return;
+    setSearchOpen(false);
+    setSearchValue("");
+    router.push(`/news?search=${encodeURIComponent(q)}`);
+  }
 
   const dateStr = now
     ? now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
@@ -108,15 +120,39 @@ export default function Navbar() {
         {searchOpen && (
           <div className="border-t border-gray-100 bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <form onSubmit={submitSearch} className="relative" role="search">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
-                  type="text"
+                  type="search"
                   autoFocus
-                  placeholder="Search NEPSE symbols, news, IPOs…"
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 text-sm focus:outline-none focus:border-[#d32027]"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  placeholder="Search news articles…"
+                  aria-label="Search news"
+                  className="w-full pl-10 pr-24 py-2.5 bg-white border border-gray-200 text-sm focus:outline-none focus:border-[#d32027]"
                 />
-              </div>
+                {searchValue && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchValue("")}
+                    aria-label="Clear search"
+                    className="absolute right-20 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-700"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={!searchValue.trim()}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-[#d32027] text-white text-xs font-semibold uppercase tracking-wide hover:bg-[#a31a1f] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Search
+                </button>
+              </form>
+              <p className="text-[11px] text-gray-400 mt-2">
+                Press Enter to search across articles. Looking for a stock symbol? Try the{" "}
+                <Link href="/market" className="underline hover:text-gray-700">Markets</Link> page.
+              </p>
             </div>
           </div>
         )}

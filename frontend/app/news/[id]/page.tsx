@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
-import { ArrowLeft, Share2, Bookmark, Link2 } from "lucide-react";
+import { ArrowLeft, Share2, Bookmark, Link2, Check } from "lucide-react";
 
 interface NewsArticle {
   id: number;
@@ -57,6 +57,42 @@ export default function NewsArticlePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  // Native Web Share where available, copy-to-clipboard fallback otherwise.
+  async function handleShare() {
+    if (typeof window === "undefined" || !article) return;
+    const shareData = {
+      title: article.title,
+      text: article.excerpt,
+      url: window.location.href,
+    };
+    const nav = window.navigator as Navigator & {
+      share?: (data: ShareData) => Promise<void>;
+      canShare?: (data: ShareData) => boolean;
+    };
+    try {
+      if (nav.share && (!nav.canShare || nav.canShare(shareData))) {
+        await nav.share(shareData);
+        return;
+      }
+    } catch {
+      // User cancelled or share failed — fall through to copy.
+    }
+    void copyLink();
+  }
+
+  async function copyLink() {
+    if (typeof window === "undefined") return;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Older browsers — surface a prompt as a last-ditch fallback.
+      window.prompt("Copy this link", window.location.href);
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -255,15 +291,21 @@ export default function NewsArticlePage() {
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                   </a>
                   <button
-                    onClick={() => {
-                      if (typeof window !== "undefined") navigator.clipboard?.writeText(window.location.href);
-                    }}
-                    className="p-2 text-gray-400 hover:text-gray-900 transition-colors"
-                    aria-label="Copy link"
+                    type="button"
+                    onClick={copyLink}
+                    className={`p-2 transition-colors ${copied ? "text-[#009429]" : "text-gray-400 hover:text-gray-900"}`}
+                    aria-label={copied ? "Link copied" : "Copy link"}
+                    title={copied ? "Link copied" : "Copy link"}
                   >
-                    <Link2 className="w-4 h-4" />
+                    {copied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
                   </button>
-                  <button className="p-2 text-gray-400 hover:text-gray-900 transition-colors" aria-label="Share">
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    className="p-2 text-gray-400 hover:text-gray-900 transition-colors"
+                    aria-label="Share"
+                    title="Share"
+                  >
                     <Share2 className="w-4 h-4" />
                   </button>
                 </div>

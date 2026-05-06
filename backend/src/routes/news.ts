@@ -149,10 +149,24 @@ router.get("/", async (req, res) => {
     params.push(category as string);
   }
 
-  if (search) {
-    query += ` AND (title ILIKE $${paramIdx} OR excerpt ILIKE $${paramIdx})`;
-    params.push(`%${search}%`);
-    paramIdx++;
+  if (search && typeof search === "string") {
+    // Split into individual terms and AND them together so multi-word
+    // queries narrow results (e.g. "ipo banking" requires both). Each term
+    // matches across title / excerpt / category for a sensible balance —
+    // no full-text indexing needed at this scale, and `content` is skipped
+    // to avoid scanning large HTML bodies on every request.
+    const terms = search
+      .trim()
+      .slice(0, 80) // bound input length
+      .split(/\s+/)
+      .filter((t) => t.length > 0)
+      .slice(0, 5); // at most 5 terms
+
+    for (const term of terms) {
+      query += ` AND (title ILIKE $${paramIdx} OR excerpt ILIKE $${paramIdx} OR category ILIKE $${paramIdx})`;
+      params.push(`%${term}%`);
+      paramIdx++;
+    }
   }
 
   // Get total count
