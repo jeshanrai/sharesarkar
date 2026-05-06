@@ -19,6 +19,8 @@ const allowedOrigins = (process.env.FRONTEND_URL || "")
   .map((o) => stripSlash(o.trim()))
   .filter(Boolean);
 
+const bodyLimit = process.env.BODY_LIMIT || "50mb";
+
 app.use(
   cors({
     origin: (origin, cb) => {
@@ -30,7 +32,9 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+// Article drafts can include inline base64 media, so keep the parser limit above the default.
+app.use(express.json({ limit: bodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 
 app.use("/api/stocks", stockRoutes);
 app.use("/api/admin", authRoutes);

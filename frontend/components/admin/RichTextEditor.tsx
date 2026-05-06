@@ -18,6 +18,10 @@ import {
   Redo2,
   RemoveFormatting,
   X,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  Copy,
 } from "lucide-react";
 
 interface RichTextEditorProps {
@@ -109,8 +113,13 @@ export default function RichTextEditor({
   const savedRangeRef = useRef<Range | null>(null);
   const [isEmpty, setIsEmpty] = useState(true);
   const [modal, setModal] = useState<ModalKind>(null);
+  // The top-level block currently containing the cursor — drives the
+  // contextual block-actions toolbar (delete / move / duplicate).
+  const [activeBlock, setActiveBlock] = useState<HTMLElement | null>(null);
 
   // Push value into the editor when it changes from outside (e.g. async load).
+  // We avoid resetting innerHTML on every keystroke — only when the incoming
+  // value differs from what's already rendered.
   useEffect(() => {
     const el = editorRef.current;
     if (!el) return;
@@ -120,8 +129,20 @@ export default function RichTextEditor({
     }
   }, [value]);
 
+  // Walk up from `node` until we hit a direct child of the editor — that
+  // direct child is the "block" the cursor is in (a <p>, <h2>, <ul>, image
+  // wrapper, video embed, etc.).
+  function findTopLevelBlock(node: Node | null): HTMLElement | null {
+    const editor = editorRef.current;
+    if (!editor || !node || !editor.contains(node)) return null;
+    let cur: Node | null = node;
+    while (cur && cur.parentNode !== editor) cur = cur.parentNode;
+    return cur instanceof HTMLElement ? cur : null;
+  }
+
   // Remember the current selection so we can restore it after the modal closes
   // (otherwise focus jumps out of the editor and insertions land at the start).
+  // Also tracks which top-level block the caret is in.
   function rememberSelection() {
     const sel = window.getSelection();
     if (sel && sel.rangeCount > 0) {
@@ -129,6 +150,7 @@ export default function RichTextEditor({
       const editor = editorRef.current;
       if (editor && editor.contains(range.commonAncestorContainer)) {
         savedRangeRef.current = range.cloneRange();
+        setActiveBlock(findTopLevelBlock(range.commonAncestorContainer));
       }
     }
   }
@@ -164,7 +186,79 @@ export default function RichTextEditor({
     if (!el) return;
     onChange(el.innerHTML);
     setIsEmpty(!el.textContent?.trim());
+    rememberSelection();
   }
+
+  // Apply / remove the active-block outline as the caret moves.
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    Array.from(editor.querySelectorAll(".rte-block-active")).forEach((n) =>
+      n.classList.remove("rte-block-active")
+    );
+    if (activeBlock && editor.contains(activeBlock)) {
+      activeBlock.classList.add("rte-block-active");
+    }
+  }, [activeBlock]);
+
+  // ── Block-level actions (delete / move / duplicate) ───────────
+  // All operate on the currently-active top-level block.
+
+  function placeCaretInside(el: HTMLElement) {
+    const editor = editorRef.current;
+    if (!editor || !editor.contains(el)) return;
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(true);
+    const sel = window.getSelection();
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    editor.focus();
+    setActiveBlock(el);
+  }
+
+  function deleteActiveBlock() {
+    const el = editorRef.current;
+    const block = activeBlock;
+    if (!el || !block || !el.contains(block)) return;
+    const fallback = (block.previousElementSibling || block.nextElementSibling) as HTMLElement | null;
+    block.remove();
+    if (fallback) placeCaretInside(fallback);
+    else setActiveBlock(null);
+    onChange(el.innerHTML);
+    setIsEmpty(!el.textContent?.trim());
+  }
+
+  function moveActiveBlock(direction: "up" | "down") {
+    const el = editorRef.current;
+    const block = activeBlock;
+    if (!el || !block || !el.contains(block)) return;
+    if (direction === "up") {
+      const prev = block.previousElementSibling;
+      if (prev) el.insertBefore(block, prev);
+    } else {
+      const next = block.nextElementSibling;
+      if (next) el.insertBefore(next, block);
+    }
+    onChange(el.innerHTML);
+    placeCaretInside(block);
+  }
+
+  function duplicateActiveBlock() {
+    const el = editorRef.current;
+    const block = activeBlock;
+    if (!el || !block || !el.contains(block)) return;
+    const clone = block.cloneNode(true) as HTMLElement;
+    block.after(clone);
+    onChange(el.innerHTML);
+    placeCaretInside(clone);
+  }
+
+  const blockActionsAvailable = !!activeBlock;
+  const canMoveUp = !!activeBlock?.previousElementSibling;
+  const canMoveDown = !!activeBlock?.nextElementSibling;
 
   function handlePaste(e: React.ClipboardEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -255,6 +349,37 @@ export default function RichTextEditor({
         <ToolButton title="Clear formatting" onClick={() => exec("removeFormat")}>
           <RemoveFormatting className="w-4 h-4" />
         </ToolButton>
+        <Divider />
+        {/* Block actions — operate on the block where the cursor is */}
+        <ToolButton
+          title="Move block up"
+          onClick={() => moveActiveBlock("up")}
+          disabled={!canMoveUp}
+        >
+          <ArrowUp className="w-4 h-4" />
+        </ToolButton>
+        <ToolButton
+          title="Move block down"
+          onClick={() => moveActiveBlock("down")}
+          disabled={!canMoveDown}
+        >
+          <ArrowDown className="w-4 h-4" />
+        </ToolButton>
+        <ToolButton
+          title="Duplicate block"
+          onClick={duplicateActiveBlock}
+          disabled={!blockActionsAvailable}
+        >
+          <Copy className="w-4 h-4" />
+        </ToolButton>
+        <ToolButton
+          title="Delete block"
+          onClick={deleteActiveBlock}
+          disabled={!blockActionsAvailable}
+          danger
+        >
+          <Trash2 className="w-4 h-4" />
+        </ToolButton>
         <div className="ml-auto flex items-center gap-1">
           <ToolButton title="Undo" onClick={() => exec("undo")}>
             <Undo2 className="w-4 h-4" />
@@ -264,6 +389,13 @@ export default function RichTextEditor({
           </ToolButton>
         </div>
       </div>
+
+      {activeBlock && (
+        <div className="px-4 py-1.5 border-b border-gray-100 bg-[#009429]/5 text-[11px] text-gray-600 flex items-center gap-2">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#009429]" />
+          Editing <span className="font-mono text-[10px] text-gray-700">&lt;{activeBlock.tagName.toLowerCase()}&gt;</span> block — use the toolbar to move, duplicate, or delete it.
+        </div>
+      )}
 
       {/* Editable surface */}
       <div className="relative">
@@ -333,19 +465,30 @@ function ToolButton({
   title,
   onClick,
   children,
+  disabled = false,
+  danger = false,
 }: {
   title: string;
   onClick: () => void;
   children: React.ReactNode;
+  disabled?: boolean;
+  danger?: boolean;
 }) {
+  const base =
+    "w-8 h-8 inline-flex items-center justify-center rounded-md border border-transparent transition-colors";
+  const enabled = danger
+    ? "text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-100"
+    : "text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm hover:border-gray-200";
+  const dimmed = "text-gray-300 cursor-not-allowed";
   return (
     <button
       type="button"
       title={title}
       aria-label={title}
+      disabled={disabled}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className="w-8 h-8 inline-flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm border border-transparent hover:border-gray-200 transition-colors"
+      className={`${base} ${disabled ? dimmed : enabled}`}
     >
       {children}
     </button>
