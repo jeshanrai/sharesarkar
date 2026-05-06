@@ -26,6 +26,7 @@ function useNow() {
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
   const now = useNow();
 
   const dateStr = now
@@ -63,9 +64,19 @@ export default function Navbar() {
 
           {/* Wordmark */}
           <Link href="/" className="flex items-center gap-3 mr-auto lg:mr-0 group">
-            <div className="hidden sm:flex w-9 h-9 bg-[#d32027] items-center justify-center group-hover:rotate-3 transition-transform">
-              <span className="text-white font-serif font-black text-lg leading-none">S</span>
-            </div>
+            {!logoFailed ? (
+              <img
+                src="/assets/logos/svg/SS Icon only (Fill).svg"
+                alt=""
+                aria-hidden="true"
+                className="hidden sm:block w-9 h-9 object-contain"
+                onError={() => setLogoFailed(true)}
+              />
+            ) : (
+              <div className="hidden sm:flex w-9 h-9 bg-[#d32027] items-center justify-center group-hover:rotate-3 transition-transform">
+                <span className="text-white font-serif font-black text-lg leading-none">S</span>
+              </div>
+            )}
             <div className="leading-none">
               <h1 className="font-serif font-black text-[1.6rem] tracking-tight text-gray-900 leading-none">
                 ShareSanskar

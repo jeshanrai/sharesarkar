@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 
 const footerLinks = {
@@ -70,15 +73,26 @@ const socialLinks = [
 ];
 
 export default function Footer() {
+  const [logoFailed, setLogoFailed] = useState(false);
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-brand-green rounded flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
-              </div>
+              {!logoFailed ? (
+                <img
+                  src="/assets/logos/svg/SS Icon only (Fill).svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="w-8 h-8 object-contain"
+                  onError={() => setLogoFailed(true)}
+                />
+              ) : (
+                <div className="w-8 h-8 bg-brand-green rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">S</span>
+                </div>
+              )}
               <div>
                 <h3 className="font-bold">ShareSanskar</h3>
               </div>
