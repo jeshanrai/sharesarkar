@@ -65,22 +65,22 @@ export default function LiveIndexStrip() {
   const idxUp = (idx?.change ?? 0) >= 0;
 
   return (
-    <div className="sticky top-0 z-[60] bg-[#0a0a0a] text-white border-b border-white/10 overflow-hidden">
+    <div className="sticky top-0 z-[60] bg-slate-50 border-b border-slate-200 overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:items-stretch">
         {/* NEPSE pinned tile */}
-        <div className="shrink-0 flex items-center gap-3 px-4 lg:px-6 py-2 sm:py-2.5 border-b sm:border-b-0 sm:border-r border-white/10 bg-gradient-to-r from-black to-black/0">
+        <div className="shrink-0 flex items-center gap-3 px-4 lg:px-6 py-2 sm:py-2.5 border-b sm:border-b-0 sm:border-r border-slate-200 bg-white">
           <div className="flex items-center gap-1.5">
             <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Live</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Live</span>
           </div>
-          <div className="border-l border-white/10 pl-3 flex items-center gap-2 sm:block">
-            <div className="text-[9px] uppercase tracking-widest text-white/50 sm:mb-0">NEPSE</div>
+          <div className="border-l border-slate-200 pl-3 flex items-center gap-2 sm:block">
+            <div className="text-[9px] uppercase tracking-widest text-slate-400 sm:mb-0">NEPSE</div>
             <div className="flex items-baseline gap-2">
-              <span className="price text-sm sm:text-base font-bold">{fmt(idx?.value ?? 0)}</span>
-              <span className={`percent ${idxUp ? "text-emerald-400" : "text-red-400"}`}>
+              <span className="price text-sm sm:text-base font-bold text-slate-800">{fmt(idx?.value ?? 0)}</span>
+              <span className={`percent ${idxUp ? "text-emerald-600" : "text-red-500"}`}>
                 {idxUp ? "+" : ""}{fmt(idx?.changePercent ?? 0)}%
               </span>
             </div>
@@ -93,10 +93,10 @@ export default function LiveIndexStrip() {
             {[...items, ...items].map((s, i) => {
               const up = Number(s.change_pct) >= 0;
               return (
-                <div key={`${s.index_id}-${i}`} className="shrink-0 flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 border-r border-white/5 whitespace-nowrap">
-                  <span className="ticker-symbol text-white/60">{s.alias}</span>
-                  <span className="price text-white">{fmt(s.close)}</span>
-                  <span className={`percent ${up ? "text-emerald-400" : "text-red-400"}`}>
+                <div key={`${s.index_id}-${i}`} className="shrink-0 flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 border-r border-slate-200 whitespace-nowrap">
+                  <span className="ticker-symbol text-slate-500 font-medium">{s.alias}</span>
+                  <span className="price text-slate-700">{fmt(s.close)}</span>
+                  <span className={`percent ${up ? "text-emerald-600" : "text-red-500"}`}>
                     {up ? "▲" : "▼"} {up ? "+" : ""}{fmt(s.change_pct)}%
                   </span>
                 </div>

@@ -53,11 +53,11 @@ export default function Navbar() {
   return (
     <header className="sticky top-[37px] z-50 bg-white border-b border-gray-200">
       {/* Utility row */}
-      <div className="bg-black text-white text-[11px]">
+      <div className="bg-slate-100 border-b border-slate-200 text-[11px]">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 h-7 flex items-center justify-between">
-          <div className="flex items-center gap-4 text-white/70">
+          <div className="flex items-center gap-4 text-slate-500">
             <span className="hidden sm:inline">{dateStr}</span>
-            <span className="hidden md:inline text-white/40">|</span>
+            <span className="hidden md:inline text-slate-300">|</span>
             <span className="hidden md:inline tabular-nums">Kathmandu {timeStr} NPT</span>
           </div>
           <div className="flex items-center gap-4" />
