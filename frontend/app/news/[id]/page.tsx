@@ -5,7 +5,9 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
-import { ArrowLeft, Share2, Bookmark, Link2, Check } from "lucide-react";
+import Toast from "@/components/Toast";
+import { useSavedStories } from "@/lib/useSavedStories";
+import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Link2, Check } from "lucide-react";
 
 interface NewsArticle {
   id: number;
@@ -58,6 +60,32 @@ export default function NewsArticlePage() {
   const [error, setError] = useState(false);
   const [progress, setProgress] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; trigger: number; variant: "default" | "success" }>({
+    msg: "",
+    trigger: 0,
+    variant: "default",
+  });
+
+  const { isSaved, toggle: toggleSaved } = useSavedStories();
+  const saved = article ? isSaved({ id: article.id, slug: article.slug }) : false;
+
+  function handleToggleSave() {
+    if (!article) return;
+    const nowSaved = toggleSaved({
+      id: article.id,
+      slug: article.slug,
+      title: article.title,
+      excerpt: article.excerpt,
+      image_url: article.image_url,
+      category: article.category,
+      created_at: article.created_at,
+    });
+    setToast({
+      msg: nowSaved ? "Saved to Read Later" : "Removed from Read Later",
+      trigger: Date.now(),
+      variant: nowSaved ? "success" : "default",
+    });
+  }
 
   // Native Web Share where available, copy-to-clipboard fallback otherwise.
   async function handleShare() {
@@ -309,8 +337,16 @@ export default function NewsArticlePage() {
                     <Share2 className="w-4 h-4" />
                   </button>
                 </div>
-                <button className="btn-text flex items-center gap-2 text-gray-500 hover:text-[#d32027] transition-colors">
-                  <Bookmark className="w-4 h-4" /> Save Story
+                <button
+                  type="button"
+                  onClick={handleToggleSave}
+                  aria-pressed={saved ? "true" : "false"}
+                  className={`btn-text flex items-center gap-2 transition-colors ${
+                    saved ? "text-[#009429] hover:text-[#007a22]" : "text-gray-500 hover:text-[#d32027]"
+                  }`}
+                >
+                  {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                  {saved ? "Saved" : "Save Story"}
                 </button>
               </div>
 
@@ -381,6 +417,7 @@ export default function NewsArticlePage() {
           </div>
         </div>
       </article>
+      <Toast message={toast.msg} trigger={toast.trigger} variant={toast.variant} />
     </PageLayout>
   );
 }

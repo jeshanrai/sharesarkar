@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, Bookmark } from "lucide-react";
+import { useSavedStories } from "@/lib/useSavedStories";
 
 const primaryNav = [
   { label: "Markets", href: "/market" },
@@ -31,6 +32,7 @@ export default function Navbar() {
   const [searchValue, setSearchValue] = useState("");
   const [logoFailed, setLogoFailed] = useState(false);
   const now = useNow();
+  const { count: savedCount, hydrated: savedHydrated } = useSavedStories();
 
   function submitSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -102,12 +104,29 @@ export default function Navbar() {
           {/* Search + actions */}
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => setSearchOpen((v) => !v)}
               className="p-2 text-gray-600 hover:text-gray-900"
               aria-label="Search"
             >
               <Search className="w-4 h-4" />
             </button>
+            <Link
+              href="/saved"
+              aria-label={savedHydrated && savedCount > 0 ? `Saved stories (${savedCount})` : "Saved stories"}
+              title="Read Later"
+              className="relative p-2 text-gray-600 hover:text-gray-900"
+            >
+              <Bookmark className="w-4 h-4" />
+              {savedHydrated && savedCount > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 inline-flex items-center justify-center rounded-full bg-[#d32027] text-white text-[9px] font-bold leading-none"
+                >
+                  {savedCount > 99 ? "99+" : savedCount}
+                </span>
+              )}
+            </Link>
             <Link
               href="/#subscribe"
               className="btn-text hidden sm:inline-block px-3 py-1.5 bg-black text-white hover:bg-[#d32027] transition-colors"
@@ -194,6 +213,20 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
+            <Link
+              href="/saved"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="nav-link px-2 py-3 border-b border-gray-100 text-gray-700 hover:text-[#d32027] flex items-center justify-between"
+            >
+              <span className="inline-flex items-center gap-2">
+                <Bookmark className="w-4 h-4" /> Read Later
+              </span>
+              {savedHydrated && savedCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-[#d32027] text-white text-[10px] font-bold">
+                  {savedCount > 99 ? "99+" : savedCount}
+                </span>
+              )}
+            </Link>
           </nav>
         </div>
       )}
