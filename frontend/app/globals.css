@@ -129,10 +129,10 @@ p { text-wrap: pretty; }
   letter-spacing: -0.015em;
 }
 
-/* Article hero title — 56–72px, weight 900 */
+/* Article hero title — 56–72px, weight 800 (per spec: use 800, not cartoon-black) */
 .headline-hero {
   font-family: var(--font-display);
-  font-weight: 900;
+  font-weight: 800;
   font-size: var(--type-hero);
   line-height: 1.02;
   letter-spacing: -0.025em;

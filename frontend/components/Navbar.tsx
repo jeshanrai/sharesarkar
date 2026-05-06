@@ -74,11 +74,11 @@ export default function Navbar() {
               />
             ) : (
               <div className="hidden sm:flex w-9 h-9 bg-[#d32027] items-center justify-center group-hover:rotate-3 transition-transform">
-                <span className="text-white font-serif font-black text-lg leading-none">S</span>
+                <span className="text-white font-serif font-extrabold text-lg leading-none">S</span>
               </div>
             )}
             <div className="leading-none">
-              <h1 className="font-serif font-black text-[1.6rem] tracking-tight text-gray-900 leading-none">
+              <h1 className="font-serif font-extrabold text-[1.6rem] tracking-tight text-gray-900 leading-none">
                 ShareSanskar
               </h1>
               <p className="hidden md:block text-[9px] uppercase tracking-[0.22em] font-semibold text-gray-500 mt-1.5">

@@ -39,7 +39,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://cdn.fontshare.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&f[]=supreme@700,800,900&display=swap"
+          href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&f[]=supreme@700,800&display=swap"
         />
         <link rel="icon" href="/assets/logos/favicon/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/assets/logos/favicon/favicon-32x32.png" />

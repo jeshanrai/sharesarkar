@@ -15,7 +15,7 @@ export default function ComingSoon({
     <div className="flex-1 flex items-center justify-center px-4 py-24">
       <div className="text-center max-w-2xl">
         <p className="eyebrow text-[#d32027] mb-6 inline-block section-rule">ShareSanskar</p>
-        <h1 className="font-serif font-black text-5xl md:text-7xl text-gray-900 tracking-tight leading-none">
+        <h1 className="font-serif font-extrabold text-5xl md:text-7xl text-gray-900 tracking-tight leading-none">
           {title}
         </h1>
         {subtitle && (
