@@ -3,6 +3,7 @@ import SectionHeader from "./SectionHeader";
 
 interface NewsItem {
   id: number;
+  slug?: string | null;
   title: string;
   excerpt: string;
   image_url: string;
@@ -62,6 +63,7 @@ export default async function NewsSection() {
               <NewsCard
                 key={news.id}
                 id={news.id}
+                slug={news.slug}
                 title={news.title}
                 excerpt={news.excerpt}
                 imageUrl={news.image_url}
@@ -80,6 +82,7 @@ export default async function NewsSection() {
               <NewsCard
                 key={news.id}
                 id={news.id}
+                slug={news.slug}
                 title={news.title}
                 excerpt={news.excerpt}
                 imageUrl={news.image_url}

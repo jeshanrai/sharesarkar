@@ -16,13 +16,14 @@ interface Permissions {
 
 interface NewsItem {
   id: number;
+  slug: string | null;
   title: string;
   excerpt: string;
   image_url: string;
   category: string;
   section: string;
   sort_order: number;
-  is_published: number;
+  is_published: boolean;
   read_time: string | null;
   views: number;
   author_name: string | null;
@@ -79,7 +80,15 @@ export default function AdminNewsPage() {
         return;
       }
       const data = await res.json();
-      setNews(data);
+      // Normalize is_published to a real boolean — guards against any drift
+      // (older payloads occasionally returned 0/1 or "t"/"f").
+      type RawNewsItem = Omit<NewsItem, "is_published"> & { is_published: unknown };
+      setNews(
+        (Array.isArray(data) ? data : []).map((n: RawNewsItem): NewsItem => ({
+          ...n,
+          is_published: n.is_published === true || n.is_published === 1 || n.is_published === "t" || n.is_published === "true",
+        }))
+      );
     } catch {
       // API might be down
     } finally {
@@ -118,22 +127,24 @@ export default function AdminNewsPage() {
     const token = localStorage.getItem("admin_token");
     if (!token) return;
 
+    const next = !item.is_published;
+    // Optimistic update — flip immediately, revert on failure.
+    setNews((prev) => prev.map((n) => (n.id === item.id ? { ...n, is_published: next } : n)));
+
     try {
-      await fetch(`${API_URL}/api/news/${item.id}`, {
+      const res = await fetch(`${API_URL}/api/news/${item.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ is_published: item.is_published ? 0 : 1 }),
+        body: JSON.stringify({ is_published: next }),
       });
-      setNews(
-        news.map((n) =>
-          n.id === item.id ? { ...n, is_published: n.is_published ? 0 : 1 } : n
-        )
-      );
+      if (!res.ok) throw new Error("update failed");
     } catch {
-      alert("Failed to update");
+      // Revert on failure
+      setNews((prev) => prev.map((n) => (n.id === item.id ? { ...n, is_published: !next } : n)));
+      alert("Failed to update publish status");
     }
   }
 
@@ -171,7 +182,7 @@ export default function AdminNewsPage() {
           fetch(`${API_URL}/api/news/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ is_published: publish ? 1 : 0 }),
+            body: JSON.stringify({ is_published: publish }),
           })
         )
       );
@@ -531,7 +542,7 @@ export default function AdminNewsPage() {
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <Link
-                        href={`/news/${item.id}`}
+                        href={`/news/${item.slug || item.id}`}
                         target="_blank"
                         className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Preview"

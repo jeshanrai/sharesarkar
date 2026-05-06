@@ -10,6 +10,7 @@ const PLACEHOLDER = (
 
 interface NewsCardProps {
   id?: number | string;
+  slug?: string | null;
   title: string;
   excerpt: string;
   imageUrl: string;
@@ -18,8 +19,9 @@ interface NewsCardProps {
   isLarge?: boolean;
 }
 
-export default function NewsCard({ id, title, excerpt, imageUrl, category, date, isLarge = false }: NewsCardProps) {
-  const href = id !== undefined ? `/news/${id}` : "/news";
+export default function NewsCard({ id, slug, title, excerpt, imageUrl, category, date, isLarge = false }: NewsCardProps) {
+  const target = slug || (id !== undefined ? id : null);
+  const href = target !== null ? `/news/${target}` : "/news";
 
   if (isLarge) {
     return (

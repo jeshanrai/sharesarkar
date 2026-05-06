@@ -164,7 +164,7 @@ router.post("/", requireAnyAuth, async (req: AuthRequest, res) => {
     }
   }
 
-  const { title, excerpt, content, author, image_url, category, section, sort_order, is_published, read_time } = req.body;
+  const { title, slug: requestedSlug, excerpt, content, author, image_url, category, section, sort_order, is_published, read_time } = req.body;
 
   if (!title || !excerpt) {
     res.status(400).json({ error: "Title and excerpt are required" });
@@ -191,8 +191,10 @@ router.post("/", requireAnyAuth, async (req: AuthRequest, res) => {
     }
   }
 
-  // Generate unique slug
-  let slug = slugify(title);
+  // Use admin-supplied slug if provided, otherwise derive from title
+  const requested = typeof requestedSlug === "string" ? requestedSlug.trim() : "";
+  let slug = requested ? slugify(requested) : slugify(title);
+  if (!slug) slug = slugify(title);
   const { rows: existing } = await pool.query("SELECT id FROM news WHERE slug = $1", [slug]);
   if (existing.length > 0) {
     slug = `${slug}-${Date.now()}`;
@@ -244,7 +246,7 @@ router.put("/:id", requireAnyAuth, async (req: AuthRequest, res) => {
     }
   }
 
-  const { title, excerpt, content, author, image_url, category, section, sort_order, is_published, read_time } = req.body;
+  const { title, slug: requestedSlug, excerpt, content, author, image_url, category, section, sort_order, is_published, read_time } = req.body;
 
   // Authors without can_publish cannot change publish state
   let publishState = is_published ?? old.is_published;
@@ -255,14 +257,21 @@ router.put("/:id", requireAnyAuth, async (req: AuthRequest, res) => {
     }
   }
 
-  // Re-generate slug if title changed
-  let slug = old.slug;
-  if (title && title !== old.title) {
-    slug = slugify(title);
-    const { rows: slugCheck } = await pool.query("SELECT id FROM news WHERE slug = $1 AND id != $2", [slug, req.params.id]);
-    if (slugCheck.length > 0) {
-      slug = `${slug}-${Date.now()}`;
+  // Slug handling:
+  //  - If admin explicitly provided a slug, normalize and use it (uniqueness-checked).
+  //  - Otherwise, regenerate from title only when the title changed.
+  let slug: string = old.slug;
+  const requested = typeof requestedSlug === "string" ? requestedSlug.trim() : "";
+  if (requested) {
+    const candidate = slugify(requested) || old.slug;
+    if (candidate !== old.slug) {
+      const { rows: slugCheck } = await pool.query("SELECT id FROM news WHERE slug = $1 AND id != $2", [candidate, req.params.id]);
+      slug = slugCheck.length > 0 ? `${candidate}-${Date.now()}` : candidate;
     }
+  } else if (title && title !== old.title) {
+    const candidate = slugify(title);
+    const { rows: slugCheck } = await pool.query("SELECT id FROM news WHERE slug = $1 AND id != $2", [candidate, req.params.id]);
+    slug = slugCheck.length > 0 ? `${candidate}-${Date.now()}` : candidate;
   }
 
   // Authors cannot change section or sort_order

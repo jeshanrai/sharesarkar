@@ -7,6 +7,7 @@ import StockChart from "./StockChart";
 
 interface HeroNews {
   id: number;
+  slug?: string | null;
   title: string;
   excerpt: string;
   image_url: string;
@@ -60,7 +61,7 @@ export default function HeroSection() {
         {/* ── Lead story ──────────────────────────────────────────── */}
         <div className="lg:col-span-7">
           {lead ? (
-            <Link href={`/news/${lead.id}`} className="block group focus-visible:outline-offset-4">
+            <Link href={`/news/${lead.slug || lead.id}`} className="block group focus-visible:outline-offset-4">
               <article className="cursor-pointer animate-fade-up">
                 <div className="relative aspect-[16/9] overflow-hidden bg-gray-900 mb-6">
                   <Image
@@ -125,7 +126,7 @@ export default function HeroSection() {
             ))}
             {stories.map((s, i) => (
               <li key={s.id} className="animate-fade-up">
-                <Link href={`/news/${s.id}`} className="group py-5 flex gap-4 cursor-pointer">
+                <Link href={`/news/${s.slug || s.id}`} className="group py-5 flex gap-4 cursor-pointer">
                   <span className="font-serif text-[2.25rem] font-bold text-gray-200 leading-none w-10 shrink-0 group-hover:text-[#d32027] transition-colors tabular-nums">
                     {String(i + 1).padStart(2, "0")}
                   </span>

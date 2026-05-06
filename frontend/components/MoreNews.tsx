@@ -3,6 +3,7 @@ import Link from "next/link";
 
 interface NewsItem {
   id: number;
+  slug?: string | null;
   title: string;
   excerpt: string;
   image_url: string;
@@ -45,7 +46,7 @@ export default async function MoreNews() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {news.map((item) => (
-          <Link key={item.id} href={`/news/${item.id}`} className="block">
+          <Link key={item.id} href={`/news/${item.slug || item.id}`} className="block">
             <article className="group cursor-pointer bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
               <div className="relative h-40 overflow-hidden bg-gray-100">
                 <Image

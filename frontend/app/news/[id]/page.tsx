@@ -135,7 +135,10 @@ export default function NewsArticlePage() {
   }
 
   const articleContent = article.content || article.excerpt;
-  const paragraphs = articleContent.split("\n").filter((p) => p.trim());
+  // If the body looks like HTML (created via the rich-text editor) we render it
+  // directly. Otherwise we split plain-text on newlines for backward compatibility.
+  const isHtml = /<\/?(p|h[1-6]|ul|ol|li|blockquote|strong|em|b|i|u|a|img|br)[\s>]/i.test(articleContent);
+  const paragraphs = isHtml ? [] : articleContent.split("\n").filter((p) => p.trim());
 
   return (
     <PageLayout>
@@ -216,11 +219,18 @@ export default function NewsArticlePage() {
               )}
 
               {/* Article body — drop-cap on first paragraph */}
-              <div className="prose-editorial">
-                {paragraphs.map((p, i) => (
-                  <p key={i}>{p}</p>
-                ))}
-              </div>
+              {isHtml ? (
+                <div
+                  className="prose-editorial"
+                  dangerouslySetInnerHTML={{ __html: articleContent }}
+                />
+              ) : (
+                <div className="prose-editorial">
+                  {paragraphs.map((p, i) => (
+                    <p key={i}>{p}</p>
+                  ))}
+                </div>
+              )}
 
               {/* Share rail */}
               <div className="mt-12 pt-8 border-t border-gray-200 flex flex-wrap items-center justify-between gap-4">
@@ -292,7 +302,7 @@ export default function NewsArticlePage() {
                   <ol className="space-y-5 border-t border-gray-200 pt-5">
                     {article.related.map((item, i) => (
                       <li key={item.id}>
-                        <Link href={`/news/${item.id}`} className="group flex gap-3">
+                        <Link href={`/news/${item.slug || item.id}`} className="group flex gap-3">
                           <span className="numeric text-gray-200 group-hover:text-[#d32027] transition-colors text-2xl font-bold leading-none w-8 shrink-0">
                             {String(i + 1).padStart(2, "0")}
                           </span>

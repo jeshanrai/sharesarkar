@@ -173,7 +173,7 @@ export default function NewsPage() {
           <>
             {/* Featured first article */}
             {pagination.page === 1 && news.length > 0 && (
-              <Link href={`/news/${news[0].id}`} className="block mb-8 group">
+              <Link href={`/news/${news[0].slug || news[0].id}`} className="block mb-8 group">
                 <article className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                     <div className="relative h-64 lg:h-80 bg-gray-100">
@@ -223,7 +223,7 @@ export default function NewsPage() {
             {/* News Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {(pagination.page === 1 ? news.slice(1) : news).map((item) => (
-                <Link href={`/news/${item.id}`} key={item.id} className="group">
+                <Link href={`/news/${item.slug || item.id}`} key={item.id} className="group">
                   <article className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all h-full flex flex-col">
                     <div className="relative h-48 bg-gray-100 overflow-hidden">
                       {item.image_url && (
