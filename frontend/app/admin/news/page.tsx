@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Edit, Trash2, ArrowUp, ArrowDown, FileText, CheckCircle2, Clock, Eye, Image as ImageIcon, Search, UserPen, Check, X } from "lucide-react";
+import { resolveImageUrl } from "@/lib/resolveImageUrl";
 
 type UserRole = "admin" | "author";
 
@@ -446,15 +447,21 @@ export default function AdminNewsPage() {
                   </td>
                   <td className="px-6 py-4 w-[40%]">
                     <div className="flex items-start gap-4">
-                      {item.image_url ? (
-                        <div className="w-16 h-12 rounded-lg bg-gray-100 shrink-0 overflow-hidden relative shadow-inner">
-                          <img src={item.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                        </div>
-                      ) : (
-                        <div className="w-16 h-12 rounded-lg bg-gray-50 border border-gray-100 shrink-0 flex items-center justify-center">
-                          <ImageIcon className="w-5 h-5 text-gray-300" />
-                        </div>
-                      )}
+                      {(() => {
+                        // Resolve `/uploads/...` against the API origin —
+                        // otherwise the browser tries to fetch the image
+                        // from the frontend host and 404s.
+                        const thumb = resolveImageUrl(item.image_url);
+                        return thumb ? (
+                          <div className="w-16 h-12 rounded-lg bg-gray-100 shrink-0 overflow-hidden relative shadow-inner">
+                            <img src={thumb} alt="" className="w-full h-full object-cover" loading="lazy" />
+                          </div>
+                        ) : (
+                          <div className="w-16 h-12 rounded-lg bg-gray-50 border border-gray-100 shrink-0 flex items-center justify-center">
+                            <ImageIcon className="w-5 h-5 text-gray-300" />
+                          </div>
+                        );
+                      })()}
                       <div className="min-w-0">
                         <p className="font-semibold text-gray-900 line-clamp-2 leading-tight mb-1 whitespace-normal break-words" title={item.title}>
                           {item.title}

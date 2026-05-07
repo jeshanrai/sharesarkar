@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ImageIcon } from "lucide-react";
+import { resolveImageUrl, isBackendMedia } from "@/lib/resolveImageUrl";
 
 const PLACEHOLDER = (
   <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -22,17 +23,21 @@ interface NewsCardProps {
 export default function NewsCard({ id, slug, title, excerpt, imageUrl, category, date, isLarge = false }: NewsCardProps) {
   const target = slug || (id !== undefined ? id : null);
   const href = target !== null ? `/news/${target}` : "/news";
+  // Resolve once — null means we should render the placeholder, not pass an
+  // empty string to next/image (which logs a console error).
+  const resolvedSrc = resolveImageUrl(imageUrl);
 
   if (isLarge) {
     return (
       <Link href={href} className="block group cursor-pointer">
         <article>
           <div className="relative aspect-[4/3] overflow-hidden mb-3 bg-gray-100">
-            {imageUrl ? (
+            {resolvedSrc ? (
               <Image
-                src={imageUrl}
+                src={resolvedSrc}
                 alt={title}
                 fill
+                unoptimized={isBackendMedia(resolvedSrc)}
                 className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
               />
             ) : (
@@ -56,11 +61,12 @@ export default function NewsCard({ id, slug, title, excerpt, imageUrl, category,
     <Link href={href} className="block group cursor-pointer">
       <article className="flex gap-3 py-3 border-b border-gray-100 last:border-b-0">
         <div className="relative w-20 h-20 flex-shrink-0 overflow-hidden bg-gray-100">
-          {imageUrl ? (
+          {resolvedSrc ? (
             <Image
-              src={imageUrl}
+              src={resolvedSrc}
               alt={title}
               fill
+              unoptimized={isBackendMedia(resolvedSrc)}
               className="object-cover group-hover:scale-105 transition-transform duration-300"
               sizes="80px"
             />

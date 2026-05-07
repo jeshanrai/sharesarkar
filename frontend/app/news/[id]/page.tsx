@@ -7,6 +7,7 @@ import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
 import Toast from "@/components/Toast";
 import { useSavedStories } from "@/lib/useSavedStories";
+import { resolveImageUrl, isBackendMedia } from "@/lib/resolveImageUrl";
 import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Link2, Check } from "lucide-react";
 
 interface NewsArticle {
@@ -264,23 +265,27 @@ export default function NewsArticlePage() {
             {/* Main column */}
             <div className="lg:col-span-8">
               {/* Hero image */}
-              {article.image_url && (
-                <figure className="mb-10">
-                  <div className="relative aspect-[16/9] bg-gray-100 overflow-hidden">
-                    <Image
-                      src={article.image_url}
-                      alt={article.title}
-                      fill
-                      className="object-cover"
-                      sizes="(min-width: 1024px) 60vw, 100vw"
-                      priority
-                    />
-                  </div>
-                  <figcaption className="meta text-gray-500 mt-3">
-                    Photograph · ShareSanskar
-                  </figcaption>
-                </figure>
-              )}
+              {(() => {
+                const src = resolveImageUrl(article.image_url);
+                return src ? (
+                  <figure className="mb-10">
+                    <div className="relative aspect-[16/9] bg-gray-100 overflow-hidden">
+                      <Image
+                        src={src}
+                        alt={article.title}
+                        fill
+                        unoptimized={isBackendMedia(src)}
+                        className="object-cover"
+                        sizes="(min-width: 1024px) 60vw, 100vw"
+                        priority
+                      />
+                    </div>
+                    <figcaption className="meta text-gray-500 mt-3">
+                      Photograph · ShareSanskar
+                    </figcaption>
+                  </figure>
+                ) : null;
+              })()}
 
               {/* Article body — drop-cap on first paragraph */}
               {isHtml ? (

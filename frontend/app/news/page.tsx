@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
 import Breadcrumb from "@/components/Breadcrumb";
+import { resolveImageUrl, isBackendMedia } from "@/lib/resolveImageUrl";
 import { Search, Filter, Clock, ArrowRight, TrendingUp, X } from "lucide-react";
 
 interface NewsItem {
@@ -43,7 +44,7 @@ function timeAgo(dateStr: string): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-export default function NewsPage() {
+function NewsPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -230,14 +231,18 @@ export default function NewsPage() {
                 <article className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                     <div className="relative h-64 lg:h-80 bg-gray-100">
-                      {news[0].image_url && (
-                        <Image
-                          src={news[0].image_url}
-                          alt={news[0].title}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      )}
+                      {(() => {
+                        const src = resolveImageUrl(news[0].image_url);
+                        return src ? (
+                          <Image
+                            src={src}
+                            alt={news[0].title}
+                            fill
+                            unoptimized={isBackendMedia(src)}
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : null;
+                      })()}
                       <div className="absolute top-4 left-4">
                         <span className="px-3 py-1 bg-brand-red text-white text-xs font-semibold rounded-full">
                           {news[0].category}
@@ -279,14 +284,18 @@ export default function NewsPage() {
                 <Link href={`/news/${item.slug || item.id}`} key={item.id} className="group">
                   <article className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all h-full flex flex-col">
                     <div className="relative h-48 bg-gray-100 overflow-hidden">
-                      {item.image_url && (
-                        <Image
-                          src={item.image_url}
-                          alt={item.title}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      )}
+                      {(() => {
+                        const src = resolveImageUrl(item.image_url);
+                        return src ? (
+                          <Image
+                            src={src}
+                            alt={item.title}
+                            fill
+                            unoptimized={isBackendMedia(src)}
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : null;
+                      })()}
                       <div className="absolute top-3 left-3">
                         <span className="px-2.5 py-0.5 bg-gray-900/80 backdrop-blur-sm text-white text-[10px] font-medium rounded-full">
                           {item.category}
@@ -355,6 +364,39 @@ export default function NewsPage() {
             )}
           </>
         )}
+      </div>
+    </PageLayout>
+  );
+}
+
+// Next requires `useSearchParams()` consumers to live inside a Suspense
+// boundary so the build can pre-render the rest of the tree while deferring
+// the search-params-dependent part to client render.
+export default function NewsPage() {
+  return (
+    <Suspense fallback={<NewsPageFallback />}>
+      <NewsPageInner />
+    </Suspense>
+  );
+}
+
+function NewsPageFallback() {
+  return (
+    <PageLayout>
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+        <div className="h-8 w-48 bg-gray-100 rounded animate-pulse mb-3" />
+        <div className="h-4 w-72 bg-gray-100 rounded animate-pulse mb-8" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+              <div className="h-48 bg-gray-100 animate-pulse" />
+              <div className="p-5 space-y-2">
+                <div className="h-4 bg-gray-100 rounded w-3/4 animate-pulse" />
+                <div className="h-3 bg-gray-100 rounded w-1/2 animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </PageLayout>
   );

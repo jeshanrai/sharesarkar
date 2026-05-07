@@ -9,7 +9,24 @@
       "Bash(PGPASSWORD=jeshan psql -U postgres -h localhost -p 5432 -d sharesanskar -f schema.sql)",
       "Bash(where psql *)",
       "Read(//c/Program Files/PostgreSQL/**)",
-      "WebFetch(domain:nepsescraper.onrender.com)"
+      "WebFetch(domain:nepsescraper.onrender.com)",
+      "Bash(npm install *)",
+      "Bash(sleep 3 && cat /c/Users/Lenovo/AppData/Local/Temp/claude/c--Users-Lenovo-Desktop-Sharesarkar-sharesarkar/ea17e434-2ae0-4d75-b253-bfcbd664988a/tasks/btq1x96ao.output 2>/dev/null)",
+      "Read(//c/Users/Lenovo/AppData/Local/Temp/claude/c--Users-Lenovo-Desktop-Sharesarkar-sharesarkar/ea17e434-2ae0-4d75-b253-bfcbd664988a/tasks/**)",
+      "Bash(echo \"---exit $?---\")",
+      "Bash(curl -sv \"http://localhost:3000/_next/image?url=http%3A%2F%2Flocalhost%3A5000%2Fuploads%2F45de9b02-4306-4049-a9f0-0b6785978a66.webp&w=828&q=75\")",
+      "Bash(npm run *)",
+      "Bash(curl -s \"http://localhost:3000/_next/image?url=http%3A%2F%2Flocalhost%3A5000%2Fuploads%2F12c0b334-b1d2-4400-b47c-9efadc1b2027.jpg&w=1920&q=75\")",
+      "Bash(curl -sI http://localhost:5000/uploads/12c0b334-b1d2-4400-b47c-9efadc1b2027.jpg)",
+      "Bash(cp /tmp/trace.mjs src/trace.mjs && npx tsx src/trace.mjs 2>&1 | head -80 ; rm src/trace.mjs 2>/dev/null)",
+      "Bash(cat frontend/.env.local)",
+      "Bash(cat frontend/.env)",
+      "Bash(curl -sI \"http://localhost:3000/_next/image?url=http%3A%2F%2Flocalhost%3A5000%2Fuploads%2F12c0b334-b1d2-4400-b47c-9efadc1b2027.jpg&w=1920&q=75\")",
+      "Bash(node -e ' *)",
+      "Bash(curl -sI http://localhost:5000/uploads/5121fd85-8966-4dcf-9d70-744eea955c68.jpg)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }

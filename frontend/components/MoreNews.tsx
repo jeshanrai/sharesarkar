@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { resolveImageUrl, isBackendMedia } from "@/lib/resolveImageUrl";
 
 interface NewsItem {
   id: number;
@@ -45,16 +46,21 @@ export default async function MoreNews() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {news.map((item) => (
+        {news.map((item) => {
+          const imgSrc = resolveImageUrl(item.image_url);
+          return (
           <Link key={item.id} href={`/news/${item.slug || item.id}`} className="block">
             <article className="group cursor-pointer bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
               <div className="relative h-40 overflow-hidden bg-gray-100">
-                <Image
-                  src={item.image_url}
-                  alt={item.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                {imgSrc && (
+                  <Image
+                    src={imgSrc}
+                    alt={item.title}
+                    fill
+                    unoptimized={isBackendMedia(imgSrc)}
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                )}
               </div>
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -79,7 +85,8 @@ export default async function MoreNews() {
               </div>
             </article>
           </Link>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

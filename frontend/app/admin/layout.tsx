@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   LogOut, LayoutDashboard, FileText, Settings, ExternalLink, Menu, Bell,
   Search, BarChart3, Users, UserPen, X, Clock, Mail,
-  TrendingUp, AlertCircle,
+  TrendingUp, AlertCircle, Images,
 } from "lucide-react";
 
 type UserRole = "admin" | "author";
@@ -299,6 +299,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems: { href: string; label: string; icon: typeof LayoutDashboard }[] = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/news", label: "News Management", icon: FileText },
+    { href: "/admin/media", label: "Media Library", icon: Images },
   ];
 
   if (role === "admin") {

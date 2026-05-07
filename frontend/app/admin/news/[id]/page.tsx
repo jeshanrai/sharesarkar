@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import SlugField, { finalizeSlug } from "@/components/admin/SlugField";
-import ImagePicker from "@/components/admin/ImagePicker";
+import MediaPicker from "@/components/admin/MediaPicker";
 import ContentSizeMeter from "@/components/admin/ContentSizeMeter";
 import { ARTICLE_LIMITS, validateArticleSizes } from "@/lib/articleLimits";
 
@@ -186,7 +186,7 @@ export default function EditArticlePage() {
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <ImagePicker
+            <MediaPicker
               value={form.image_url}
               onChange={(next) => setForm((f) => ({ ...f, image_url: next }))}
             />

@@ -23,6 +23,7 @@ import {
   ArrowDown,
   Copy,
 } from "lucide-react";
+import { MediaLibraryDialog } from "@/components/admin/MediaPicker";
 
 interface RichTextEditorProps {
   value: string;
@@ -30,15 +31,13 @@ interface RichTextEditorProps {
   placeholder?: string;
   minHeight?: number;
   /**
-   * Cap for inline image uploads (base64). Default 1 MB — base64 inflates
-   * by ~33 %, so a 1 MB file becomes ~1.4 MB inside the article HTML.
-   * Authors should host larger media externally and use the URL tab.
-   */
-  imageMaxMB?: number;
-  /**
    * Cap for inline video uploads (base64). Default 1 MB — videos quickly
    * overflow the article content budget; recommend using the URL tab
    * (YouTube / Vimeo embed) instead.
+   *
+   * Note: image inserts no longer take a base64 cap — they go through the
+   * media library, which writes to disk and returns a URL. The 5 MB upload
+   * limit and full validation pipeline are enforced server-side.
    */
   videoMaxMB?: number;
 }
@@ -61,6 +60,20 @@ type Cmd =
 type ModalKind = null | "image" | "video";
 
 // ── Helpers ─────────────────────────────────────────────────────
+
+const RTE_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+/**
+ * Library URLs come back as `/uploads/<key>` relative paths. Inline article
+ * HTML is rendered on a different origin (Next.js front-end), so resolve to
+ * an absolute URL before inserting — otherwise the browser tries to fetch
+ * the image from the front-end origin, which won't have it.
+ */
+function absoluteMediaUrl(url: string): string {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
+  return `${RTE_API_URL.replace(/\/$/, "")}${url.startsWith("/") ? url : `/${url}`}`;
+}
 
 function readFileAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -114,7 +127,6 @@ export default function RichTextEditor({
   onChange,
   placeholder = "Write your article…",
   minHeight = 360,
-  imageMaxMB = 1,
   videoMaxMB = 1,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -427,14 +439,11 @@ export default function RichTextEditor({
       </div>
 
       {modal === "image" && (
-        <MediaModal
-          title="Insert image"
-          accept="image/*"
-          maxMB={imageMaxMB}
-          urlPlaceholder="https://example.com/photo.jpg"
-          onCancel={closeModal}
-          onSubmitUrl={(url) => insertImage(url)}
-          onSubmitDataUrl={(dataUrl) => insertImage(dataUrl)}
+        <MediaLibraryDialog
+          onClose={closeModal}
+          onPick={(url) => {
+            insertImage(absoluteMediaUrl(url));
+          }}
         />
       )}
 

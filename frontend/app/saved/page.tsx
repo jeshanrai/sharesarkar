@@ -8,6 +8,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import Toast from "@/components/Toast";
 import ConfirmModal from "@/components/ConfirmModal";
 import { useSavedStories, type SavedStory } from "@/lib/useSavedStories";
+import { resolveImageUrl, isBackendMedia } from "@/lib/resolveImageUrl";
 import { Bookmark, BookmarkX, Trash2, ArrowRight, Clock, Image as ImageIcon } from "lucide-react";
 
 function timeAgo(dateStr: string): string {
@@ -108,19 +109,23 @@ export default function SavedPage() {
               >
                 <Link href={`/news/${item.slug || item.id}`} className="block group">
                   <div className="relative h-44 bg-gray-100 overflow-hidden">
-                    {item.image_url ? (
-                      <Image
-                        src={item.image_url}
-                        alt={item.title}
-                        fill
-                        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-gray-300" />
-                      </div>
-                    )}
+                    {(() => {
+                      const src = resolveImageUrl(item.image_url);
+                      return src ? (
+                        <Image
+                          src={src}
+                          alt={item.title}
+                          fill
+                          unoptimized={isBackendMedia(src)}
+                          sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <ImageIcon className="w-8 h-8 text-gray-300" />
+                        </div>
+                      );
+                    })()}
                     {item.category && (
                       <span className="absolute top-3 left-3 px-2.5 py-0.5 bg-gray-900/80 backdrop-blur-sm text-white text-[10px] font-medium rounded-full">
                         {item.category}

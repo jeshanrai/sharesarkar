@@ -8,7 +8,9 @@ import newsRoutes from "./routes/news.js";
 import ipoRoutes from "./routes/ipo.js";
 import subscriberRoutes from "./routes/subscribers.js";
 import nepseRoutes from "./routes/nepse.js";
+import mediaRoutes from "./routes/media.js";
 import { startNepseScheduler } from "./services/nepse.js";
+import { getStorage } from "./services/storage.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -45,6 +47,32 @@ app.use("/api/news", newsRoutes);
 app.use("/api/ipo", ipoRoutes);
 app.use("/api/subscribers", subscriberRoutes);
 app.use("/api/nepse", nepseRoutes);
+app.use("/api/media", mediaRoutes);
+
+// Serve uploaded media as static files. Long-lived cache header is safe
+// because filenames are content-derived UUIDs that never change.
+//
+// We re-resolve the storage adapter inside the middleware so a config
+// change (and singleton recreation) is picked up without needing a
+// full server restart. The express.static handler itself is cached
+// per-directory to avoid recompiling on every request.
+const initialStorage = getStorage();
+const staticHandlerCache = new Map<string, express.RequestHandler>();
+function staticHandlerFor(dir: string): express.RequestHandler {
+  let handler = staticHandlerCache.get(dir);
+  if (!handler) {
+    handler = express.static(dir, {
+      maxAge: "30d",
+      immutable: true,
+      fallthrough: true,
+    });
+    staticHandlerCache.set(dir, handler);
+  }
+  return handler;
+}
+app.use(initialStorage.urlPrefix, (req, res, next) => {
+  staticHandlerFor(getStorage().directory)(req, res, next);
+});
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import StockChart from "./StockChart";
+import { resolveImageUrl, isBackendMedia } from "@/lib/resolveImageUrl";
 
 interface HeroNews {
   id: number;
@@ -64,14 +65,20 @@ export default function HeroSection() {
             <Link href={`/news/${lead.slug || lead.id}`} className="block group focus-visible:outline-offset-4">
               <article className="cursor-pointer animate-fade-up">
                 <div className="relative aspect-[16/9] overflow-hidden bg-gray-900 mb-6">
-                  <Image
-                    src={lead.image_url}
-                    alt={lead.title}
-                    fill
-                    className="object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
-                    sizes="(min-width: 1024px) 60vw, 100vw"
-                    priority
-                  />
+                  {(() => {
+                    const src = resolveImageUrl(lead.image_url);
+                    return src ? (
+                      <Image
+                        src={src}
+                        alt={lead.title}
+                        fill
+                        unoptimized={isBackendMedia(src)}
+                        className="object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+                        sizes="(min-width: 1024px) 60vw, 100vw"
+                        priority
+                      />
+                    ) : null;
+                  })()}
                 </div>
                 <div className="flex items-center gap-3 mb-4">
                   <span className="eyebrow text-[#d32027]">{lead.category}</span>
@@ -139,17 +146,21 @@ export default function HeroSection() {
                       {s.title}
                     </h3>
                   </div>
-                  {s.image_url && (
-                    <div className="hidden sm:block relative w-20 h-20 shrink-0 bg-gray-100 overflow-hidden">
-                      <Image
-                        src={s.image_url}
-                        alt=""
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        sizes="80px"
-                      />
-                    </div>
-                  )}
+                  {(() => {
+                    const src = resolveImageUrl(s.image_url);
+                    return src ? (
+                      <div className="hidden sm:block relative w-20 h-20 shrink-0 bg-gray-100 overflow-hidden">
+                        <Image
+                          src={src}
+                          alt=""
+                          fill
+                          unoptimized={isBackendMedia(src)}
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          sizes="80px"
+                        />
+                      </div>
+                    ) : null;
+                  })()}
                 </Link>
               </li>
             ))}
