@@ -74,14 +74,14 @@ export default function StockChart() {
         {/* NEPSE composite */}
         <div className="lg:col-span-3 px-5 lg:px-8 py-5">
           <p className="eyebrow text-gray-500 mb-2">NEPSE Index</p>
-          <p className="numeric font-bold text-4xl text-gray-900 leading-none">
+          <p className="headline-lg text-gray-900 leading-none">
             {fmtNum(idx?.value ?? 0)}
           </p>
           <div className="flex items-center gap-2 mt-2">
-            <span className={`price ${isUp ? "text-emerald-600" : "text-red-600"}`}>
+            <span className={`price ${isUp ? "text-teal-600" : "text-rose-600"}`}>
               {isUp ? "▲" : "▼"} {isUp ? "+" : ""}{fmtNum(idx?.change ?? 0)}
             </span>
-            <span className={`percent ${isUp ? "text-emerald-600" : "text-red-600"}`}>
+            <span className={`percent ${isUp ? "text-teal-600" : "text-rose-600"}`}>
               ({isUp ? "+" : ""}{fmtNum(idx?.changePercent ?? 0)}%)
             </span>
           </div>
@@ -121,21 +121,21 @@ export default function StockChart() {
           <div className="mt-4">
             <p className="eyebrow text-gray-500 mb-2">Breadth</p>
             <div className="flex h-1.5 w-full bg-gray-100 overflow-hidden">
-              <div className="bg-emerald-500" style={{ width: `${adv}%` }} />
+              <div className="bg-teal-500" style={{ width: `${adv}%` }} />
               <div className="bg-gray-400" style={{ width: `${unc}%` }} />
-              <div className="bg-red-500" style={{ width: `${dec}%` }} />
+              <div className="bg-rose-500" style={{ width: `${dec}%` }} />
             </div>
             <div className="flex justify-between mt-1.5">
-              <span className="meta text-emerald-600">{idx?.advances ?? 0} adv</span>
+              <span className="meta text-teal-600">{idx?.advances ?? 0} adv</span>
               <span className="meta text-gray-500">{idx?.unchanged ?? 0} unch</span>
-              <span className="meta text-red-600">{idx?.declines ?? 0} dec</span>
+              <span className="meta text-rose-600">{idx?.declines ?? 0} dec</span>
             </div>
           </div>
         </div>
 
         {/* Top gainers */}
         <div className="lg:col-span-3 px-5 lg:px-8 py-5">
-          <p className="eyebrow text-emerald-700 mb-3">Top Gainers</p>
+          <p className="eyebrow text-teal-700 mb-3">Top Gainers</p>
           <ol className="space-y-1.5">
             {gainers.length === 0 && (
               <li className="meta text-gray-400 py-2">Loading…</li>
@@ -145,7 +145,7 @@ export default function StockChart() {
                 <span className="table-num table-num--regular text-gray-400 w-3">{i + 1}</span>
                 <span className="ticker-symbol text-gray-900 flex-1">{s.symbol}</span>
                 <span className="price text-gray-600">{fmtNum(s.ltp)}</span>
-                <span className="percent text-emerald-600 w-14 text-right">
+                <span className="percent text-teal-600 w-14 text-right">
                   +{fmtNum(s.diff_pct)}%
                 </span>
               </li>
@@ -155,7 +155,7 @@ export default function StockChart() {
 
         {/* Top losers */}
         <div className="lg:col-span-3 px-5 lg:px-8 py-5">
-          <p className="eyebrow text-red-700 mb-3">Top Losers</p>
+          <p className="eyebrow text-rose-700 mb-3">Top Losers</p>
           <ol className="space-y-1.5">
             {losers.length === 0 && (
               <li className="meta text-gray-400 py-2">Loading…</li>
@@ -165,7 +165,7 @@ export default function StockChart() {
                 <span className="table-num table-num--regular text-gray-400 w-3">{i + 1}</span>
                 <span className="ticker-symbol text-gray-900 flex-1">{s.symbol}</span>
                 <span className="price text-gray-600">{fmtNum(s.ltp)}</span>
-                <span className="percent text-red-600 w-14 text-right">
+                <span className="percent text-rose-600 w-14 text-right">
                   {fmtNum(s.diff_pct)}%
                 </span>
               </li>

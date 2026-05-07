@@ -101,7 +101,7 @@ export default function Navbar() {
               <h1 className="font-serif font-extrabold text-[1.6rem] tracking-tight text-gray-900 leading-none">
                 ShareSanskar
               </h1>
-              <p className="hidden md:block text-[9px] uppercase tracking-[0.22em] font-semibold text-gray-500 mt-1.5">
+              <p className="hidden md:block eyebrow text-gray-500 mt-1.5">
                 Nepal Markets · Daily
               </p>
             </div>
@@ -132,7 +132,7 @@ export default function Navbar() {
               {savedHydrated && savedCount > 0 && (
                 <span
                   aria-hidden="true"
-                  className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 inline-flex items-center justify-center rounded-full bg-[#d32027] text-white text-[9px] font-bold leading-none"
+                  className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 inline-flex items-center justify-center rounded-full bg-[#d32027] text-white eyebrow leading-none"
                 >
                   {savedCount > 99 ? "99+" : savedCount}
                 </span>
@@ -174,7 +174,7 @@ export default function Navbar() {
                 <button
                   type="submit"
                   disabled={!searchValue.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-[#d32027] text-white text-xs font-semibold uppercase tracking-wide hover:bg-[#a31a1f] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-[#d32027] text-white btn-text hover:bg-[#a31a1f] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Search
                 </button>

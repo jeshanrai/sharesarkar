@@ -106,27 +106,27 @@ export default function IPOPage() {
 
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">IPO & Right Shares</h1>
-          <p className="text-gray-500 text-sm">Track upcoming, open, and past IPOs in Nepal stock market</p>
+          <h1 className="headline-lg text-gray-900 mb-2">IPO & Right Shares</h1>
+          <p className="text-gray-500 meta">Track upcoming, open, and past IPOs in Nepal stock market</p>
         </div>
 
         {/* Stats Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveFilter("open")}>
-            <p className="text-2xl font-bold text-green-700">{stats.open}</p>
-            <p className="text-xs text-green-600 font-medium">Open Now</p>
+            <p className="headline-lg text-green-700">{stats.open}</p>
+            <p className="eyebrow text-green-600">Open Now</p>
           </div>
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveFilter("upcoming")}>
-            <p className="text-2xl font-bold text-blue-700">{stats.upcoming}</p>
-            <p className="text-xs text-blue-600 font-medium">Upcoming</p>
+            <p className="headline-lg text-blue-700">{stats.upcoming}</p>
+            <p className="eyebrow text-blue-600">Upcoming</p>
           </div>
           <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveFilter("closed")}>
-            <p className="text-2xl font-bold text-orange-700">{stats.closed}</p>
-            <p className="text-xs text-orange-600 font-medium">Closed</p>
+            <p className="headline-lg text-orange-700">{stats.closed}</p>
+            <p className="eyebrow text-orange-600">Closed</p>
           </div>
           <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveFilter("listed")}>
-            <p className="text-2xl font-bold text-purple-700">{stats.listed}</p>
-            <p className="text-xs text-purple-600 font-medium">Listed</p>
+            <p className="headline-lg text-purple-700">{stats.listed}</p>
+            <p className="eyebrow text-purple-600">Listed</p>
           </div>
         </div>
 
@@ -165,7 +165,7 @@ export default function IPOPage() {
         ) : filteredIPOs.length === 0 ? (
           <div className="text-center py-16">
             <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-medium">No IPOs found for this filter</p>
+            <p className="text-gray-500 meta">No IPOs found for this filter</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -175,22 +175,22 @@ export default function IPOPage() {
                 <div key={ipo.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all group">
                   {/* Status Header */}
                   <div className={`px-5 py-2 flex items-center justify-between ${ipo.status === "open" ? "bg-green-500" : ipo.status === "upcoming" ? "bg-blue-500" : ipo.status === "closed" ? "bg-orange-500" : "bg-purple-500"} text-white`}>
-                    <span className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="eyebrow flex items-center gap-1.5">
                       {sc.icon} {sc.label}
                     </span>
-                    <span className="text-xs font-medium bg-white/20 px-2 py-0.5 rounded-full">{ipo.share_type}</span>
+                    <span className="eyebrow bg-white/20 px-2 py-0.5 rounded-full">{ipo.share_type}</span>
                   </div>
 
                   <div className="p-5">
                     {/* Company Info */}
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="font-bold text-gray-900 text-base group-hover:text-brand-green transition-colors mb-1">
+                        <h3 className={`headline-sm text-gray-900 transition-colors mb-1 ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`}>
                           {ipo.company_name}
                         </h3>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{ipo.symbol}</span>
-                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                          <span className={`eyebrow text-gray-600 bg-gray-100 px-2 py-0.5 rounded transition-colors ${ipo.status === "open" ? "group-hover:text-green-600 group-hover:bg-green-50" : ipo.status === "upcoming" ? "group-hover:text-blue-600 group-hover:bg-blue-50" : ipo.status === "closed" ? "group-hover:text-orange-600 group-hover:bg-orange-50" : "group-hover:text-purple-600 group-hover:bg-purple-50"}`}>{ipo.symbol}</span>
+                          <span className={`meta text-gray-400 transition-colors flex items-center gap-1 ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`}>
                             <Building2 className="w-3 h-3" />{ipo.sector}
                           </span>
                         </div>
@@ -199,33 +199,33 @@ export default function IPOPage() {
 
                     {/* Key Data */}
                     <div className="grid grid-cols-3 gap-3 mb-4">
-                      <div className="bg-gray-50 rounded-lg p-3 text-center">
-                        <p className="text-[10px] text-gray-500 uppercase mb-0.5">Units</p>
-                        <p className="text-sm font-bold text-gray-900">{ipo.units?.toLocaleString() || "N/A"}</p>
+                      <div className={`bg-gray-50 rounded-lg p-3 text-center transition-colors ${ipo.status === "open" ? "group-hover:bg-green-50" : ipo.status === "upcoming" ? "group-hover:bg-blue-50" : ipo.status === "closed" ? "group-hover:bg-orange-50" : "group-hover:bg-purple-50"}`}>
+                        <p className={`eyebrow text-gray-500 mb-0.5 transition-colors ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`}>Units</p>
+                        <p className={`meta text-gray-900 transition-colors ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`}>{ipo.units?.toLocaleString() || "N/A"}</p>
                       </div>
-                      <div className="bg-gray-50 rounded-lg p-3 text-center">
-                        <p className="text-[10px] text-gray-500 uppercase mb-0.5">Per Unit</p>
-                        <p className="text-sm font-bold text-gray-900">Rs. {ipo.price_per_unit}</p>
+                      <div className={`bg-gray-50 rounded-lg p-3 text-center transition-colors ${ipo.status === "open" ? "group-hover:bg-green-50" : ipo.status === "upcoming" ? "group-hover:bg-blue-50" : ipo.status === "closed" ? "group-hover:bg-orange-50" : "group-hover:bg-purple-50"}`}>
+                        <p className={`eyebrow text-gray-500 mb-0.5 transition-colors ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`}>Per Unit</p>
+                        <p className={`meta text-gray-900 transition-colors ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`}>Rs. {ipo.price_per_unit}</p>
                       </div>
-                      <div className="bg-gray-50 rounded-lg p-3 text-center">
-                        <p className="text-[10px] text-gray-500 uppercase mb-0.5">Total</p>
-                        <p className="text-sm font-bold text-gray-900">{ipo.total_amount || "N/A"}</p>
+                      <div className={`bg-gray-50 rounded-lg p-3 text-center transition-colors ${ipo.status === "open" ? "group-hover:bg-green-50" : ipo.status === "upcoming" ? "group-hover:bg-blue-50" : ipo.status === "closed" ? "group-hover:bg-orange-50" : "group-hover:bg-purple-50"}`}>
+                        <p className={`eyebrow text-gray-500 mb-0.5 transition-colors ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`}>Total</p>
+                        <p className={`meta text-gray-900 transition-colors ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`}>{ipo.total_amount || "N/A"}</p>
                       </div>
                     </div>
 
                     {/* Dates */}
                     <div className="space-y-2 text-xs">
-                      <div className="flex items-center justify-between text-gray-600">
-                        <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3 text-gray-400" /> Open Date</span>
+                      <div className={`flex items-center justify-between text-gray-600 transition-colors ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`}>
+                        <span className="flex items-center gap-1.5"><Calendar className={`w-3 h-3 text-gray-400 transition-colors ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`} /> Open Date</span>
                         <span className="font-medium">{formatDate(ipo.open_date)}</span>
                       </div>
-                      <div className="flex items-center justify-between text-gray-600">
-                        <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3 text-gray-400" /> Close Date</span>
+                      <div className={`flex items-center justify-between text-gray-600 transition-colors ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`}>
+                        <span className="flex items-center gap-1.5"><Calendar className={`w-3 h-3 text-gray-400 transition-colors ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`} /> Close Date</span>
                         <span className="font-medium">{formatDate(ipo.close_date)}</span>
                       </div>
                       {ipo.listing_date && (
-                        <div className="flex items-center justify-between text-gray-600">
-                          <span className="flex items-center gap-1.5"><TrendingUp className="w-3 h-3 text-gray-400" /> Listing Date</span>
+                        <div className={`flex items-center justify-between text-gray-600 transition-colors ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`}>
+                          <span className="flex items-center gap-1.5"><TrendingUp className={`w-3 h-3 text-gray-400 transition-colors ${ipo.status === "open" ? "group-hover:text-green-600" : ipo.status === "upcoming" ? "group-hover:text-blue-600" : ipo.status === "closed" ? "group-hover:text-orange-600" : "group-hover:text-purple-600"}`} /> Listing Date</span>
                           <span className="font-medium">{formatDate(ipo.listing_date)}</span>
                         </div>
                       )}
@@ -255,8 +255,8 @@ export default function IPOPage() {
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm font-semibold text-amber-900 mb-1">How to Apply for IPO?</h3>
-              <p className="text-xs text-amber-700">
+              <h3 className="meta text-amber-900 mb-1">How to Apply for IPO?</h3>
+              <p className="eyebrow text-amber-700">
                 You can apply for IPOs through <strong>MeroShare</strong> (meroshare.cdsc.com.np). Make sure you have a DMAT account and sufficient balance in your connected bank account. Applications are processed on a first-come, first-served basis with a minimum of 10 units per application.
               </p>
             </div>
