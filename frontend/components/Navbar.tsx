@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Search, Menu, X, Bookmark } from "lucide-react";
 import { useSavedStories } from "@/lib/useSavedStories";
 
@@ -27,6 +27,7 @@ function useNow() {
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -49,6 +50,23 @@ export default function Navbar() {
   const timeStr = now
     ? now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })
     : "";
+
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const desktopNavClass = (href: string) =>
+    `nav-link px-3 py-2 border-b-2 -mb-px transition-colors ${
+      isActive(href)
+        ? "text-gray-900 border-[#d32027]"
+        : "text-gray-700 border-transparent hover:text-[#d32027] hover:border-[#d32027]"
+    }`;
+
+  const mobileNavClass = (href: string) =>
+    `nav-link px-2 py-3 border-b border-gray-100 transition-colors ${
+      isActive(href) ? "text-gray-900" : "text-gray-700 hover:text-[#d32027]"
+    }`;
 
   return (
     <header className="sticky top-14 sm:top-16 z-50 bg-white border-b border-gray-200">
@@ -175,7 +193,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 lg:px-8 hidden lg:flex items-center h-10 gap-1 overflow-x-auto">
           <Link
             href="/"
-            className="nav-link px-3 py-2 text-gray-900 border-b-2 border-[#d32027] -mb-px"
+            className={desktopNavClass("/")}
           >
             Latest
           </Link>
@@ -183,7 +201,7 @@ export default function Navbar() {
             <Link
               key={item.href}
               href={item.href}
-              className="nav-link px-3 py-2 text-gray-700 hover:text-[#d32027] border-b-2 border-transparent hover:border-[#d32027] -mb-px transition-colors"
+              className={desktopNavClass(item.href)}
             >
               {item.label}
             </Link>
@@ -195,13 +213,13 @@ export default function Navbar() {
       {isMobileMenuOpen && (
         <div className="lg:hidden border-t border-gray-100 bg-white">
           <nav className="max-w-7xl mx-auto px-4 py-2 flex flex-col">
-            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="nav-link px-2 py-3 border-b border-gray-100 text-gray-900">Latest</Link>
+            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className={mobileNavClass("/")}>Latest</Link>
             {primaryNav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="nav-link px-2 py-3 border-b border-gray-100 text-gray-700 hover:text-[#d32027]"
+                className={mobileNavClass(item.href)}
               >
                 {item.label}
               </Link>
