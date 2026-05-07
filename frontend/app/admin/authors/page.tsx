@@ -285,8 +285,8 @@ export default function AuthorsPage() {
                     {author.full_name ? author.full_name.charAt(0).toUpperCase() : author.username.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 text-sm">{author.full_name || author.username}</h3>
-                    <p className="text-xs text-gray-500">@{author.username}</p>
+                      <h3 className="meta text-gray-900">{author.full_name || author.username}</h3>
+                      <p className="eyebrow text-gray-500">@{author.username}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">

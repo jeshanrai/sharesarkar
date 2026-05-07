@@ -343,7 +343,7 @@ export default function RichTextEditor({
           <Heading3 className="w-4 h-4" />
         </ToolButton>
         <ToolButton title="Paragraph" onClick={() => exec("formatBlock", "P")}>
-          <span className="text-[11px] font-semibold tracking-wide">P</span>
+          <span className="eyebrow">P</span>
         </ToolButton>
         <ToolButton title="Quote" onClick={() => exec("formatBlock", "BLOCKQUOTE")}>
           <Quote className="w-4 h-4" />
@@ -585,7 +585,7 @@ function MediaModal({
     >
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+          <h3 className="meta text-gray-900">{title}</h3>
           <button
             type="button"
             aria-label="Close"
@@ -597,7 +597,7 @@ function MediaModal({
         </div>
 
         <div className="p-5">
-          <div className="inline-flex p-0.5 bg-gray-100 rounded-lg mb-4 text-xs font-medium">
+          <div className="inline-flex p-0.5 bg-gray-100 rounded-lg mb-4 eyebrow">
             <button
               type="button"
               onClick={() => setTab("url")}
@@ -621,13 +621,13 @@ function MediaModal({
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder={urlPlaceholder}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl meta focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
                 autoFocus
               />
               <button
                 type="button"
                 onClick={submitUrl}
-                className="w-full py-2.5 bg-[#009429] text-white rounded-lg text-sm font-medium hover:bg-[#007a22] transition-colors"
+                className="w-full py-2.5 bg-[#009429] text-white rounded-lg meta hover:bg-[#007a22] transition-colors"
               >
                 Insert
               </button>
@@ -644,10 +644,10 @@ function MediaModal({
               className="cursor-pointer border-2 border-dashed border-gray-200 hover:border-[#009429] hover:bg-[#009429]/5 rounded-xl px-4 py-8 text-center transition-colors"
             >
               <Upload className="w-6 h-6 mx-auto text-gray-400 mb-2" />
-              <p className="text-sm text-gray-700 font-medium">
+              <p className="meta text-gray-700 font-medium">
                 {busy ? "Reading file…" : "Click to upload or drag & drop"}
               </p>
-              <p className="text-xs text-gray-400 mt-1">Max {maxMB} MB</p>
+              <p className="eyebrow text-gray-400 mt-1">Max {maxMB} MB</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -662,7 +662,7 @@ function MediaModal({
             </div>
           )}
 
-          {error && <p className="text-xs text-red-600 mt-3">{error}</p>}
+          {error && <p className="eyebrow text-red-600 mt-3">{error}</p>}
         </div>
       </div>
     </div>

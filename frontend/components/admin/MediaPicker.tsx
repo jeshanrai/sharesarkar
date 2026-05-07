@@ -48,7 +48,7 @@ export default function MediaPicker({ value, onChange, label = "Featured image" 
 
   return (
     <div>
-      <label className="block text-sm font-semibold text-gray-700 mb-2">
+      <label className="block meta text-gray-700 mb-2">
         <ImageIcon className="w-4 h-4 inline mr-1" /> {label}
       </label>
 
@@ -67,7 +67,7 @@ export default function MediaPicker({ value, onChange, label = "Featured image" 
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="px-3 py-1.5 bg-white/95 hover:bg-white rounded-md text-xs font-medium text-gray-800 shadow-sm transition-colors"
+              className="px-3 py-1.5 bg-white/95 hover:bg-white rounded-md btn-text text-gray-800 shadow-sm transition-colors"
             >
               Change
             </button>
@@ -91,9 +91,9 @@ export default function MediaPicker({ value, onChange, label = "Featured image" 
               <ImageOff className="w-4 h-4" />
             </span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-red-800">This image is missing</p>
-              <p className="text-xs text-red-700/80 mt-0.5 truncate font-mono">{value}</p>
-              <p className="text-xs text-gray-600 mt-1.5">
+              <p className="meta text-red-800">This image is missing</p>
+              <p className="eyebrow text-red-700/80 mt-0.5 truncate font-mono">{value}</p>
+              <p className="eyebrow text-gray-600 mt-1.5">
                 The file no longer exists on the server. Replace it with a working image, or remove it from this article.
               </p>
             </div>
@@ -102,14 +102,14 @@ export default function MediaPicker({ value, onChange, label = "Featured image" 
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="px-3 py-1.5 bg-[#009429] text-white rounded-md text-xs font-semibold hover:bg-[#007a22] transition-colors"
+              className="px-3 py-1.5 bg-[#009429] text-white rounded-md btn-text hover:bg-[#007a22] transition-colors"
             >
               Replace
             </button>
             <button
               type="button"
               onClick={() => onChange("")}
-              className="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 hover:text-red-600 hover:border-red-200 rounded-md text-xs font-medium transition-colors"
+              className="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 hover:text-red-600 hover:border-red-200 rounded-md btn-text transition-colors"
             >
               Remove
             </button>
@@ -123,7 +123,7 @@ export default function MediaPicker({ value, onChange, label = "Featured image" 
         >
           <ImageIcon className="w-6 h-6 text-gray-400" />
           <span className="font-medium">Choose from library</span>
-          <span className="text-xs text-gray-400">or upload a new image</span>
+          <span className="eyebrow text-gray-400">or upload a new image</span>
         </button>
       )}
 
@@ -242,7 +242,7 @@ export function MediaLibraryDialog({
     >
       <div className="w-full max-w-5xl max-h-[90vh] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col">
         <header className="flex items-center justify-between gap-3 px-5 py-3 border-b border-gray-100 flex-wrap">
-          <h2 className="text-sm font-semibold text-gray-900">Media Library</h2>
+          <h2 className="meta text-gray-900">Media Library</h2>
           <div className="flex items-center gap-2">
             <div className="relative" role="search">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -258,7 +258,7 @@ export function MediaLibraryDialog({
                 }}
                 placeholder="Search…"
                 aria-label="Search media"
-                className="pl-9 pr-9 py-2 border border-gray-200 rounded-lg text-sm w-56 focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
+                className="pl-9 pr-9 py-2 border border-gray-200 rounded-lg meta w-56 focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
               />
               {searchInput && (
                 <button
@@ -275,7 +275,7 @@ export function MediaLibraryDialog({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#009429] text-white text-xs font-semibold rounded-lg hover:bg-[#007a22] disabled:opacity-70 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#009429] text-white btn-text rounded-lg hover:bg-[#007a22] disabled:opacity-70 transition-colors"
             >
               {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
               Upload
@@ -326,13 +326,13 @@ export function MediaLibraryDialog({
               }}
               placeholder="https://example.com/photo.jpg"
               autoFocus
-              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
+              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg meta focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
             />
             <button
               type="button"
               onClick={submitUrl}
               disabled={!urlValue.trim()}
-              className="px-4 py-2 bg-[#009429] text-white text-sm font-medium rounded-lg hover:bg-[#007a22] disabled:opacity-50 transition-colors"
+              className="px-4 py-2 bg-[#009429] text-white meta rounded-lg hover:bg-[#007a22] disabled:opacity-50 transition-colors"
             >
               Use URL
             </button>
@@ -340,7 +340,7 @@ export function MediaLibraryDialog({
         )}
 
         {error && (
-          <div className="px-5 py-2 bg-red-50 border-b border-red-100 text-xs text-red-700">{error}</div>
+          <div className="px-5 py-2 bg-red-50 border-b border-red-100 eyebrow text-red-700">{error}</div>
         )}
 
         <div className="flex-1 overflow-y-auto p-5">
@@ -351,7 +351,7 @@ export function MediaLibraryDialog({
               ))}
             </ul>
           ) : items.length === 0 ? (
-            <div className="text-center py-12 text-sm text-gray-500">
+            <div className="text-center py-12 meta text-gray-500">
               {search ? `No results for "${search}".` : "No media yet — upload one to get started."}
             </div>
           ) : (
@@ -393,7 +393,7 @@ export function MediaLibraryDialog({
             >
               <ChevronLeft className="w-3.5 h-3.5" /> Prev
             </button>
-            <span className="text-xs text-gray-500 px-2">
+            <span className="eyebrow text-gray-500 px-2">
               Page <span className="font-semibold text-gray-900">{page}</span> of {totalPages}
             </span>
             <button

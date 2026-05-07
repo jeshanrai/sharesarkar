@@ -321,23 +321,23 @@ export default function AdminIPOPage() {
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ring-1 ring-inset ${
+                        className={`px-2.5 py-1 rounded-full eyebrow ring-1 ring-inset ${
                         STATUS_BADGE[ipo.status] || "bg-gray-100 text-gray-700"
                       }`}
                     >
                       {ipo.status}
                     </span>
                     {!ipo.is_published && (
-                      <span className="ml-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-gray-100 text-gray-500">
+                        <span className="ml-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded eyebrow bg-gray-100 text-gray-500">
                         <EyeOff className="w-2.5 h-2.5" /> Hidden
                       </span>
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-xs text-gray-700 font-semibold">
+                      <p className="meta text-gray-700">
                       Rs. {Number(ipo.price_per_unit).toLocaleString()}/unit
                     </p>
-                    <p className="text-[11px] text-gray-500">
+                      <p className="eyebrow text-gray-500">
                       {Number(ipo.units).toLocaleString()} units
                     </p>
                   </td>

@@ -269,7 +269,7 @@ export default function AdminSettingsPage() {
           {tab === "account" && (
             <div className="space-y-6">
               {profileLoading ? (
-                <p className="text-gray-500 text-sm">Loading profile...</p>
+                 <p className="text-gray-500 meta">Loading profile...</p>
               ) : (
                 <>
                   <div className="flex items-center gap-4 pb-5 border-b border-gray-100">
@@ -283,10 +283,10 @@ export default function AdminSettingsPage() {
                       {(me?.full_name || me?.username || "?").charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900 text-lg">
+                      <p className="headline-sm text-gray-900">
                         {me?.full_name || me?.username}
                       </p>
-                      <p className="text-xs text-gray-500">@{me?.username}</p>
+                      <p className="eyebrow text-gray-500">@{me?.username}</p>
                       <span
                         className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                           isAdmin ? "bg-gray-100 text-gray-700" : "bg-blue-50 text-blue-600"

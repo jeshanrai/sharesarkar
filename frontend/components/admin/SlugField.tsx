@@ -36,11 +36,11 @@ interface SlugFieldProps {
 export default function SlugField({ value, onChange, onBlur, preview, placeholder }: SlugFieldProps) {
   return (
     <div>
-      <label className="block text-sm font-semibold text-gray-700 mb-2">
+      <label className="block meta text-gray-700 mb-2">
         <Link2 className="w-4 h-4 inline mr-1" /> URL Slug
       </label>
       <div className="flex items-stretch rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#009429]/20 focus-within:border-[#009429]">
-        <span className="px-3 py-3 bg-gray-50 text-xs text-gray-500 border-r border-gray-200 flex items-center whitespace-nowrap">
+        <span className="px-3 py-3 bg-gray-50 eyebrow text-gray-500 border-r border-gray-200 flex items-center whitespace-nowrap">
           /news/
         </span>
         <input
@@ -57,7 +57,7 @@ export default function SlugField({ value, onChange, onBlur, preview, placeholde
           spellCheck={false}
         />
       </div>
-      <p className="text-xs text-gray-400 mt-2">
+      <p className="eyebrow text-gray-400 mt-2">
         Lowercase letters, numbers, and hyphens. URL preview: <span className="font-mono text-gray-600">{preview}</span>
       </p>
     </div>

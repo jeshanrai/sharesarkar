@@ -55,8 +55,8 @@ export default function SavedPage() {
 
         <div className="flex items-end justify-between gap-4 flex-wrap mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Read Later</h1>
-            <p className="text-gray-500 text-sm">
+            <h1 className="headline-lg text-gray-900 mb-2">Read Later</h1>
+            <p className="text-gray-500 meta">
               {hydrated && items.length > 0
                 ? `${items.length} saved ${items.length === 1 ? "story" : "stories"} on this device`
                 : "Stories you save show up here, on this device only."}
@@ -66,7 +66,7 @@ export default function SavedPage() {
             <button
               type="button"
               onClick={confirmClearAll}
-              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-2 eyebrow text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             >
               <Trash2 className="w-4 h-4" /> Clear all
             </button>
@@ -89,13 +89,13 @@ export default function SavedPage() {
         ) : items.length === 0 ? (
           <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl bg-gray-50/40">
             <Bookmark className="w-10 h-10 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-700 mb-1">Nothing saved yet</h3>
-            <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+            <h3 className="headline-sm text-gray-700 mb-1">Nothing saved yet</h3>
+            <p className="meta text-gray-500 mb-6 max-w-sm mx-auto">
               Tap the <span className="inline-flex items-center gap-1 align-middle"><Bookmark className="w-3.5 h-3.5" /> Save Story</span> button on any article and it&apos;ll show up here.
             </p>
             <Link
               href="/news"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#009429] text-white rounded-lg text-sm font-medium hover:bg-[#007a22] transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#009429] text-white meta hover:bg-[#007a22] transition-colors"
             >
               Browse latest news <ArrowRight className="w-4 h-4" />
             </Link>
@@ -127,7 +127,7 @@ export default function SavedPage() {
                       );
                     })()}
                     {item.category && (
-                      <span className="absolute top-3 left-3 px-2.5 py-0.5 bg-gray-900/80 backdrop-blur-sm text-white text-[10px] font-medium rounded-full">
+                      <span className="absolute top-3 left-3 px-2.5 py-0.5 bg-gray-900/80 backdrop-blur-sm text-white eyebrow rounded-full">
                         {item.category}
                       </span>
                     )}
@@ -135,12 +135,12 @@ export default function SavedPage() {
                 </Link>
                 <div className="p-5 flex-1 flex flex-col">
                   <Link href={`/news/${item.slug || item.id}`} className="group">
-                    <h3 className="text-base font-semibold text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-2 mb-2">
+                    <h3 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-2 mb-2">
                       {item.title}
                     </h3>
                   </Link>
                   {item.excerpt && (
-                    <p className="text-sm text-gray-500 line-clamp-2 mb-3">{item.excerpt}</p>
+                    <p className="meta text-gray-500 line-clamp-2 mb-3">{item.excerpt}</p>
                   )}
                   <div className="mt-auto flex items-center justify-between text-[11px] text-gray-400">
                     <span className="inline-flex items-center gap-1">

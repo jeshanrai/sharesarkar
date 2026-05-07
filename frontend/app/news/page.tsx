@@ -144,8 +144,8 @@ function NewsPageInner() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Latest News</h1>
-          <p className="text-gray-500 text-sm">Stay updated with Nepal stock market news, analysis, and insights</p>
+          <h1 className="headline-lg text-gray-900 mb-2">Latest News</h1>
+          <p className="text-gray-500 meta">Stay updated with Nepal stock market news, analysis, and insights</p>
         </div>
 
         {/* Search + Filters */}
@@ -182,7 +182,7 @@ function NewsPageInner() {
                   setPagination((p) => ({ ...p, page: 1 }));
                   syncUrl({ category: cat });
                 }}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                className={`px-3 py-1.5 rounded-full eyebrow whitespace-nowrap transition-all ${
                   activeCategory === cat
                     ? "bg-brand-green text-white shadow-sm"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -196,7 +196,7 @@ function NewsPageInner() {
 
         {/* Results info */}
         <div className="flex items-center justify-between mb-6">
-          <p className="text-sm text-gray-500">
+          <p className="meta text-gray-500">
             {pagination.total} article{pagination.total !== 1 ? "s" : ""} found
             {searchQuery && <span> for &ldquo;{searchQuery}&rdquo;</span>}
           </p>
@@ -244,13 +244,13 @@ function NewsPageInner() {
                         ) : null;
                       })()}
                       <div className="absolute top-4 left-4">
-                        <span className="px-3 py-1 bg-brand-red text-white text-xs font-semibold rounded-full">
+                        <span className="px-3 py-1 bg-brand-red text-white eyebrow rounded-full">
                           {news[0].category}
                         </span>
                       </div>
                     </div>
                     <div className="p-6 lg:p-8 flex flex-col justify-center">
-                      <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                      <div className="flex items-center gap-3 eyebrow text-gray-500 mb-3">
                         <span>{news[0].author || "ShareSanskar Team"}</span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
@@ -264,11 +264,11 @@ function NewsPageInner() {
                           </>
                         )}
                       </div>
-                      <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-3 group-hover:text-brand-green transition-colors leading-tight">
+                      <h2 className="headline-lg text-gray-900 mb-3 group-hover:text-brand-green transition-colors leading-tight">
                         {news[0].title}
                       </h2>
-                      <p className="text-gray-600 text-sm line-clamp-3 mb-4">{news[0].excerpt}</p>
-                      <div className="flex items-center text-brand-green text-sm font-medium gap-1">
+                      <p className="text-gray-600 meta line-clamp-3 mb-4">{news[0].excerpt}</p>
+                      <div className="flex items-center text-brand-green meta gap-1">
                         Read Full Article
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </div>
@@ -297,7 +297,7 @@ function NewsPageInner() {
                         ) : null;
                       })()}
                       <div className="absolute top-3 left-3">
-                        <span className="px-2.5 py-0.5 bg-gray-900/80 backdrop-blur-sm text-white text-[10px] font-medium rounded-full">
+                        <span className="px-2.5 py-0.5 bg-gray-900/80 backdrop-blur-sm text-white eyebrow rounded-full">
                           {item.category}
                         </span>
                       </div>
@@ -313,13 +313,13 @@ function NewsPageInner() {
                           </>
                         )}
                       </div>
-                      <h3 className="font-semibold text-gray-900 group-hover:text-brand-green transition-colors line-clamp-2 text-sm mb-2 flex-1">
+                      <h3 className="headline-sm text-gray-900 group-hover:text-brand-green transition-colors line-clamp-2 meta mb-2 flex-1">
                         {item.title}
                       </h3>
-                      <p className="text-gray-500 text-xs line-clamp-2 mb-3">{item.excerpt}</p>
+                      <p className="text-gray-500 line-clamp-2 mb-3">{item.excerpt}</p>
                       <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50">
-                        <span className="text-xs text-gray-400">{item.author || "ShareSanskar"}</span>
-                        <span className="text-xs text-gray-400">{item.views || 0} views</span>
+                        <span className="eyebrow text-gray-400">{item.author || "ShareSanskar"}</span>
+                        <span className="eyebrow text-gray-400">{item.views || 0} views</span>
                       </div>
                     </div>
                   </article>

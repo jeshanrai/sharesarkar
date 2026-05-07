@@ -123,16 +123,16 @@ export default function MarketPage() {
 
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="bg-white/5 rounded-lg p-2">
-                <p className="text-[10px] text-gray-500">High</p>
-                <p className="text-sm font-semibold">{fmtNum(idx?.high ?? 0)}</p>
+                <p className="eyebrow text-gray-500">High</p>
+                <p className="price text-white font-semibold">{fmtNum(idx?.high ?? 0)}</p>
               </div>
               <div className="bg-white/5 rounded-lg p-2">
-                <p className="text-[10px] text-gray-500">Low</p>
-                <p className="text-sm font-semibold">{fmtNum(idx?.low ?? 0)}</p>
+                <p className="eyebrow text-gray-500">Low</p>
+                <p className="price text-white font-semibold">{fmtNum(idx?.low ?? 0)}</p>
               </div>
               <div className="bg-white/5 rounded-lg p-2">
-                <p className="text-[10px] text-gray-500">Prev Close</p>
-                <p className="text-sm font-semibold">{fmtNum(idx?.prevClose ?? 0)}</p>
+                <p className="eyebrow text-gray-500">Prev Close</p>
+                <p className="price text-white font-semibold">{fmtNum(idx?.prevClose ?? 0)}</p>
               </div>
             </div>
           </div>
@@ -231,8 +231,8 @@ export default function MarketPage() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50/80">
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">#</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Symbol</th>
+                    <th className="text-left px-5 py-3 eyebrow text-gray-500">#</th>
+                    <th className="text-left px-5 py-3 eyebrow text-gray-500">Symbol</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase">LTP</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase">
                       {activeTable === "turnover" ? "Turnover" : "Change %"}

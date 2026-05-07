@@ -45,10 +45,10 @@ export default function NewsCard({ id, slug, title, excerpt, imageUrl, category,
             )}
           </div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="eyebrow text-[#d32027]">{category}</span>
+            <span className="meta inline-block px-2 py-0.5 bg-gray-100 text-gray-600 rounded">{category}</span>
             <span className="meta text-gray-400">· {date}</span>
           </div>
-          <h3 className="headline-lg text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-3 mb-1.5">
+          <h3 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-3 mb-1.5">
             {title}
           </h3>
           <p className="text-gray-500 line-clamp-2 mb-2">{excerpt}</p>
@@ -77,7 +77,7 @@ export default function NewsCard({ id, slug, title, excerpt, imageUrl, category,
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
-            <span className="eyebrow text-[#d32027]">{category}</span>
+            <span className="meta inline-block px-2 py-0.5 bg-gray-100 text-gray-600 rounded">{category}</span>
           </div>
           <h4 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-2 mb-1.5">
             {title}

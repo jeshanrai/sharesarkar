@@ -37,7 +37,7 @@ export default function Toast({ message, trigger, durationMs = 1800, variant = "
         visible ? "opacity-100 translate-y-0 bottom-8" : "opacity-0 translate-y-2 bottom-4"
       }`}
     >
-      <div className={`${tone} px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap`}>
+        <div className={`${tone} px-4 py-2.5 rounded-full shadow-lg meta whitespace-nowrap`}>
         {message}
       </div>
     </div>

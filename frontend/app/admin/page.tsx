@@ -153,7 +153,7 @@ export default function AdminDashboard() {
         </div>
         <Link
           href="/admin/news/new"
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#009429] text-white rounded-xl text-sm font-medium hover:bg-[#007a22] transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#009429] text-white rounded-xl btn-text hover:bg-[#007a22] transition-all"
         >
           <Plus className="w-4 h-4" /> New Article
         </Link>
@@ -282,7 +282,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900">Create Article</p>
-                <p className="text-[10px] text-gray-500">Write a new news article</p>
+                  <p className="eyebrow text-gray-500">Write a new news article</p>
               </div>
             </Link>
             <Link href="/admin/news" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group">
@@ -290,8 +290,8 @@ export default function AdminDashboard() {
                 <FileText className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">{isAdmin ? 'Manage All News' : 'My Articles'}</p>
-                <p className="text-[10px] text-gray-500">{isAdmin ? 'Edit, reorder, or delete' : 'Edit your articles'}</p>
+                  <p className="meta text-gray-900">{isAdmin ? 'Manage All News' : 'My Articles'}</p>
+                  <p className="eyebrow text-gray-500">{isAdmin ? 'Edit, reorder, or delete' : 'Edit your articles'}</p>
               </div>
             </Link>
             {isAdmin && (
@@ -300,8 +300,8 @@ export default function AdminDashboard() {
                   <UserPen className="w-4 h-4 text-indigo-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Manage Authors</p>
-                  <p className="text-[10px] text-gray-500">Create and manage author accounts</p>
+                    <p className="meta text-gray-900">Manage Authors</p>
+                    <p className="eyebrow text-gray-500">Create and manage author accounts</p>
                 </div>
               </Link>
             )}
