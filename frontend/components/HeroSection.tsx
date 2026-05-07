@@ -86,7 +86,7 @@ export default function HeroSection() {
                   <span className="h-px flex-1 bg-gray-200" />
                   <span className="byline text-gray-500">{timeAgo(lead.created_at)}</span>
                 </div>
-                <h1 className="headline-xl text-gray-900 mb-5 group-hover:text-[#d32027] transition-colors wrap-anywhere">
+                <h1 className="headline-lg text-gray-900 mb-5 group-hover:text-[#d32027] transition-colors wrap-anywhere">
                   {lead.title}
                 </h1>
                 <p className="lead text-gray-600 line-clamp-3 wrap-anywhere">
