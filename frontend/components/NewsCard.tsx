@@ -30,7 +30,7 @@ export default function NewsCard({ id, slug, title, excerpt, imageUrl, category,
   if (isLarge) {
     return (
       <Link href={href} className="block group cursor-pointer">
-        <article>
+        <article className="p-4">
           <div className="relative aspect-[4/3] overflow-hidden mb-3 bg-gray-100">
             {resolvedSrc ? (
               <Image
@@ -48,10 +48,11 @@ export default function NewsCard({ id, slug, title, excerpt, imageUrl, category,
             <span className="eyebrow text-[#d32027]">{category}</span>
             <span className="meta text-gray-400">· {date}</span>
           </div>
-          <h3 className="headline-lg text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-3 mb-2">
+          <h3 className="headline-lg text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-3 mb-1.5">
             {title}
           </h3>
-          <p className="text-gray-600 line-clamp-2">{excerpt}</p>
+          <p className="text-gray-500 line-clamp-2 mb-2">{excerpt}</p>
+          <p className="meta text-gray-400">{date}</p>
         </article>
       </Link>
     );
@@ -59,7 +60,7 @@ export default function NewsCard({ id, slug, title, excerpt, imageUrl, category,
 
   return (
     <Link href={href} className="block group cursor-pointer">
-      <article className="flex gap-3 py-3 border-b border-gray-100 last:border-b-0">
+      <article className="flex gap-3 p-4 border-b border-gray-100 last:border-b-0">
         <div className="relative w-20 h-20 flex-shrink-0 overflow-hidden bg-gray-100">
           {resolvedSrc ? (
             <Image
@@ -75,13 +76,13 @@ export default function NewsCard({ id, slug, title, excerpt, imageUrl, category,
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-2">
             <span className="eyebrow text-[#d32027]">{category}</span>
           </div>
-          <h4 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-2">
+          <h4 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-2 mb-1.5">
             {title}
           </h4>
-          <p className="meta text-gray-400 mt-1.5">{date}</p>
+          <p className="meta text-gray-400">{date}</p>
         </div>
       </article>
     </Link>

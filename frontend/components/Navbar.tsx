@@ -51,22 +51,10 @@ export default function Navbar() {
     : "";
 
   return (
-    <header className="sticky top-[37px] z-50 bg-white border-b border-gray-200">
-      {/* Utility row */}
-      <div className="bg-slate-100 border-b border-slate-200 text-[11px]">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 h-7 flex items-center justify-between">
-          <div className="flex items-center gap-4 text-slate-500">
-            <span className="hidden sm:inline">{dateStr}</span>
-            <span className="hidden md:inline text-slate-300">|</span>
-            <span className="hidden md:inline tabular-nums">Kathmandu {timeStr} NPT</span>
-          </div>
-          <div className="flex items-center gap-4" />
-        </div>
-      </div>
-
+    <header className="sticky top-14 sm:top-16 z-50 bg-white border-b border-gray-200">
       {/* Masthead row */}
       <div className="border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-6">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-4 lg:gap-6">
           {/* Mobile menu trigger */}
           <button
             className="lg:hidden p-2 -ml-2"
@@ -102,7 +90,12 @@ export default function Navbar() {
           </Link>
 
           {/* Search + actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 lg:gap-3">
+            <div className="hidden xl:flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-500">
+              <span className="whitespace-nowrap">{dateStr}</span>
+              <span className="text-slate-300">|</span>
+              <span className="tabular-nums whitespace-nowrap">Kathmandu {timeStr} NPT</span>
+            </div>
             <button
               type="button"
               onClick={() => setSearchOpen((v) => !v)}

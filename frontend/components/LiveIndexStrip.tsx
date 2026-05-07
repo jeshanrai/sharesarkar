@@ -49,11 +49,16 @@ export default function LiveIndexStrip() {
         if (cancelled) return;
         setSummary(s);
         setSectors(sec.data ?? []);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     load();
     const id = setInterval(load, 60_000);
-    return () => { cancelled = true; clearInterval(id); };
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
   }, []);
 
   const items = FEATURED.map((f) => {
@@ -65,43 +70,43 @@ export default function LiveIndexStrip() {
   const idxUp = (idx?.change ?? 0) >= 0;
 
   return (
-    <div className="sticky top-0 z-[60] bg-slate-50 border-b border-slate-200 overflow-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-stretch">
-        {/* NEPSE pinned tile */}
-        <div className="shrink-0 flex items-center gap-3 px-4 lg:px-6 py-2 sm:py-2.5 border-b sm:border-b-0 sm:border-r border-slate-200 bg-white">
-          <div className="flex items-center gap-1.5">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
-            </span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Live</span>
-          </div>
-          <div className="border-l border-slate-200 pl-3 flex items-center gap-2 sm:block">
-            <div className="text-[9px] uppercase tracking-widest text-slate-400 sm:mb-0">NEPSE</div>
-            <div className="flex items-baseline gap-2">
-              <span className="price text-sm sm:text-base font-bold text-slate-800">{fmt(idx?.value ?? 0)}</span>
-              <span className={`percent ${idxUp ? "text-emerald-600" : "text-red-500"}`}>
-                {idxUp ? "+" : ""}{fmt(idx?.changePercent ?? 0)}%
+    <div className="sticky top-0 z-[60] bg-white border-b border-slate-200 overflow-hidden">
+      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+        <div className="flex h-14 sm:h-16 items-stretch overflow-hidden bg-white">
+          <div className="shrink-0 flex h-full items-center gap-3 px-3 sm:px-4 lg:px-6 border-r border-slate-200 bg-white">
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
               </span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Live</span>
+            </div>
+            <div className="border-l border-slate-200 pl-3 flex items-center gap-2 sm:block">
+              <div className="text-[9px] uppercase tracking-widest text-slate-400 sm:mb-0">NEPSE</div>
+              <div className="flex items-baseline gap-2">
+                <span className="price text-sm sm:text-base font-bold text-slate-800">{fmt(idx?.value ?? 0)}</span>
+                <span className={`percent ${idxUp ? "text-emerald-600" : "text-red-500"}`}>
+                  {idxUp ? "+" : ""}{fmt(idx?.changePercent ?? 0)}%
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Scrolling sub-indices */}
-        <div className="flex-1 min-w-0 overflow-hidden ticker-container">
-          <div className="ticker-content animate-ticker flex w-max">
-            {[...items, ...items].map((s, i) => {
-              const up = Number(s.change_pct) >= 0;
-              return (
-                <div key={`${s.index_id}-${i}`} className="shrink-0 flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 border-r border-slate-200 whitespace-nowrap">
-                  <span className="ticker-symbol text-slate-500 font-medium">{s.alias}</span>
-                  <span className="price text-slate-700">{fmt(s.close)}</span>
-                  <span className={`percent ${up ? "text-emerald-600" : "text-red-500"}`}>
-                    {up ? "▲" : "▼"} {up ? "+" : ""}{fmt(s.change_pct)}%
-                  </span>
-                </div>
-              );
-            })}
+          <div className="flex-1 min-w-0 overflow-hidden ticker-container h-full">
+            <div className="ticker-content animate-ticker flex w-max h-full">
+              {[...items, ...items].map((s, i) => {
+                const up = Number(s.change_pct) >= 0;
+                return (
+                  <div key={`${s.index_id}-${i}`} className="shrink-0 flex h-full items-center gap-2 px-3 sm:px-4 lg:px-5 border-r border-slate-200 whitespace-nowrap">
+                    <span className="ticker-symbol text-slate-500 font-medium">{s.alias}</span>
+                    <span className="price text-slate-700">{fmt(s.close)}</span>
+                    <span className={`percent ${up ? "text-emerald-600" : "text-red-500"}`}>
+                      {up ? "▲" : "▼"} {up ? "+" : ""}{fmt(s.change_pct)}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
