@@ -96,7 +96,7 @@ export default function YouTubeSection() {
       <section className="py-12 border-b border-gray-200">
         <SectionHeader
           eyebrow="Reels"
-          title="Sansar Shorts"
+          title="ShareSanskar Shorts"
           description="Sixty-second market reads from our TikTok and Instagram — swipe through the rail."
           href="https://www.tiktok.com/@sharesanskar"
           hrefLabel="Follow on TikTok →"
