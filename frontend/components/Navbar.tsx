@@ -70,54 +70,47 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-14 sm:top-16 z-50 bg-white border-b border-gray-200">
-      {/* Masthead row */}
-      <div className="border-b border-gray-100">
+      {/* Masthead row — dark surface so the white wordmark reads */}
+      <div className="bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-4 lg:gap-6">
           {/* Mobile menu trigger */}
           <button
-            className="lg:hidden p-2 -ml-2"
+            className="lg:hidden p-2 -ml-2 text-white"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Menu"
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          {/* Wordmark */}
-          <Link href="/" className="flex items-center gap-3 mr-auto lg:mr-0 group">
+          {/* Wordmark — same icon + name lockup as footer */}
+          <Link href="/" className="flex items-center gap-2 mr-auto lg:mr-0 group">
             {!logoFailed ? (
               <img
                 src="/assets/logos/svg/SS Icon only (Fill).svg"
                 alt=""
                 aria-hidden="true"
-                className="hidden sm:block w-9 h-9 object-contain"
+                className="w-8 h-8 object-contain"
                 onError={() => setLogoFailed(true)}
               />
             ) : (
-              <div className="hidden sm:flex w-9 h-9 bg-[#d32027] items-center justify-center group-hover:rotate-3 transition-transform">
-                <span className="text-white font-serif font-extrabold text-lg leading-none">S</span>
+              <div className="w-8 h-8 bg-[#d32027] flex items-center justify-center">
+                <span className="text-white font-serif font-extrabold text-base leading-none">S</span>
               </div>
             )}
-            <div className="leading-none">
-              <h1 className="font-serif font-extrabold text-[1.6rem] tracking-tight text-gray-900 leading-none">
-                ShareSanskar
-              </h1>
-              <p className="hidden md:block eyebrow text-gray-500 mt-1.5">
-                Nepal Markets · Daily
-              </p>
-            </div>
+            <h1 className="font-bold text-white">ShareSanskar</h1>
           </Link>
 
           {/* Search + actions */}
           <div className="flex items-center gap-2 lg:gap-3">
-            <div className="hidden xl:flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-500">
+            <div className="hidden xl:flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] text-gray-300">
               <span className="whitespace-nowrap">{dateStr}</span>
-              <span className="text-slate-300">|</span>
+              <span className="text-white/30">|</span>
               <span className="tabular-nums whitespace-nowrap">Kathmandu {timeStr} NPT</span>
             </div>
             <button
               type="button"
               onClick={() => setSearchOpen((v) => !v)}
-              className="p-2 text-gray-600 hover:text-gray-900"
+              className="p-2 text-gray-300 hover:text-white transition-colors"
               aria-label="Search"
             >
               <Search className="w-4 h-4" />
@@ -126,7 +119,7 @@ export default function Navbar() {
               href="/saved"
               aria-label={savedHydrated && savedCount > 0 ? `Saved stories (${savedCount})` : "Saved stories"}
               title="Read Later"
-              className="relative p-2 text-gray-600 hover:text-gray-900"
+              className="relative p-2 text-gray-300 hover:text-white transition-colors"
             >
               <Bookmark className="w-4 h-4" />
               {savedHydrated && savedCount > 0 && (
@@ -140,7 +133,7 @@ export default function Navbar() {
             </Link>
             <Link
               href="/#subscribe"
-              className="btn-text hidden sm:inline-block px-3 py-1.5 bg-black text-white hover:bg-[#d32027] transition-colors"
+              className="btn-text hidden sm:inline-block px-3 py-1.5 bg-[#d32027] text-white hover:bg-white hover:text-gray-900 transition-colors"
             >
               Subscribe
             </Link>
@@ -148,7 +141,7 @@ export default function Navbar() {
         </div>
 
         {searchOpen && (
-          <div className="border-t border-gray-100 bg-gray-50">
+          <div className="border-t border-white/10 bg-gray-900">
             <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3">
               <form onSubmit={submitSearch} className="relative" role="search">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -159,7 +152,7 @@ export default function Navbar() {
                   onChange={(e) => setSearchValue(e.target.value)}
                   placeholder="Search news articles…"
                   aria-label="Search news"
-                  className="w-full pl-10 pr-24 py-2.5 bg-white border border-gray-200 text-sm focus:outline-none focus:border-[#d32027]"
+                  className="w-full pl-10 pr-24 py-2.5 bg-white text-gray-900 border border-white/20 text-sm focus:outline-none focus:border-[#d32027]"
                 />
                 {searchValue && (
                   <button
@@ -181,7 +174,7 @@ export default function Navbar() {
               </form>
               <p className="text-[11px] text-gray-400 mt-2">
                 Press Enter to search across articles. Looking for a stock symbol? Try the{" "}
-                <Link href="/market" className="underline hover:text-gray-700">Markets</Link> page.
+                <Link href="/market" className="underline hover:text-gray-200">Markets</Link> page.
               </p>
             </div>
           </div>

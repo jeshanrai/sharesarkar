@@ -1,118 +1,230 @@
-import Image from "next/image";
+"use client";
 
-interface Video {
-  id: string;
-  title: string;
-  thumbnail: string;
-  duration: string;
-  views: string;
-  date: string;
-  channel: string;
-}
+import { useEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import SectionHeader from "./SectionHeader";
 
-const videos: Video[] = [
+type Reel =
+  | { kind: "tiktok"; id: string; url: string; caption: string }
+  | { kind: "instagram"; permalink: string; caption: string };
+
+const reels: Reel[] = [
   {
-    id: "1",
-    title: "NEPSE Technical Analysis: Weekly Market Outlook - What to Buy?",
-    thumbnail: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80",
-    duration: "15:24",
-    views: "12.5K views",
-    date: "2 days ago",
-    channel: "ShareSanskar",
+    kind: "tiktok",
+    id: "7581323326111419679",
+    url: "https://www.tiktok.com/@sharesanskar/video/7581323326111419679",
+    caption: "Reliance Spinning Mills opens IPO for foreign-employment applicants.",
   },
   {
-    id: "2",
-    title: "Top 5 Undervalued Stocks in Nepal Stock Market 2024",
-    thumbnail: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800&q=80",
-    duration: "22:18",
-    views: "8.3K views",
-    date: "4 days ago",
-    channel: "ShareSanskar",
+    kind: "tiktok",
+    id: "7581384609200344350",
+    url: "https://www.tiktok.com/@sharesanskar/video/7581384609200344350",
+    caption: "Cash-transaction ceiling tightened from Rs. 10 lakh to Rs. 5 lakh.",
   },
   {
-    id: "3",
-    title: "How to Apply for IPO in Nepal - Complete Guide for Beginners",
-    thumbnail: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&q=80",
-    duration: "18:45",
-    views: "25.1K views",
-    date: "1 week ago",
-    channel: "ShareSanskar",
+    kind: "instagram",
+    permalink: "https://www.instagram.com/reel/DYBnDDMxUCD/",
+    caption: "From the @sharesanskar Instagram reels.",
   },
   {
-    id: "4",
-    title: "Banking Sector Analysis: Which Bank Stock to Invest In?",
-    thumbnail: "https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?w=800&q=80",
-    duration: "28:32",
-    views: "15.7K views",
-    date: "1 week ago",
-    channel: "ShareSanskar",
+    kind: "tiktok",
+    id: "7636726820917808415",
+    url: "https://www.tiktok.com/@sharesanskar/video/7636726820917808415",
+    caption: "Netflix in talks with the government and Nepali telcos to launch domestically.",
   },
 ];
 
-export default function YouTubeSection() {
-  return (
-    <section className="py-10 bg-gray-50 -mx-4 px-4 lg:-mx-8 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand-red rounded flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Video Analysis</h2>
-              <p className="text-gray-500 text-xs">Learn from our expert analysis</p>
-            </div>
-          </div>
-          <a
-            href="https://youtube.com/@sharesanskar"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-brand-red text-white rounded text-sm font-medium hover:opacity-90 transition-opacity"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
-            </svg>
-            Subscribe
-          </a>
-        </div>
+declare global {
+  interface Window {
+    instgrm?: { Embeds?: { process: () => void } };
+  }
+}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {videos.map((video) => (
-            <article key={video.id} className="group cursor-pointer">
-              <div className="relative aspect-video rounded-lg overflow-hidden mb-2.5 bg-gray-200">
-                <Image
-                  src={video.thumbnail}
-                  alt={video.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                  <div className="w-10 h-10 bg-brand-red rounded-full flex items-center justify-center opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all">
-                    <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
+// TikTok's and Instagram's embed scripts only auto-process the blockquotes
+// they find at script-load time. With Next.js client-side navigation the
+// script may already be cached from a previous page (TikTok in particular
+// won't re-scan the DOM), so we re-inject fresh <script> tags on each mount
+// and poll briefly for IG's process() once it's defined.
+function loadEmbedScript(src: string, attr: string) {
+  // Remove any prior copy so the script re-executes and rescans the DOM.
+  document.querySelectorAll(`script[${attr}]`).forEach((s) => s.remove());
+  const s = document.createElement("script");
+  s.src = src;
+  s.async = true;
+  s.setAttribute(attr, "true");
+  document.body.appendChild(s);
+  return s;
+}
+
+export default function YouTubeSection() {
+  const railRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const tt = loadEmbedScript("https://www.tiktok.com/embed.js", "data-reels-tiktok");
+    const ig = loadEmbedScript("https://www.instagram.com/embed.js", "data-reels-instagram");
+
+    // Poll for window.instgrm and call process() once it's available; bail
+    // after ~5s so we never loop forever.
+    let tries = 0;
+    const poll = window.setInterval(() => {
+      tries += 1;
+      if (window.instgrm?.Embeds?.process) {
+        window.instgrm.Embeds.process();
+        window.clearInterval(poll);
+      } else if (tries > 25) {
+        window.clearInterval(poll);
+      }
+    }, 200);
+
+    return () => {
+      window.clearInterval(poll);
+      tt.remove();
+      ig.remove();
+    };
+  }, []);
+
+  function scrollBy(direction: 1 | -1) {
+    const el = railRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>("[data-reel-card]");
+    const step = card ? card.offsetWidth + 16 : el.clientWidth * 0.8;
+    el.scrollBy({ left: step * direction, behavior: "smooth" });
+  }
+
+  return (
+    <>
+      <section className="py-12 border-b border-gray-200">
+        <SectionHeader
+          eyebrow="Reels"
+          title="Sansar Shorts"
+          description="Sixty-second market reads from our TikTok and Instagram — swipe through the rail."
+          href="https://www.tiktok.com/@sharesanskar"
+          hrefLabel="Follow on TikTok →"
+        />
+
+        <div className="relative">
+          {/* Rail controls */}
+          <div className="hidden md:flex items-center justify-end gap-2 mb-4">
+            <button
+              type="button"
+              aria-label="Scroll reels left"
+              onClick={() => scrollBy(-1)}
+              className="w-9 h-9 rounded-full border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 flex items-center justify-center text-gray-700 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="Scroll reels right"
+              onClick={() => scrollBy(1)}
+              className="w-9 h-9 rounded-full border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 flex items-center justify-center text-gray-700 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div
+            ref={railRef}
+            className="reels-rail flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth"
+          >
+            {reels.map((r, i) => (
+              <div
+                key={i}
+                data-reel-card
+                className="snap-start shrink-0 w-[min(85vw,360px)] sm:w-[360px]"
+              >
+                <div className="relative bg-white border border-gray-100 overflow-hidden">
+                  {r.kind === "tiktok" ? (
+                    <TikTokEmbed url={r.url} id={r.id} />
+                  ) : (
+                    <InstagramEmbed permalink={r.permalink} />
+                  )}
                 </div>
-                <span className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded">
-                  {video.duration}
-                </span>
+                <p className="meta text-gray-500 mt-3 line-clamp-2">{r.caption}</p>
               </div>
-              <h3 className="font-medium text-gray-900 group-hover:text-brand-green transition-colors line-clamp-2 text-xs mb-1.5">
-                {video.title}
-              </h3>
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
-                <span>{video.channel}</span>
-                <span>•</span>
-                <span>{video.views}</span>
-                <span>•</span>
-                <span>{video.date}</span>
-              </div>
-            </article>
-          ))}
+            ))}
+          </div>
         </div>
+      </section>
+
+      <style jsx global>{`
+        .reels-rail::-webkit-scrollbar {
+          height: 6px;
+        }
+        .reels-rail::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .reels-rail::-webkit-scrollbar-thumb {
+          background: #e5e7eb;
+          border-radius: 3px;
+        }
+        .reels-rail::-webkit-scrollbar-thumb:hover {
+          background: #d4d4d8;
+        }
+        /* Remove the embeds' default outer margins so cards align cleanly,
+           but let TikTok/Instagram keep their internal min-width (TikTok
+           requires >= 325px to render its iframe). */
+        .reels-rail .tiktok-embed,
+        .reels-rail .instagram-media {
+          margin: 0 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+        /* TikTok renders an iframe inside the blockquote that ignores the
+           parent's width; pin it to the card so it doesn't overflow. */
+        .reels-rail .tiktok-embed iframe {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+      `}</style>
+    </>
+  );
+}
+
+function TikTokEmbed({ url, id }: { url: string; id: string }) {
+  return (
+    <blockquote
+      className="tiktok-embed"
+      cite={url}
+      data-video-id={id}
+      style={{ maxWidth: "605px", minWidth: "325px" }}
+    >
+      <section>
+        <a target="_blank" rel="noopener noreferrer" href={`${url}?refer=embed`}>
+          @sharesanskar on TikTok
+        </a>
+      </section>
+    </blockquote>
+  );
+}
+
+function InstagramEmbed({ permalink }: { permalink: string }) {
+  return (
+    <blockquote
+      className="instagram-media"
+      data-instgrm-captioned
+      data-instgrm-permalink={`${permalink}?utm_source=ig_embed&utm_campaign=loading`}
+      data-instgrm-version="14"
+      style={{
+        background: "#FFF",
+        border: 0,
+        margin: 0,
+        maxWidth: 540,
+        minWidth: 326,
+        padding: 0,
+        width: "100%",
+      }}
+    >
+      <div style={{ padding: 16 }}>
+        <a
+          href={`${permalink}?utm_source=ig_embed&utm_campaign=loading`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ background: "#FFFFFF", lineHeight: 0, textDecoration: "none", width: "100%" }}
+        >
+          View this reel on Instagram
+        </a>
       </div>
-    </section>
+    </blockquote>
   );
 }

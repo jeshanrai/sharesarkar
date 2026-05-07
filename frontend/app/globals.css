@@ -219,10 +219,21 @@ p { text-wrap: pretty; }
 }
 .section-rule::before {
   content: "";
-  width: 14px;
+  width: 16px;
   height: 2px;
   background: var(--brand-red);
   flex-shrink: 0;
+}
+/* When .eyebrow is paired with .section-rule it acts as a section sub-heading
+   — bump the size a notch above the default 11px eyebrow scale. */
+.eyebrow.section-rule {
+  font-size: 0.8125rem;     /* 13px */
+  letter-spacing: 0.12em;
+}
+@media (min-width: 768px) {
+  .eyebrow.section-rule {
+    font-size: 0.875rem;    /* 14px on tablet+ */
+  }
 }
 
 /* ── Article prose ───────────────────────────────────────────── */

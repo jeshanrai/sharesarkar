@@ -33,7 +33,9 @@ export default function Home() {
           </Suspense>
         </div>
 
-        <YouTubeSection />
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          <YouTubeSection />
+        </div>
 
         <div id="subscribe" className="max-w-7xl mx-auto px-4 lg:px-8 scroll-mt-32">
           <SubscriptionSection />

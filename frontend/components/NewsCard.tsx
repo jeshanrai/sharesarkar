@@ -48,11 +48,10 @@ export default function NewsCard({ id, slug, title, excerpt, imageUrl, category,
             <span className="meta inline-block px-2 py-0.5 bg-gray-100 text-gray-600 rounded">{category}</span>
             <span className="meta text-gray-400">· {date}</span>
           </div>
-          <h3 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-3 mb-1.5">
+          <h3 className="headline-md text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-3 mb-1.5">
             {title}
           </h3>
-          <p className="text-gray-500 line-clamp-2 mb-2">{excerpt}</p>
-          <p className="meta text-gray-400">{date}</p>
+          <p className="meta text-gray-500 line-clamp-2">{excerpt}</p>
         </article>
       </Link>
     );
@@ -78,11 +77,11 @@ export default function NewsCard({ id, slug, title, excerpt, imageUrl, category,
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
             <span className="meta inline-block px-2 py-0.5 bg-gray-100 text-gray-600 rounded">{category}</span>
+            <span className="meta text-gray-400">· {date}</span>
           </div>
-          <h4 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-2 mb-1.5">
+          <h4 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-2">
             {title}
           </h4>
-          <p className="meta text-gray-400">{date}</p>
         </div>
       </article>
     </Link>

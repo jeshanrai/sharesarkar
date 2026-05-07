@@ -23,6 +23,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 function timeAgo(dateStr?: string): string {
   if (!dateStr) return "";
   const date = new Date(dateStr.includes("Z") ? dateStr : dateStr + "Z");
+  if (Number.isNaN(date.getTime())) return "";
   const diffMs = Date.now() - date.getTime();
   const m = Math.floor(diffMs / 60000);
   if (m < 1) return "Just now";
@@ -85,10 +86,10 @@ export default function HeroSection() {
                   <span className="h-px flex-1 bg-gray-200" />
                   <span className="byline text-gray-500">{timeAgo(lead.created_at)}</span>
                 </div>
-                <h1 className="headline-hero text-gray-900 mb-5 group-hover:text-[#d32027] transition-colors max-w-[22ch] break-words [overflow-wrap:anywhere]">
+                <h1 className="headline-xl text-gray-900 mb-5 group-hover:text-[#d32027] transition-colors wrap-anywhere">
                   {lead.title}
                 </h1>
-                <p className="lead text-gray-600 line-clamp-3 break-words [overflow-wrap:anywhere]">
+                <p className="lead text-gray-600 line-clamp-3 wrap-anywhere">
                   {lead.excerpt}
                 </p>
                 <p className="byline text-gray-400 mt-5">
@@ -142,7 +143,7 @@ export default function HeroSection() {
                       <span className="eyebrow text-[#d32027]">{s.category}</span>
                       <span className="byline text-gray-400">· {timeAgo(s.created_at)}</span>
                     </div>
-                    <h3 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-3 break-words [overflow-wrap:anywhere]">
+                    <h3 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-3 wrap-anywhere">
                       {s.title}
                     </h3>
                   </div>

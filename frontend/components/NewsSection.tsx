@@ -13,9 +13,11 @@ interface NewsItem {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr?: string | null): string {
+  if (!dateStr) return "";
   const now = new Date();
-  const date = new Date(dateStr + "Z");
+  const date = new Date(dateStr.endsWith("Z") ? dateStr : dateStr + "Z");
+  if (Number.isNaN(date.getTime())) return "";
   const diffMs = now.getTime() - date.getTime();
   const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
   if (diffHrs < 1) return "Just now";

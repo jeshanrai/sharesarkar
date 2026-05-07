@@ -15,6 +15,17 @@ interface NewsItem {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+function formatDate(dateStr?: string | null): string {
+  if (!dateStr) return "";
+  const date = new Date(dateStr.endsWith("Z") ? dateStr : dateStr + "Z");
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 async function fetchFeatured(): Promise<NewsItem[]> {
   try {
     const res = await fetch(`${API_URL}/api/news?section=featured`, {
@@ -74,14 +85,8 @@ export default async function MoreNews() {
                 <h3 className="headline-sm text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-2 mb-1.5">
                   {item.title}
                 </h3>
-                <p className="text-gray-500 line-clamp-2 mb-2">{item.excerpt}</p>
-                <p className="meta text-gray-400">
-                  {new Date(item.created_at + "Z").toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
+                <p className="meta text-gray-500 line-clamp-2 mb-2">{item.excerpt}</p>
+                <p className="meta text-gray-400">{formatDate(item.created_at)}</p>
               </div>
             </article>
           </Link>
