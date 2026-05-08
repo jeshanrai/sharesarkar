@@ -265,7 +265,7 @@ function NewsPageInner() {
                           </>
                         )}
                       </div>
-                      <h2 className="headline-lg text-gray-900 mb-3 group-hover:text-brand-green transition-colors leading-tight">
+                      <h2 className="headline-lg text-gray-900 mb-3 transition-colors leading-tight">
                         {news[0].title}
                       </h2>
                       <p className="text-gray-600 meta line-clamp-3 mb-4">{news[0].excerpt}</p>
@@ -314,7 +314,7 @@ function NewsPageInner() {
                           </>
                         )}
                       </div>
-                      <h3 className="headline-sm text-gray-900 group-hover:text-brand-green transition-colors line-clamp-2 meta mb-2 flex-1">
+                      <h3 className="headline-sm text-gray-900 transition-colors line-clamp-2 meta mb-2 flex-1">
                         {item.title}
                       </h3>
                       <p className="text-gray-500 line-clamp-2 mb-3">{item.excerpt}</p>

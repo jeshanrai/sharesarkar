@@ -30,7 +30,7 @@ export default function NewsCard({ id, slug, title, excerpt, imageUrl, category,
   if (isLarge) {
     return (
       <Link href={href} className="block group cursor-pointer">
-        <article className="p-4">
+        <article className="p-4 h-full flex flex-col">
           <div className="relative aspect-[4/3] overflow-hidden mb-3 bg-gray-100">
             {resolvedSrc ? (
               <Image
@@ -51,7 +51,7 @@ export default function NewsCard({ id, slug, title, excerpt, imageUrl, category,
           <h3 className="headline-md text-gray-900 group-hover:text-[#d32027] transition-colors line-clamp-3 mb-1.5">
             {title}
           </h3>
-          <p className="meta text-gray-500 line-clamp-2">{excerpt}</p>
+          <p className="meta text-gray-500 line-clamp-2 mt-auto">{excerpt}</p>
         </article>
       </Link>
     );

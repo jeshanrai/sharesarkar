@@ -178,6 +178,41 @@ router.get("/", async (req, res) => {
   params.push(limitNum, offset);
 
   const { rows } = await pool.query(query, params);
+  // Server-side safety: ensure the 'trending' section returns at least a
+  // small minimum number of items to avoid empty desktop rails. If the
+  // original query returned fewer than the minimum, pull additional items
+  // (latest) excluding those already returned.
+  if (section === "trending") {
+    const MIN_TRENDING = 5;
+    let finalRows = rows;
+    if (finalRows.length < MIN_TRENDING) {
+      const need = MIN_TRENDING - finalRows.length;
+      const excludeIds: number[] = finalRows.map((r: any) => r.id).filter(Boolean);
+      let fallbackQuery = "SELECT * FROM news WHERE is_published = TRUE";
+      const fallbackParams: (string | number)[] = [];
+      if (excludeIds.length > 0) {
+        const placeholders = excludeIds.map((_, i) => `$${i + 1}`).join(",");
+        fallbackQuery += ` AND id NOT IN (${placeholders})`;
+        fallbackParams.push(...excludeIds);
+      }
+      fallbackQuery += ` ORDER BY sort_order ASC, created_at DESC LIMIT $${fallbackParams.length + 1}`;
+      fallbackParams.push(need);
+      const { rows: extra } = await pool.query(fallbackQuery, fallbackParams);
+      finalRows = finalRows.concat(extra);
+    }
+
+    res.json({
+      data: finalRows,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
+    return;
+  }
+
   res.json({
     data: rows,
     pagination: {

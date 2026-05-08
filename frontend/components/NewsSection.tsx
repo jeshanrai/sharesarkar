@@ -1,5 +1,6 @@
 import NewsCard from "./NewsCard";
 import SectionHeader from "./SectionHeader";
+import ScrollReveal from "./ScrollReveal";
 
 interface NewsItem {
   id: number;
@@ -47,51 +48,85 @@ export default async function NewsSection() {
     fetchSection("trending"),
   ]);
 
+  
+
   if (mainNews.length === 0 && sidebarNews.length === 0) return null;
 
   return (
-    <section className="py-12 border-b border-gray-200">
-      <SectionHeader
-        eyebrow="Latest News"
-        title="What's moving Nepal's markets"
-        description="Hand-picked reporting and analysis from the ShareSanskar newsroom — updated through the trading day."
-        href="/news"
-      />
+    <section className="py-16 border-b border-gray-200">
+      <div className="sticky top-20 z-20 bg-white pt-2 pb-6">
+        <SectionHeader
+          eyebrow="Latest News"
+          title="What's moving Nepal's markets"
+          description="Hand-picked reporting and analysis from the ShareSanskar newsroom — updated through the trading day."
+          href="/news"
+        />
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start mt-8">
         <div className="lg:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
-            {mainNews.map((news) => (
-              <NewsCard
-                key={news.id}
-                id={news.id}
-                slug={news.slug}
-                title={news.title}
-                excerpt={news.excerpt}
-                imageUrl={news.image_url}
-                category={news.category}
-                date={timeAgo(news.created_at)}
-                isLarge
-              />
-            ))}
-          </div>
+          <ScrollReveal stagger={70}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-10 auto-rows-fr">
+              {mainNews.map((news) => (
+                <div key={news.id} className="reveal bg-white/0 transition-all duration-700 ease-out h-full">
+                  <NewsCard
+                    id={news.id}
+                    slug={news.slug}
+                    title={news.title}
+                    excerpt={news.excerpt}
+                    imageUrl={news.image_url}
+                    category={news.category}
+                    date={timeAgo(news.created_at)}
+                    isLarge
+                  />
+                </div>
+              ))}
+            </div>
+          </ScrollReveal>
         </div>
 
-        <aside className="lg:col-span-1 lg:border-l lg:border-gray-200 lg:pl-8">
-          <h3 className="eyebrow text-gray-900 section-rule mb-4">Trending</h3>
+        <aside className="lg:col-span-1 lg:border-l lg:border-gray-200 lg:pl-10 flex flex-col gap-6 lg:sticky lg:top-44 lg:self-start">
+          <h3 className="eyebrow text-gray-900 section-rule">Trending</h3>
+
           <div className="border-t border-gray-200">
-            {sidebarNews.map((news) => (
-              <NewsCard
-                key={news.id}
-                id={news.id}
-                slug={news.slug}
-                title={news.title}
-                excerpt={news.excerpt}
-                imageUrl={news.image_url}
-                category={news.category}
-                date={timeAgo(news.created_at)}
-              />
-            ))}
+            <ScrollReveal stagger={50}>
+              <div className="flex flex-col">
+                {sidebarNews.map((news) => (
+                  <div key={news.id} className="reveal transition-all duration-600 ease-out">
+                    <NewsCard
+                      id={news.id}
+                      slug={news.slug}
+                      title={news.title}
+                      excerpt={news.excerpt}
+                      imageUrl={news.image_url}
+                      category={news.category}
+                      date={timeAgo(news.created_at)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </ScrollReveal>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm hidden lg:block">
+            <h4 className="eyebrow text-gray-700 mb-3">Market Snapshot</h4>
+            <div className="text-sm text-gray-600 space-y-2">
+              <div className="flex items-center justify-between">
+                <span>NEPSE</span>
+                <span className="font-semibold">2,345.21</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Change</span>
+                <span className="text-red-600">-0.8%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Volume</span>
+                <span>1.2M</span>
+              </div>
+            </div>
+            <div className="mt-4">
+              <a href="/market" className="w-full inline-block text-center bg-brand-green text-white px-3 py-2 rounded-lg text-sm">View market</a>
+            </div>
           </div>
         </aside>
       </div>
