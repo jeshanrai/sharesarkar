@@ -7,7 +7,7 @@ interface Props {
   stagger?: number; // ms
 }
 
-export default function ScrollReveal({ children, stagger = 80 }: Props) {
+export default function ScrollReveal({ children, stagger = 40 }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -33,8 +33,7 @@ export default function ScrollReveal({ children, stagger = 80 }: Props) {
           if (!entry.isIntersecting) return;
           const target = entry.target as HTMLElement;
           const idx = reveals.indexOf(target);
-          const delay = Math.min(300, idx * stagger);
-          // small stagger for nicer feel
+          const delay = Math.min(160, idx * stagger);
           window.setTimeout(() => {
             target.classList.remove("opacity-0", "translate-y-6");
             target.classList.add("opacity-100", "translate-y-0");
@@ -43,7 +42,7 @@ export default function ScrollReveal({ children, stagger = 80 }: Props) {
           io.unobserve(target);
         });
       },
-      { root: null, rootMargin: "0px 0px -10% 0px", threshold: 0.12 }
+      { root: null, rootMargin: "0px 0px -4% 0px", threshold: 0.08 }
     );
 
     reveals.forEach((el) => {

@@ -65,7 +65,7 @@ export default async function NewsSection() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start mt-8">
         <div className="lg:col-span-2">
-          <ScrollReveal stagger={70}>
+          <ScrollReveal stagger={35}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-10 auto-rows-fr">
               {mainNews.map((news) => (
                 <div key={news.id} className="reveal bg-white/0 transition-all duration-700 ease-out h-full">
@@ -89,7 +89,7 @@ export default async function NewsSection() {
           <h3 className="eyebrow text-gray-900 section-rule">Trending</h3>
 
           <div className="border-t border-gray-200">
-            <ScrollReveal stagger={50}>
+            <ScrollReveal stagger={25}>
               <div className="flex flex-col">
                 {sidebarNews.map((news) => (
                   <div key={news.id} className="reveal transition-all duration-600 ease-out">
