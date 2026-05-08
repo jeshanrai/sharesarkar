@@ -9,6 +9,7 @@ import ipoRoutes from "./routes/ipo.js";
 import subscriberRoutes from "./routes/subscribers.js";
 import nepseRoutes from "./routes/nepse.js";
 import mediaRoutes from "./routes/media.js";
+import adsRoutes from "./routes/ads.js";
 import { startNepseScheduler } from "./services/nepse.js";
 import { getStorage } from "./services/storage.js";
 
@@ -48,6 +49,7 @@ app.use("/api/ipo", ipoRoutes);
 app.use("/api/subscribers", subscriberRoutes);
 app.use("/api/nepse", nepseRoutes);
 app.use("/api/media", mediaRoutes);
+app.use("/api/ads", adsRoutes);
 
 // Serve uploaded media as static files. Long-lived cache header is safe
 // because filenames are content-derived UUIDs that never change.

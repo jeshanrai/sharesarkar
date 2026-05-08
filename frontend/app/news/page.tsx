@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
 import Breadcrumb from "@/components/Breadcrumb";
+import AdvertisementSlot from "@/components/AdvertisementSlot";
 import { resolveImageUrl, isBackendMedia } from "@/lib/resolveImageUrl";
 import { Search, Filter, Clock, ArrowRight, TrendingUp, X } from "lucide-react";
 
@@ -364,6 +365,8 @@ function NewsPageInner() {
             )}
           </>
         )}
+
+        <AdvertisementSlot placement="news_listing" variant="banner" limit={2} />
       </div>
     </PageLayout>
   );

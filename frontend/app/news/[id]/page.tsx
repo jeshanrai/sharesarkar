@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
+import AdvertisementSlot from "@/components/AdvertisementSlot";
 import Toast from "@/components/Toast";
 import { useSavedStories } from "@/lib/useSavedStories";
 import { resolveImageUrl, isBackendMedia } from "@/lib/resolveImageUrl";
@@ -417,6 +418,10 @@ export default function NewsArticlePage() {
                     View Markets →
                   </span>
                 </Link>
+
+                {/* Advertisement slot — fills the space the related rail leaves
+                    in long articles. Renders nothing if no ads are configured. */}
+                <AdvertisementSlot placement="news_article" variant="card" limit={2} />
               </div>
             </aside>
           </div>

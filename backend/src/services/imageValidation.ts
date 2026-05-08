@@ -3,14 +3,28 @@ import { imageSize } from "image-size";
 export const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"] as const;
 export type AllowedMime = (typeof ALLOWED_MIMES)[number];
 
+// Ads accept everything editorial does plus animated GIFs — animation is the
+// whole point of GIF support, so we deliberately don't allow GIF for article
+// hero images (they'd autoplay on every card).
+export const ALLOWED_AD_MIMES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+] as const;
+export type AllowedAdMime = (typeof ALLOWED_AD_MIMES)[number];
+
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;        // 5 MB
+// GIFs blow past 5 MB easily once they're animated, so ads get a higher cap.
+export const MAX_AD_FILE_BYTES = 10 * 1024 * 1024;    // 10 MB
 export const MIN_DIMENSION = 200;                      // px (either side)
 export const MAX_DIMENSION = 6000;                     // px (either side)
 
-const EXT_BY_MIME: Record<AllowedMime, string> = {
+const EXT_BY_MIME: Record<AllowedAdMime, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
+  "image/gif": "gif",
 };
 
 /**
@@ -55,7 +69,25 @@ export function detectMimeFromBytes(buf: Buffer): AllowedMime | null {
   return null;
 }
 
-export function extensionFor(mime: AllowedMime): string {
+// GIF87a or GIF89a — both start with "GIF8?a".
+function isGifBytes(buf: Buffer): boolean {
+  if (buf.length < 6) return false;
+  return (
+    buf[0] === 0x47 && // G
+    buf[1] === 0x49 && // I
+    buf[2] === 0x46 && // F
+    buf[3] === 0x38 && // 8
+    (buf[4] === 0x37 || buf[4] === 0x39) && // 7 or 9
+    buf[5] === 0x61    // a
+  );
+}
+
+export function detectAdMimeFromBytes(buf: Buffer): AllowedAdMime | null {
+  if (isGifBytes(buf)) return "image/gif";
+  return detectMimeFromBytes(buf);
+}
+
+export function extensionFor(mime: AllowedAdMime): string {
   return EXT_BY_MIME[mime];
 }
 
@@ -102,6 +134,66 @@ export function validateImageBuffer(buf: Buffer): ValidatedImage {
   if (width < MIN_DIMENSION || height < MIN_DIMENSION) {
     throw new Error(
       `Image is too small (${width}×${height} px). Minimum ${MIN_DIMENSION}×${MIN_DIMENSION} px for editorial use.`
+    );
+  }
+  if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+    throw new Error(
+      `Image is too large (${width}×${height} px). Please resize below ${MAX_DIMENSION}×${MAX_DIMENSION} px before uploading.`
+    );
+  }
+
+  return {
+    mime,
+    ext: extensionFor(mime),
+    width,
+    height,
+    size: buf.length,
+  };
+}
+
+export interface ValidatedAdImage {
+  mime: AllowedAdMime;
+  ext: string;
+  width: number;
+  height: number;
+  size: number;
+}
+
+/**
+ * Validation pipeline for ad creatives. Mirrors `validateImageBuffer` but
+ * additionally accepts animated GIFs and uses the larger ad size cap.
+ */
+export function validateAdImageBuffer(buf: Buffer): ValidatedAdImage {
+  if (!buf || buf.length === 0) {
+    throw new Error("File is empty.");
+  }
+  if (buf.length > MAX_AD_FILE_BYTES) {
+    const mb = (buf.length / (1024 * 1024)).toFixed(2);
+    throw new Error(
+      `File is ${mb} MB — the limit is ${(MAX_AD_FILE_BYTES / (1024 * 1024)).toFixed(0)} MB.`
+    );
+  }
+
+  const mime = detectAdMimeFromBytes(buf);
+  if (!mime) {
+    throw new Error(
+      "Unsupported image format. Allowed: JPEG, PNG, WebP, GIF."
+    );
+  }
+
+  let dimensions: { width?: number; height?: number };
+  try {
+    dimensions = imageSize(buf);
+  } catch {
+    throw new Error("Could not read image dimensions — file may be corrupt.");
+  }
+  const { width, height } = dimensions;
+  if (!width || !height) {
+    throw new Error("Could not determine image dimensions.");
+  }
+  if (width < MIN_DIMENSION || height < MIN_DIMENSION) {
+    throw new Error(
+      `Image is too small (${width}×${height} px). Minimum ${MIN_DIMENSION}×${MIN_DIMENSION} px.`
     );
   }
   if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
