@@ -8,6 +8,8 @@ import RichTextEditor from "@/components/admin/RichTextEditor";
 import SlugField, { finalizeSlug } from "@/components/admin/SlugField";
 import MediaPicker from "@/components/admin/MediaPicker";
 import ContentSizeMeter from "@/components/admin/ContentSizeMeter";
+import ChipMultiSelect from "@/components/admin/ChipMultiSelect";
+import SeoFields, { type SeoValues } from "@/components/admin/SeoFields";
 import { ARTICLE_LIMITS, validateArticleSizes } from "@/lib/articleLimits";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -20,7 +22,7 @@ const SECTIONS = [
   { value: "featured", label: "Featured Articles" },
 ];
 
-const CATEGORIES = ["Market", "Banking", "Hydropower", "IPO", "Insurance", "Analysis", "Education", "Regulation", "Breaking"];
+const SEED_CATEGORIES = ["Market", "Banking", "Hydropower", "IPO", "Insurance", "Analysis", "Education", "Regulation", "Breaking"];
 
 export default function EditArticlePage() {
   const router = useRouter();
@@ -35,11 +37,55 @@ export default function EditArticlePage() {
     author: "",
     image_url: "",
     category: "Market",
+    categories: ["Market"] as string[],
+    tags: [] as string[],
     section: "latest",
     sort_order: 0,
     is_published: true,
     read_time: "",
   });
+  const [seo, setSeo] = useState<SeoValues>({
+    meta_title: "",
+    meta_description: "",
+    og_image_url: "",
+    canonical_url: "",
+    noindex: false,
+  });
+  const [categorySuggestions, setCategorySuggestions] = useState<string[]>(SEED_CATEGORIES);
+  const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSuggestions() {
+      try {
+        const [catRes, tagRes] = await Promise.all([
+          fetch(`${API_URL}/api/news/categories`).then((r) => (r.ok ? r.json() : [])),
+          fetch(`${API_URL}/api/news/tags`).then((r) => (r.ok ? r.json() : [])),
+        ]);
+        if (cancelled) return;
+        const merged = Array.from(
+          new Set([...(Array.isArray(catRes) ? catRes : []), ...SEED_CATEGORIES])
+        ).sort();
+        setCategorySuggestions(merged);
+        setTagSuggestions(Array.isArray(tagRes) ? tagRes : []);
+      } catch {
+        // Silently fall back to seed categories.
+      }
+    }
+    loadSuggestions();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Mirror the primary chip into `category` so the backend always sees a
+  // consistent primary value even if the editor only edited the chip list.
+  useEffect(() => {
+    if (form.categories.length === 0) return;
+    if (form.category !== form.categories[0]) {
+      setForm((f) => ({ ...f, category: f.categories[0] }));
+    }
+  }, [form.categories, form.category]);
 
   useEffect(() => {
     async function load() {
@@ -59,6 +105,18 @@ export default function EditArticlePage() {
           return;
         }
         const data = await res.json();
+        const primary = data.category || "Market";
+        const loadedCategories: string[] = Array.isArray(data.categories) && data.categories.length > 0
+          ? data.categories
+          : [primary];
+        // Ensure the primary is the first chip even on legacy rows that
+        // only had a `category` value pre-migration.
+        const orderedCategories = loadedCategories.some((c) => c.toLowerCase() === primary.toLowerCase())
+          ? loadedCategories.slice().sort((a, b) =>
+              a.toLowerCase() === primary.toLowerCase() ? -1 :
+              b.toLowerCase() === primary.toLowerCase() ? 1 : 0
+            )
+          : [primary, ...loadedCategories];
         setForm({
           title: data.title || "",
           slug: data.slug || "",
@@ -66,13 +124,22 @@ export default function EditArticlePage() {
           content: data.content || "",
           author: data.author || "ShareSanskar Team",
           image_url: data.image_url || "",
-          category: data.category || "Market",
+          category: primary,
+          categories: orderedCategories,
+          tags: Array.isArray(data.tags) ? data.tags : [],
           section: data.section || "latest",
           sort_order: data.sort_order || 0,
           // Postgres BOOLEAN comes back as a real true/false, but defend against
           // older payloads that might still send 1/0 or "t"/"f".
           is_published: data.is_published === true || data.is_published === 1 || data.is_published === "t" || data.is_published === "true",
           read_time: data.read_time || "",
+        });
+        setSeo({
+          meta_title: data.meta_title || "",
+          meta_description: data.meta_description || "",
+          og_image_url: data.og_image_url || "",
+          canonical_url: data.canonical_url || "",
+          noindex: data.noindex === true,
         });
       } catch {
         alert("Failed to load article");
@@ -88,9 +155,14 @@ export default function EditArticlePage() {
     const token = localStorage.getItem("admin_token");
     if (!token) return;
 
+    if (form.categories.length === 0) {
+      alert("Pick at least one category.");
+      return;
+    }
+
     // Pre-flight size check — same caps as the backend, so we fail early
     // with a friendly message instead of waiting for a 413.
-    const sizeError = validateArticleSizes(form);
+    const sizeError = validateArticleSizes({ ...form, ...seo });
     if (sizeError) {
       alert(sizeError);
       return;
@@ -107,6 +179,8 @@ export default function EditArticlePage() {
         },
         body: JSON.stringify({
           ...form,
+          ...seo,
+          category: form.categories[0] || form.category,
           slug: finalSlug || undefined,
           sort_order: Number(form.sort_order),
           is_published: form.is_published,
@@ -215,12 +289,27 @@ export default function EditArticlePage() {
                   {SECTIONS.map((s) => (<option key={s.value} value={s.value}>{s.label}</option>))}
                 </select>
               </div>
-              <div>
-                <label htmlFor="article-category" className="block text-xs font-medium text-gray-600 mb-1.5">Category</label>
-                <select id="article-category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 cursor-pointer">
-                  {CATEGORIES.map((c) => (<option key={c} value={c}>{c}</option>))}
-                </select>
-              </div>
+              <ChipMultiSelect
+                label="Categories"
+                values={form.categories}
+                onChange={(next) => setForm((f) => ({ ...f, categories: next }))}
+                suggestions={categorySuggestions}
+                max={ARTICLE_LIMITS.max_categories}
+                maxLength={ARTICLE_LIMITS.category_name}
+                primaryLabel="Primary"
+                placeholder="Type to add or pick…"
+                helpText="The first chip is the primary category. Press Enter or comma to add."
+              />
+              <ChipMultiSelect
+                label="Tags"
+                values={form.tags}
+                onChange={(next) => setForm((f) => ({ ...f, tags: next }))}
+                suggestions={tagSuggestions}
+                max={ARTICLE_LIMITS.max_tags}
+                maxLength={ARTICLE_LIMITS.tag_name}
+                placeholder="e.g. NABIL, dividend, hydropower"
+                helpText="Tags help readers discover related stories. Free-form."
+              />
               <div>
                 <label htmlFor="article-author" className="block text-xs font-medium text-gray-600 mb-1.5">Author</label>
                 <input id="article-author" type="text" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20" />
@@ -236,6 +325,18 @@ export default function EditArticlePage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <h3 className="font-semibold text-gray-900 text-sm mb-1">SEO &amp; Social</h3>
+            <p className="text-[11px] text-gray-400 mb-4">
+              Override what Google and social platforms display. Leave blank to inherit the article&rsquo;s own title, excerpt, and hero.
+            </p>
+            <SeoFields
+              values={seo}
+              fallbacks={{ title: form.title, description: form.excerpt }}
+              onChange={setSeo}
+            />
           </div>
 
           <div className="space-y-3">

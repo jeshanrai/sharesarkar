@@ -54,6 +54,7 @@ function NewsPageInner() {
   // (e.g. coming from the navbar search) load with the right filters applied.
   const initialSearch = searchParams.get("search") || "";
   const initialCategory = searchParams.get("category") || "All";
+  const initialTag = searchParams.get("tag") || "";
 
   const [news, setNews] = useState<NewsItem[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 12, total: 0, totalPages: 0 });
@@ -62,6 +63,7 @@ function NewsPageInner() {
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [searchInput, setSearchInput] = useState(initialSearch);
+  const [activeTag, setActiveTag] = useState(initialTag);
 
   // Keep state in sync when the URL query string changes (e.g. user navigates
   // back/forward, or another nav button rewrites the query).
@@ -69,6 +71,7 @@ function NewsPageInner() {
     setSearchQuery(searchParams.get("search") || "");
     setSearchInput(searchParams.get("search") || "");
     setActiveCategory(searchParams.get("category") || "All");
+    setActiveTag(searchParams.get("tag") || "");
   }, [searchParams]);
 
   // Reflect filter changes back into the URL so the page is shareable.
@@ -84,12 +87,13 @@ function NewsPageInner() {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
-  const fetchNews = useCallback(async (page: number, category: string, search: string) => {
+  const fetchNews = useCallback(async (page: number, category: string, search: string, tag: string) => {
     setLoading(true);
     try {
       let url = `${API_URL}/api/news?page=${page}&limit=12`;
       if (category && category !== "All") url += `&category=${encodeURIComponent(category)}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (tag) url += `&tag=${encodeURIComponent(tag)}`;
 
       const res = await fetch(url);
       if (res.ok) {
@@ -105,8 +109,8 @@ function NewsPageInner() {
   }, []);
 
   useEffect(() => {
-    fetchNews(pagination.page, activeCategory, searchQuery);
-  }, [pagination.page, activeCategory, searchQuery, fetchNews]);
+    fetchNews(pagination.page, activeCategory, searchQuery, activeTag);
+  }, [pagination.page, activeCategory, searchQuery, activeTag, fetchNews]);
 
   useEffect(() => {
     async function loadCategories() {
@@ -196,11 +200,29 @@ function NewsPageInner() {
         </div>
 
         {/* Results info */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <p className="meta text-gray-500">
             {pagination.total} article{pagination.total !== 1 ? "s" : ""} found
             {searchQuery && <span> for &ldquo;{searchQuery}&rdquo;</span>}
+            {activeTag && <span> tagged &ldquo;{activeTag}&rdquo;</span>}
           </p>
+          {activeTag && (
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTag("");
+                setPagination((p) => ({ ...p, page: 1 }));
+                const params = new URLSearchParams(searchParams.toString());
+                params.delete("tag");
+                const qs = params.toString();
+                router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+              }}
+              className="meta inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-[#d32027]/10 hover:text-[#d32027] transition-colors"
+            >
+              #{activeTag}
+              <X className="w-3 h-3" />
+            </button>
+          )}
         </div>
 
         {/* Loading State */}

@@ -28,6 +28,16 @@ const LIMITS = {
   content: 2 * 1024 * 1024,
   // ~8 MB to allow a base64 hero image.
   image_url: 8 * 1024 * 1024,
+  // SEO overrides — short text fields capped to fit Google's typical display.
+  meta_title: 200,
+  meta_description: 320,
+  canonical_url: 500,
+  og_image_url: 8 * 1024 * 1024,
+  // Taxonomy — one category/tag is short, but many would bloat the row.
+  category_name: 60,
+  tag_name: 60,
+  max_categories: 8,
+  max_tags: 16,
 };
 
 function byteLength(s: string): number {
@@ -56,6 +66,12 @@ function validateArticleSizes(body: {
   read_time?: string;
   author?: string;
   image_url?: string;
+  meta_title?: string;
+  meta_description?: string;
+  canonical_url?: string;
+  og_image_url?: string;
+  categories?: unknown;
+  tags?: unknown;
 }): string | null {
   if (typeof body.title === "string" && body.title.length > LIMITS.title)
     return lenError("Title", LIMITS.title, body.title.length);
@@ -75,7 +91,55 @@ function validateArticleSizes(body: {
     const n = byteLength(body.image_url);
     if (n > LIMITS.image_url) return lenError("Featured image", LIMITS.image_url, n, "bytes");
   }
+  if (typeof body.meta_title === "string" && body.meta_title.length > LIMITS.meta_title)
+    return lenError("Meta title", LIMITS.meta_title, body.meta_title.length);
+  if (typeof body.meta_description === "string" && body.meta_description.length > LIMITS.meta_description)
+    return lenError("Meta description", LIMITS.meta_description, body.meta_description.length);
+  if (typeof body.canonical_url === "string" && body.canonical_url.length > LIMITS.canonical_url)
+    return lenError("Canonical URL", LIMITS.canonical_url, body.canonical_url.length);
+  if (typeof body.og_image_url === "string") {
+    const n = byteLength(body.og_image_url);
+    if (n > LIMITS.og_image_url) return lenError("Social share image", LIMITS.og_image_url, n, "bytes");
+  }
+  if (Array.isArray(body.categories)) {
+    if (body.categories.length > LIMITS.max_categories)
+      return `Too many categories (${body.categories.length}). Maximum ${LIMITS.max_categories}.`;
+    for (const c of body.categories) {
+      if (typeof c !== "string" || c.length > LIMITS.category_name)
+        return `Category name is too long. Maximum ${LIMITS.category_name} chars.`;
+    }
+  }
+  if (Array.isArray(body.tags)) {
+    if (body.tags.length > LIMITS.max_tags)
+      return `Too many tags (${body.tags.length}). Maximum ${LIMITS.max_tags}.`;
+    for (const t of body.tags) {
+      if (typeof t !== "string" || t.length > LIMITS.tag_name)
+        return `Tag name is too long. Maximum ${LIMITS.tag_name} chars.`;
+    }
+  }
   return null;
+}
+
+/**
+ * Normalize a list of free-form taxonomy strings (categories, tags). Trims
+ * whitespace, drops empties, dedupes case-insensitively while preserving the
+ * editor's chosen casing for the first occurrence.
+ */
+function normalizeTaxonomy(input: unknown, max: number): string[] {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of input) {
+    if (typeof raw !== "string") continue;
+    const trimmed = raw.trim().replace(/\s+/g, " ");
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(trimmed);
+    if (out.length >= max) break;
+  }
+  return out;
 }
 
 // --- Admin routes (defined before /:id to avoid conflicts) ---
@@ -145,8 +209,19 @@ router.get("/", async (req, res) => {
   }
 
   if (category) {
-    query += ` AND category = $${paramIdx++}`;
+    // Match either the primary `category` column or anything in the
+    // `categories` array, so multi-category articles surface in every
+    // category they belong to (not just their primary).
+    query += ` AND (category = $${paramIdx} OR $${paramIdx} = ANY(categories))`;
     params.push(category as string);
+    paramIdx++;
+  }
+
+  const { tag } = req.query;
+  if (tag && typeof tag === "string") {
+    query += ` AND $${paramIdx} = ANY(tags)`;
+    params.push(tag);
+    paramIdx++;
   }
 
   if (search && typeof search === "string") {
@@ -224,12 +299,30 @@ router.get("/", async (req, res) => {
   });
 });
 
-// Get all categories
+// Get all categories — union of the primary `category` column and any
+// extra entries in the `categories` array, so multi-category articles
+// surface every label they use.
 router.get("/categories", async (_req, res) => {
   const { rows } = await pool.query(
-    "SELECT DISTINCT category FROM news WHERE is_published = TRUE ORDER BY category"
+    `SELECT DISTINCT label FROM (
+       SELECT category AS label FROM news WHERE is_published = TRUE AND category <> ''
+       UNION
+       SELECT unnest(categories) AS label FROM news WHERE is_published = TRUE
+     ) t
+     WHERE label IS NOT NULL AND label <> ''
+     ORDER BY label`
   );
-  res.json(rows.map((r: { category: string }) => r.category));
+  res.json(rows.map((r: { label: string }) => r.label));
+});
+
+// Get all tags — distinct, sorted, used to power tag autocomplete in the
+// admin form and tag pages on the public site.
+router.get("/tags", async (_req, res) => {
+  const { rows } = await pool.query(
+    `SELECT DISTINCT unnest(tags) AS tag FROM news WHERE is_published = TRUE
+     ORDER BY tag`
+  );
+  res.json(rows.map((r: { tag: string }) => r.tag).filter(Boolean));
 });
 
 // Get single news by ID or slug
@@ -257,10 +350,18 @@ router.get("/:idOrSlug", async (req, res) => {
   // Increment views
   await pool.query("UPDATE news SET views = COALESCE(views, 0) + 1 WHERE id = $1", [rows[0].id]);
 
-  // Get related news
+  // Get related news — match any overlap on the primary category or the
+  // categories array, so multi-category articles surface a richer rail.
+  const articleCats: string[] = Array.isArray(rows[0].categories) && rows[0].categories.length > 0
+    ? rows[0].categories
+    : [rows[0].category];
   const { rows: related } = await pool.query(
-    "SELECT id, title, slug, excerpt, image_url, category, created_at FROM news WHERE is_published = TRUE AND category = $1 AND id != $2 ORDER BY created_at DESC LIMIT 4",
-    [rows[0].category, rows[0].id]
+    `SELECT id, title, slug, excerpt, image_url, category, created_at FROM news
+     WHERE is_published = TRUE
+       AND id != $1
+       AND (category = ANY($2::text[]) OR categories && $2::text[])
+     ORDER BY created_at DESC LIMIT 4`,
+    [rows[0].id, articleCats]
   );
 
   res.json({ ...rows[0], related });
@@ -278,18 +379,60 @@ router.post("/", requireAnyAuth, async (req: AuthRequest, res) => {
     }
   }
 
-  const { title, slug: requestedSlug, excerpt, content, author, image_url, category, section, sort_order, is_published, read_time } = req.body;
+  const {
+    title,
+    slug: requestedSlug,
+    excerpt,
+    content,
+    author,
+    image_url,
+    category,
+    categories,
+    tags,
+    meta_title,
+    meta_description,
+    og_image_url,
+    canonical_url,
+    noindex,
+    section,
+    sort_order,
+    is_published,
+    read_time,
+  } = req.body;
 
   if (!title || !excerpt) {
     res.status(400).json({ error: "Title and excerpt are required" });
     return;
   }
 
-  const sizeError = validateArticleSizes({ title, slug: requestedSlug, excerpt, content, read_time, author, image_url });
+  const sizeError = validateArticleSizes({
+    title,
+    slug: requestedSlug,
+    excerpt,
+    content,
+    read_time,
+    author,
+    image_url,
+    meta_title,
+    meta_description,
+    canonical_url,
+    og_image_url,
+    categories,
+    tags,
+  });
   if (sizeError) {
     res.status(413).json({ error: sizeError });
     return;
   }
+
+  const primaryCategory = (typeof category === "string" && category.trim()) || "Market";
+  const normalizedCategories = normalizeTaxonomy(categories, LIMITS.max_categories);
+  // Always ensure the primary category is also present in the array so list
+  // queries that filter via `ANY(categories)` still find this article.
+  if (!normalizedCategories.some((c) => c.toLowerCase() === primaryCategory.toLowerCase())) {
+    normalizedCategories.unshift(primaryCategory);
+  }
+  const normalizedTags = normalizeTaxonomy(tags, LIMITS.max_tags);
 
   // Authors without can_publish always create as draft
   let publishState = is_published ?? true;
@@ -321,8 +464,14 @@ router.post("/", requireAnyAuth, async (req: AuthRequest, res) => {
   }
 
   const { rows } = await pool.query(
-    `INSERT INTO news (title, slug, excerpt, content, author, author_id, image_url, category, section, sort_order, is_published, read_time)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+    `INSERT INTO news (
+       title, slug, excerpt, content, author, author_id, image_url,
+       category, categories, tags,
+       meta_title, meta_description, og_image_url, canonical_url, noindex,
+       section, sort_order, is_published, read_time
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+     RETURNING *`,
     [
       title,
       slug,
@@ -331,7 +480,14 @@ router.post("/", requireAnyAuth, async (req: AuthRequest, res) => {
       authorName,
       authorId,
       image_url || "",
-      category || "Market",
+      primaryCategory,
+      normalizedCategories,
+      normalizedTags,
+      typeof meta_title === "string" ? meta_title : "",
+      typeof meta_description === "string" ? meta_description : "",
+      typeof og_image_url === "string" ? og_image_url : "",
+      typeof canonical_url === "string" ? canonical_url : "",
+      noindex === true,
       section || "latest",
       sort_order ?? 0,
       publishState,
@@ -366,9 +522,42 @@ router.put("/:id", requireAnyAuth, async (req: AuthRequest, res) => {
     }
   }
 
-  const { title, slug: requestedSlug, excerpt, content, author, image_url, category, section, sort_order, is_published, read_time } = req.body;
+  const {
+    title,
+    slug: requestedSlug,
+    excerpt,
+    content,
+    author,
+    image_url,
+    category,
+    categories,
+    tags,
+    meta_title,
+    meta_description,
+    og_image_url,
+    canonical_url,
+    noindex,
+    section,
+    sort_order,
+    is_published,
+    read_time,
+  } = req.body;
 
-  const sizeError = validateArticleSizes({ title, slug: requestedSlug, excerpt, content, read_time, author, image_url });
+  const sizeError = validateArticleSizes({
+    title,
+    slug: requestedSlug,
+    excerpt,
+    content,
+    read_time,
+    author,
+    image_url,
+    meta_title,
+    meta_description,
+    canonical_url,
+    og_image_url,
+    categories,
+    tags,
+  });
   if (sizeError) {
     res.status(413).json({ error: sizeError });
     return;
@@ -404,10 +593,39 @@ router.put("/:id", requireAnyAuth, async (req: AuthRequest, res) => {
   const finalSection = req.userRole === "author" ? old.section : (section ?? old.section);
   const finalSortOrder = req.userRole === "author" ? old.sort_order : (sort_order ?? old.sort_order);
 
+  // Taxonomy: only overwrite when the client explicitly sent a value, so a
+  // partial update (e.g. just toggling publish state) doesn't wipe categories.
+  const finalPrimary = (typeof category === "string" && category.trim()) || old.category;
+  let finalCategories: string[];
+  if (Array.isArray(categories)) {
+    finalCategories = normalizeTaxonomy(categories, LIMITS.max_categories);
+    if (!finalCategories.some((c) => c.toLowerCase() === finalPrimary.toLowerCase())) {
+      finalCategories.unshift(finalPrimary);
+    }
+  } else {
+    finalCategories = Array.isArray(old.categories) ? old.categories : [];
+    // Make sure the primary is reflected if it just changed.
+    if (!finalCategories.some((c: string) => c.toLowerCase() === finalPrimary.toLowerCase())) {
+      finalCategories = [finalPrimary, ...finalCategories];
+    }
+  }
+  const finalTags = Array.isArray(tags)
+    ? normalizeTaxonomy(tags, LIMITS.max_tags)
+    : (Array.isArray(old.tags) ? old.tags : []);
+
+  const finalMetaTitle = typeof meta_title === "string" ? meta_title : (old.meta_title ?? "");
+  const finalMetaDescription = typeof meta_description === "string" ? meta_description : (old.meta_description ?? "");
+  const finalOgImage = typeof og_image_url === "string" ? og_image_url : (old.og_image_url ?? "");
+  const finalCanonical = typeof canonical_url === "string" ? canonical_url : (old.canonical_url ?? "");
+  const finalNoindex = typeof noindex === "boolean" ? noindex : (old.noindex === true);
+
   const { rows } = await pool.query(
-    `UPDATE news SET title = $1, slug = $2, excerpt = $3, content = $4, author = $5, image_url = $6, category = $7, section = $8,
-     sort_order = $9, is_published = $10, read_time = $11, updated_at = NOW()
-     WHERE id = $12 RETURNING *`,
+    `UPDATE news SET
+       title = $1, slug = $2, excerpt = $3, content = $4, author = $5, image_url = $6,
+       category = $7, categories = $8, tags = $9,
+       meta_title = $10, meta_description = $11, og_image_url = $12, canonical_url = $13, noindex = $14,
+       section = $15, sort_order = $16, is_published = $17, read_time = $18, updated_at = NOW()
+     WHERE id = $19 RETURNING *`,
     [
       title ?? old.title,
       slug,
@@ -415,7 +633,14 @@ router.put("/:id", requireAnyAuth, async (req: AuthRequest, res) => {
       content !== undefined ? content : old.content,
       author ?? old.author,
       image_url ?? old.image_url,
-      category ?? old.category,
+      finalPrimary,
+      finalCategories,
+      finalTags,
+      finalMetaTitle,
+      finalMetaDescription,
+      finalOgImage,
+      finalCanonical,
+      finalNoindex,
       finalSection,
       finalSortOrder,
       publishState,

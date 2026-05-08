@@ -41,6 +41,18 @@ CREATE TABLE IF NOT EXISTS news (
   author_id INTEGER REFERENCES authors(id) ON DELETE SET NULL,
   image_url TEXT NOT NULL DEFAULT '',
   category TEXT NOT NULL DEFAULT 'Market',
+  -- Additional categories beyond the primary `category`. Editors can pick
+  -- multiple categories per story; the primary is what hero badges and
+  -- related-story lookups use. See migration 002 for the rationale.
+  categories TEXT[] NOT NULL DEFAULT '{}',
+  tags TEXT[] NOT NULL DEFAULT '{}',
+  -- SEO overrides. When blank, the article page falls back to
+  -- title / excerpt / image_url for the corresponding meta tag.
+  meta_title TEXT NOT NULL DEFAULT '',
+  meta_description TEXT NOT NULL DEFAULT '',
+  og_image_url TEXT NOT NULL DEFAULT '',
+  canonical_url TEXT NOT NULL DEFAULT '',
+  noindex BOOLEAN NOT NULL DEFAULT FALSE,
   section TEXT NOT NULL DEFAULT 'latest',
   sort_order INTEGER NOT NULL DEFAULT 0,
   is_published BOOLEAN NOT NULL DEFAULT TRUE,
@@ -57,6 +69,8 @@ CREATE INDEX IF NOT EXISTS idx_news_published ON news(is_published);
 CREATE INDEX IF NOT EXISTS idx_news_sort ON news(section, sort_order);
 CREATE INDEX IF NOT EXISTS idx_news_slug ON news(slug);
 CREATE INDEX IF NOT EXISTS idx_news_category ON news(category);
+CREATE INDEX IF NOT EXISTS idx_news_categories ON news USING GIN (categories);
+CREATE INDEX IF NOT EXISTS idx_news_tags ON news USING GIN (tags);
 
 -- ─── IPO listings ───────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS ipo_listings (

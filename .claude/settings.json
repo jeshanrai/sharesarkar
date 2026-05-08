@@ -23,10 +23,12 @@
       "Bash(cat frontend/.env)",
       "Bash(curl -sI \"http://localhost:3000/_next/image?url=http%3A%2F%2Flocalhost%3A5000%2Fuploads%2F12c0b334-b1d2-4400-b47c-9efadc1b2027.jpg&w=1920&q=75\")",
       "Bash(node -e ' *)",
-      "Bash(curl -sI http://localhost:5000/uploads/5121fd85-8966-4dcf-9d70-744eea955c68.jpg)"
+      "Bash(curl -sI http://localhost:5000/uploads/5121fd85-8966-4dcf-9d70-744eea955c68.jpg)",
+      "Bash(mv \"c:/Users/Lenovo/Desktop/Sharesarkar/sharesarkar/frontend/app/news/[id]/page.tsx\" \"c:/Users/Lenovo/Desktop/Sharesarkar/sharesarkar/frontend/app/news/[id]/ArticleClient.tsx\")"
     ],
     "additionalDirectories": [
-      "\\tmp"
+      "\\tmp",
+      "c:\\Users\\Lenovo\\Desktop\\Sharesarkar\\sharesarkar\\frontend\\app\\news\\[id]"
     ]
   }
 }

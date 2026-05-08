@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
@@ -8,6 +8,8 @@ import RichTextEditor from "@/components/admin/RichTextEditor";
 import SlugField, { finalizeSlug, softSlug } from "@/components/admin/SlugField";
 import MediaPicker from "@/components/admin/MediaPicker";
 import ContentSizeMeter from "@/components/admin/ContentSizeMeter";
+import ChipMultiSelect from "@/components/admin/ChipMultiSelect";
+import SeoFields, { type SeoValues } from "@/components/admin/SeoFields";
 import { ARTICLE_LIMITS, validateArticleSizes } from "@/lib/articleLimits";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -20,7 +22,7 @@ const SECTIONS = [
   { value: "featured", label: "Featured Articles" },
 ];
 
-const CATEGORIES = ["Market", "Banking", "Hydropower", "IPO", "Insurance", "Analysis", "Education", "Regulation", "Breaking"];
+const SEED_CATEGORIES = ["Market", "Banking", "Hydropower", "IPO", "Insurance", "Analysis", "Education", "Regulation", "Breaking"];
 
 export default function NewArticlePage() {
   const router = useRouter();
@@ -34,11 +36,57 @@ export default function NewArticlePage() {
     author: "ShareSanskar Team",
     image_url: "",
     category: "Market",
+    categories: ["Market"] as string[],
+    tags: [] as string[],
     section: "latest",
     sort_order: 0,
     is_published: true,
     read_time: "",
   });
+  const [seo, setSeo] = useState<SeoValues>({
+    meta_title: "",
+    meta_description: "",
+    og_image_url: "",
+    canonical_url: "",
+    noindex: false,
+  });
+  const [categorySuggestions, setCategorySuggestions] = useState<string[]>(SEED_CATEGORIES);
+  const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
+
+  // Pull existing categories & tags so editors get autocomplete from prior
+  // articles. Falls back gracefully when the endpoint returns nothing.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSuggestions() {
+      try {
+        const [catRes, tagRes] = await Promise.all([
+          fetch(`${API_URL}/api/news/categories`).then((r) => (r.ok ? r.json() : [])),
+          fetch(`${API_URL}/api/news/tags`).then((r) => (r.ok ? r.json() : [])),
+        ]);
+        if (cancelled) return;
+        const merged = Array.from(
+          new Set([...(Array.isArray(catRes) ? catRes : []), ...SEED_CATEGORIES])
+        ).sort();
+        setCategorySuggestions(merged);
+        setTagSuggestions(Array.isArray(tagRes) ? tagRes : []);
+      } catch {
+        // Keep seed categories; tag list stays empty.
+      }
+    }
+    loadSuggestions();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Keep `category` (the primary, used by hero badges & breadcrumbs) in lockstep
+  // with categories[0] so a single source of truth wins.
+  useEffect(() => {
+    if (form.categories.length === 0) return;
+    if (form.category !== form.categories[0]) {
+      setForm((f) => ({ ...f, category: f.categories[0] }));
+    }
+  }, [form.categories, form.category]);
 
   function updateTitle(title: string) {
     setForm((f) => ({
@@ -60,9 +108,14 @@ export default function NewArticlePage() {
     const token = localStorage.getItem("admin_token");
     if (!token) return;
 
+    if (form.categories.length === 0) {
+      alert("Pick at least one category.");
+      return;
+    }
+
     // Pre-flight size check — same caps as the backend, so we fail early
     // with a friendly message instead of waiting for a 413.
-    const sizeError = validateArticleSizes(form);
+    const sizeError = validateArticleSizes({ ...form, ...seo });
     if (sizeError) {
       alert(sizeError);
       return;
@@ -79,6 +132,10 @@ export default function NewArticlePage() {
         },
         body: JSON.stringify({
           ...form,
+          ...seo,
+          // Send the primary explicitly — `category` mirrors categories[0]
+          // but the backend treats the explicit field as authoritative.
+          category: form.categories[0] || form.category,
           slug: finalSlug || undefined,
           sort_order: Number(form.sort_order),
           is_published: form.is_published,
@@ -195,12 +252,27 @@ export default function NewArticlePage() {
                   {SECTIONS.map((s) => (<option key={s.value} value={s.value}>{s.label}</option>))}
                 </select>
               </div>
-              <div>
-                <label htmlFor="new-article-category" className="block text-xs font-medium text-gray-600 mb-1.5">Category</label>
-                <select id="new-article-category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 cursor-pointer">
-                  {CATEGORIES.map((c) => (<option key={c} value={c}>{c}</option>))}
-                </select>
-              </div>
+              <ChipMultiSelect
+                label="Categories"
+                values={form.categories}
+                onChange={(next) => setForm((f) => ({ ...f, categories: next }))}
+                suggestions={categorySuggestions}
+                max={ARTICLE_LIMITS.max_categories}
+                maxLength={ARTICLE_LIMITS.category_name}
+                primaryLabel="Primary"
+                placeholder="Type to add or pick…"
+                helpText="The first chip is the primary category. Press Enter or comma to add."
+              />
+              <ChipMultiSelect
+                label="Tags"
+                values={form.tags}
+                onChange={(next) => setForm((f) => ({ ...f, tags: next }))}
+                suggestions={tagSuggestions}
+                max={ARTICLE_LIMITS.max_tags}
+                maxLength={ARTICLE_LIMITS.tag_name}
+                placeholder="e.g. NABIL, dividend, hydropower"
+                helpText="Tags help readers discover related stories. Free-form."
+              />
               <div>
                 <label htmlFor="new-article-author" className="block text-xs font-medium text-gray-600 mb-1.5">Author</label>
                 <input id="new-article-author" type="text" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20" />
@@ -216,6 +288,18 @@ export default function NewArticlePage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <h3 className="font-semibold text-gray-900 text-sm mb-1">SEO &amp; Social</h3>
+            <p className="text-[11px] text-gray-400 mb-4">
+              Override what Google and social platforms display. Leave blank to inherit the article&rsquo;s own title, excerpt, and hero.
+            </p>
+            <SeoFields
+              values={seo}
+              fallbacks={{ title: form.title, description: form.excerpt }}
+              onChange={setSeo}
+            />
           </div>
 
           <div className="space-y-3">
