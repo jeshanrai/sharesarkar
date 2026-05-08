@@ -219,24 +219,47 @@ export default function NewsArticlePage() {
       <article>
         {/* ── Header band (full-bleed bg, content aligned to grid) ── */}
         <header className="border-b border-gray-200 bg-gray-50/60">
-          <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10 lg:py-14">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-              <div className="lg:col-span-8">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10 lg:py-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-start">
+              <aside className="hidden lg:block lg:col-span-2 pt-1">
+                <div>
+                  <p className="eyebrow text-[#d32027] section-rule inline-flex">{article.category}</p>
+                  <p className="meta text-gray-500 mt-5">Market Desk</p>
+                  <p className="meta text-gray-400 mt-2 leading-relaxed">
+                    Daily context and signals from the Nepal equities market.
+                  </p>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-gray-200/80">
+                  <p className="eyebrow text-gray-500">At a glance</p>
+                  <div className="mt-3 space-y-2">
+                    {article.read_time && (
+                      <p className="meta text-gray-600">Read time: {article.read_time}</p>
+                    )}
+                    <p className="meta text-gray-600">Views: {Number(article.views).toLocaleString()}</p>
+                    <time dateTime={article.created_at} className="meta text-gray-500 block">
+                      Published {timeAgo(article.created_at)}
+                    </time>
+                  </div>
+                </div>
+              </aside>
+
+              <div className="lg:col-span-6">
                 <Link
                   href={`/news?category=${article.category}`}
-                  className="eyebrow text-[#d32027] hover:underline underline-offset-4"
+                  className="eyebrow text-[#d32027] hover:underline underline-offset-4 lg:hidden"
                 >
                   {article.category}
                 </Link>
 
-                <h1 className="headline-hero text-gray-900 mt-5 mb-6">
+                <h1 className="headline-lg text-gray-900 mt-4 lg:mt-0 mb-6">
                   {article.title}
                 </h1>
 
                 <p className="lead text-gray-700">{article.excerpt}</p>
 
-                {/* Byline + meta */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-8 pt-6 border-t border-gray-200">
+                {/* Keep a compact meta row for non-desktop sizes. */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-8 pt-6 border-t border-gray-200 lg:hidden">
                   <span className="byline text-gray-900">
                     By {article.author || "ShareSanskar Newsroom"}
                   </span>
@@ -256,6 +279,65 @@ export default function NewsArticlePage() {
                   </span>
                 </div>
               </div>
+
+              <aside className="hidden lg:block lg:col-span-4">
+                <div className="border border-gray-200 bg-white p-5">
+                  <p className="eyebrow text-gray-500">Story context</p>
+                  <div className="mt-4 space-y-3">
+                    <p className="byline text-gray-900">By {article.author || "ShareSanskar Newsroom"}</p>
+                    <time dateTime={article.created_at} className="meta text-gray-600 block">
+                      {formatDate(article.created_at)}
+                    </time>
+                    <div className="flex items-center gap-2 text-gray-300">
+                      {article.read_time && <span className="meta text-gray-600">{article.read_time}</span>}
+                      {article.read_time && <span>·</span>}
+                      <span className="price text-gray-600">{Number(article.views).toLocaleString()} views</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 pt-4 border-t border-gray-200 flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={handleToggleSave}
+                      aria-pressed={saved}
+                      className={`btn-text inline-flex items-center gap-1.5 transition-colors ${
+                        saved ? "text-[#009429] hover:text-[#007a22]" : "text-gray-600 hover:text-[#d32027]"
+                      }`}
+                    >
+                      {saved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
+                      {saved ? "Saved" : "Save"}
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={copyLink}
+                        className={`p-1.5 transition-colors ${copied ? "text-[#009429]" : "text-gray-400 hover:text-gray-900"}`}
+                        aria-label={copied ? "Link copied" : "Copy link"}
+                        title={copied ? "Link copied" : "Copy link"}
+                      >
+                        {copied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleShare}
+                        className="p-1.5 text-gray-400 hover:text-gray-900 transition-colors"
+                        aria-label="Share"
+                        title="Share"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <Link
+                    href="/market"
+                    className="btn-text mt-4 inline-block text-gray-700 hover:text-[#d32027] transition-colors"
+                  >
+                    View Markets →
+                  </Link>
+                </div>
+              </aside>
             </div>
           </div>
         </header>
@@ -346,7 +428,7 @@ export default function NewsArticlePage() {
                 <button
                   type="button"
                   onClick={handleToggleSave}
-                  aria-pressed={saved ? "true" : "false"}
+                  aria-pressed={saved}
                   className={`btn-text flex items-center gap-2 transition-colors ${
                     saved ? "text-[#009429] hover:text-[#007a22]" : "text-gray-500 hover:text-[#d32027]"
                   }`}
