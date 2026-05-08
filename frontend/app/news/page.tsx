@@ -319,8 +319,8 @@ function NewsPageInner() {
                       </h3>
                       <p className="text-gray-500 line-clamp-2 mb-3">{item.excerpt}</p>
                       <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50">
-                        <span className="eyebrow text-gray-400">{item.author || "ShareSanskar"}</span>
-                        <span className="eyebrow text-gray-400">{item.views || 0} views</span>
+                        <span className="meta text-gray-400">{item.author || "ShareSanskar"}</span>
+                        <span className="meta text-gray-400">{item.views || 0} views</span>
                       </div>
                     </div>
                   </article>
