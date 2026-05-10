@@ -105,7 +105,7 @@ function getEmbedSrc(url: string): string | null {
       else if (u.pathname.startsWith("/watch")) id = u.searchParams.get("v") || "";
       else if (u.pathname.startsWith("/shorts/")) id = u.pathname.split("/")[2] || "";
       else if (u.pathname.startsWith("/embed/")) id = u.pathname.split("/")[2] || "";
-      if (id) return `https://www.youtube.com/embed/${id}`;
+      if (id) return `https://www.youtube.com/embed/${id}?rel=0`;
     }
 
     // Vimeo — vimeo.com/{id}

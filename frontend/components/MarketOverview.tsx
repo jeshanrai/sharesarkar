@@ -132,12 +132,12 @@ export default function MarketOverview() {
           </div>
 
           <div className="border-t border-gray-200">
-            <div className="grid grid-cols-12 gap-2 py-2.5 border-b border-gray-100 meta text-gray-500">
+            <div className="grid grid-cols-10 sm:grid-cols-12 gap-2 py-2.5 border-b border-gray-100 meta text-gray-500">
               <div className="col-span-1">#</div>
               <div className="col-span-4">Symbol</div>
               <div className="col-span-3 text-right">LTP</div>
               <div className="col-span-2 text-right">Δ%</div>
-              <div className="col-span-2 text-right">{metricLabel}</div>
+              <div className="col-span-2 text-right hidden sm:block">{metricLabel}</div>
             </div>
             {top.length === 0 && Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="grid grid-cols-12 gap-2 py-3 border-b border-gray-100">
@@ -149,7 +149,7 @@ export default function MarketOverview() {
               return (
                 <div
                   key={r.symbol}
-                  className="grid grid-cols-12 gap-2 items-center py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors text-base group"
+                  className="grid grid-cols-10 sm:grid-cols-12 gap-2 items-center py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors text-base group"
                 >
                   <div className="col-span-1 table-num table-num--regular text-gray-400">{i + 1}</div>
                   <div className="col-span-4 ticker-symbol text-gray-900 group-hover:text-[#d32027] transition-colors text-sm">{r.symbol}</div>
@@ -157,7 +157,7 @@ export default function MarketOverview() {
                   <div className={`col-span-2 text-right percent text-sm ${up ? "text-emerald-600" : "text-red-600"}`}>
                     {up ? "+" : ""}{fmtNum(r.diff_pct)}%
                   </div>
-                  <div className="col-span-2 text-right table-num table-num--regular text-gray-600 text-sm">{formatMetric(r)}</div>
+                  <div className="col-span-2 text-right table-num table-num--regular text-gray-600 text-sm hidden sm:block">{formatMetric(r)}</div>
                 </div>
               );
             })}

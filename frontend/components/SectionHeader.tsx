@@ -16,7 +16,7 @@ export default function SectionHeader({
   hrefLabel = "View All →",
 }: SectionHeaderProps) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-4 mb-8 pb-3">
+    <header className="flex flex-wrap items-end justify-between gap-4 mb-3 pb-1">
       <div className="max-w-3xl">
         <p className="eyebrow section-rule">{eyebrow}</p>
         <h2 className="headline-lg text-gray-900 mt-3 text-balance">{title}</h2>

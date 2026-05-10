@@ -73,19 +73,19 @@ export default function LiveIndexStrip() {
     <div className="sticky top-0 z-[60] bg-white border-b border-slate-200 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <div className="flex h-14 sm:h-16 items-stretch overflow-hidden bg-white">
-          <div className="shrink-0 flex h-full items-center gap-3 px-3 sm:px-4 lg:px-6 border-r border-slate-200 bg-white">
-            <div className="flex items-center gap-1.5">
+          <div className="shrink-0 flex h-full items-center gap-1.5 sm:gap-3 pr-2 sm:pr-4 lg:pr-6 border-r border-slate-200 bg-white max-w-[45%] sm:max-w-none">
+            <div className="flex items-center gap-1 sm:gap-1.5">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Live</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 hidden sm:inline">Live</span>
             </div>
-            <div className="border-l border-slate-200 pl-3 flex items-center gap-2 sm:block">
-              <div className="text-[9px] uppercase tracking-widest text-slate-400 sm:mb-0">NEPSE</div>
-              <div className="flex items-baseline gap-2">
-                <span className="price text-sm sm:text-base font-bold text-slate-800">{fmt(idx?.value ?? 0)}</span>
-                <span className={`percent ${idxUp ? "text-emerald-600" : "text-red-500"}`}>
+            <div className="border-l border-slate-200 pl-2 sm:pl-3 flex items-center gap-1.5 sm:gap-2 sm:block min-w-0">
+              <div className="text-[9px] uppercase tracking-widest text-slate-400 sm:mb-0 hidden sm:block">NEPSE</div>
+              <div className="flex items-baseline gap-1 sm:gap-2 min-w-0">
+                <span className="price text-xs sm:text-base font-bold text-slate-800 truncate">{fmt(idx?.value ?? 0)}</span>
+                <span className={`percent text-[10px] sm:text-xs ${idxUp ? "text-emerald-600" : "text-red-500"}`}>
                   {idxUp ? "+" : ""}{fmt(idx?.changePercent ?? 0)}%
                 </span>
               </div>
@@ -97,10 +97,10 @@ export default function LiveIndexStrip() {
               {[...items, ...items].map((s, i) => {
                 const up = Number(s.change_pct) >= 0;
                 return (
-                  <div key={`${s.index_id}-${i}`} className="shrink-0 flex h-full items-center gap-2 px-3 sm:px-4 lg:px-5 border-r border-slate-200 whitespace-nowrap">
-                    <span className="ticker-symbol text-slate-500 font-medium">{s.alias}</span>
-                    <span className="price text-slate-700">{fmt(s.close)}</span>
-                    <span className={`percent ${up ? "text-emerald-600" : "text-red-500"}`}>
+                  <div key={`${s.index_id}-${i}`} className="shrink-0 flex h-full items-center gap-1.5 sm:gap-2 px-2 sm:px-4 lg:px-5 border-r border-slate-200 whitespace-nowrap">
+                    <span className="ticker-symbol text-slate-500 font-medium text-[10px] sm:text-xs">{s.alias}</span>
+                    <span className="price text-slate-700 text-[10px] sm:text-xs">{fmt(s.close)}</span>
+                    <span className={`percent text-[10px] sm:text-xs ${up ? "text-emerald-600" : "text-red-500"}`}>
                       {up ? "▲" : "▼"} {up ? "+" : ""}{fmt(s.change_pct)}%
                     </span>
                   </div>

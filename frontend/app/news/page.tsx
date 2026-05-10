@@ -8,7 +8,15 @@ import PageLayout from "@/components/PageLayout";
 import Breadcrumb from "@/components/Breadcrumb";
 import AdvertisementSlot from "@/components/AdvertisementSlot";
 import { resolveImageUrl, isBackendMedia } from "@/lib/resolveImageUrl";
-import { Search, Filter, Clock, ArrowRight, TrendingUp, X } from "lucide-react";
+import { Search, Filter, Clock, ArrowRight, TrendingUp, X, Zap, Flame, Star, Newspaper } from "lucide-react";
+
+const SECTION_TABS = [
+  { value: "all", label: "All", icon: Newspaper },
+  { value: "breaking", label: "Breaking", icon: Zap },
+  { value: "latest", label: "Latest News", icon: Clock },
+  { value: "trending", label: "Trending", icon: Flame },
+  { value: "featured", label: "Featured", icon: Star },
+];
 
 interface NewsItem {
   id: number;
@@ -55,6 +63,7 @@ function NewsPageInner() {
   const initialSearch = searchParams.get("search") || "";
   const initialCategory = searchParams.get("category") || "All";
   const initialTag = searchParams.get("tag") || "";
+  const initialSection = searchParams.get("section") || "all";
 
   const [news, setNews] = useState<NewsItem[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 12, total: 0, totalPages: 0 });
@@ -64,6 +73,7 @@ function NewsPageInner() {
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [activeTag, setActiveTag] = useState(initialTag);
+  const [activeSection, setActiveSection] = useState(initialSection);
 
   // Keep state in sync when the URL query string changes (e.g. user navigates
   // back/forward, or another nav button rewrites the query).
@@ -72,28 +82,33 @@ function NewsPageInner() {
     setSearchInput(searchParams.get("search") || "");
     setActiveCategory(searchParams.get("category") || "All");
     setActiveTag(searchParams.get("tag") || "");
+    setActiveSection(searchParams.get("section") || "all");
   }, [searchParams]);
 
   // Reflect filter changes back into the URL so the page is shareable.
-  function syncUrl(next: { search?: string; category?: string }) {
+  function syncUrl(next: { search?: string; category?: string; section?: string }) {
     const params = new URLSearchParams(searchParams.toString());
     const search = next.search ?? searchQuery;
     const category = next.category ?? activeCategory;
+    const section = next.section ?? activeSection;
     if (search) params.set("search", search);
     else params.delete("search");
     if (category && category !== "All") params.set("category", category);
     else params.delete("category");
+    if (section && section !== "all") params.set("section", section);
+    else params.delete("section");
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
-  const fetchNews = useCallback(async (page: number, category: string, search: string, tag: string) => {
+  const fetchNews = useCallback(async (page: number, category: string, search: string, tag: string, section: string) => {
     setLoading(true);
     try {
       let url = `${API_URL}/api/news?page=${page}&limit=12`;
       if (category && category !== "All") url += `&category=${encodeURIComponent(category)}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (tag) url += `&tag=${encodeURIComponent(tag)}`;
+      if (section && section !== "all") url += `&section=${encodeURIComponent(section)}`;
 
       const res = await fetch(url);
       if (res.ok) {
@@ -109,8 +124,8 @@ function NewsPageInner() {
   }, []);
 
   useEffect(() => {
-    fetchNews(pagination.page, activeCategory, searchQuery, activeTag);
-  }, [pagination.page, activeCategory, searchQuery, activeTag, fetchNews]);
+    fetchNews(pagination.page, activeCategory, searchQuery, activeTag, activeSection);
+  }, [pagination.page, activeCategory, searchQuery, activeTag, activeSection, fetchNews]);
 
   useEffect(() => {
     async function loadCategories() {
@@ -153,7 +168,37 @@ function NewsPageInner() {
           <p className="text-gray-500 meta">Stay updated with Nepal stock market news, analysis, and insights</p>
         </div>
 
-        {/* Search + Filters */}
+        {/* Section Tabs */}
+        <div className="flex items-center gap-1 mb-6 overflow-x-auto pb-1 border-b border-gray-200 scrollbar-hide">
+          {SECTION_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeSection === tab.value;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => {
+                  setActiveSection(tab.value);
+                  setPagination((p) => ({ ...p, page: 1 }));
+                  syncUrl({ section: tab.value });
+                }}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px ${
+                  isActive
+                    ? "border-brand-green text-brand-green"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? "text-brand-green" : "text-gray-400"}`} />
+                {tab.value === "breaking" && (
+                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-red-500" : "bg-red-400"} animate-pulse`} />
+                )}
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Search + Category Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <form onSubmit={handleSearch} className="flex-1 relative" role="search">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />

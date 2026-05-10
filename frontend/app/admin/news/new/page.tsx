@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
 import RichTextEditor from "@/components/admin/RichTextEditor";
@@ -9,6 +9,7 @@ import SlugField, { finalizeSlug, softSlug } from "@/components/admin/SlugField"
 import MediaPicker from "@/components/admin/MediaPicker";
 import ContentSizeMeter from "@/components/admin/ContentSizeMeter";
 import ChipMultiSelect from "@/components/admin/ChipMultiSelect";
+import CategoryTreePicker from "@/components/admin/CategoryTreePicker";
 import SeoFields, { type SeoValues } from "@/components/admin/SeoFields";
 import { ARTICLE_LIMITS, validateArticleSizes } from "@/lib/articleLimits";
 
@@ -26,6 +27,8 @@ const SEED_CATEGORIES = ["Market", "Banking", "Hydropower", "IPO", "Insurance", 
 
 export default function NewArticlePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const prefilledCategory = searchParams.get("category") || "";
   const [saving, setSaving] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
   const [form, setForm] = useState({
@@ -35,8 +38,8 @@ export default function NewArticlePage() {
     content: "",
     author: "ShareSanskar Team",
     image_url: "",
-    category: "Market",
-    categories: ["Market"] as string[],
+    category: prefilledCategory || "Market",
+    categories: [prefilledCategory || "Market"] as string[],
     tags: [] as string[],
     section: "latest",
     sort_order: 0,
@@ -79,14 +82,7 @@ export default function NewArticlePage() {
     };
   }, []);
 
-  // Keep `category` (the primary, used by hero badges & breadcrumbs) in lockstep
-  // with categories[0] so a single source of truth wins.
-  useEffect(() => {
-    if (form.categories.length === 0) return;
-    if (form.category !== form.categories[0]) {
-      setForm((f) => ({ ...f, category: f.categories[0] }));
-    }
-  }, [form.categories, form.category]);
+  // Removed lockstep effect so user can manually select Primary Category
 
   function updateTitle(title: string) {
     setForm((f) => ({
@@ -252,17 +248,31 @@ export default function NewArticlePage() {
                   {SECTIONS.map((s) => (<option key={s.value} value={s.value}>{s.label}</option>))}
                 </select>
               </div>
-              <ChipMultiSelect
-                label="Categories"
+              <CategoryTreePicker
                 values={form.categories}
                 onChange={(next) => setForm((f) => ({ ...f, categories: next }))}
-                suggestions={categorySuggestions}
                 max={ARTICLE_LIMITS.max_categories}
                 maxLength={ARTICLE_LIMITS.category_name}
-                primaryLabel="Primary"
-                placeholder="Type to add or pick…"
-                helpText="The first chip is the primary category. Press Enter or comma to add."
+                helpText="Select categories from the tree."
               />
+              {form.categories.length > 0 && (
+                <div className="mt-4">
+                  <label htmlFor="primary-category" className="block text-xs font-medium text-gray-600 mb-1.5">Primary Category</label>
+                  <select
+                    id="primary-category"
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 cursor-pointer"
+                  >
+                    {form.categories.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-gray-400 mt-1.5">
+                    This category is used for the breadcrumb, URL slug routing, and primary badge.
+                  </p>
+                </div>
+              )}
               <ChipMultiSelect
                 label="Tags"
                 values={form.tags}

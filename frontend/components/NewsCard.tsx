@@ -30,7 +30,7 @@ export default function NewsCard({ id, slug, title, excerpt, imageUrl, category,
   if (isLarge) {
     return (
       <Link href={href} className="block group cursor-pointer">
-        <article className="p-4 h-full flex flex-col">
+        <article className="p-2 h-full flex flex-col">
           <div className="relative aspect-[4/3] overflow-hidden mb-3 bg-gray-100">
             {resolvedSrc ? (
               <Image

@@ -477,9 +477,19 @@ export default function AdminNewsPage() {
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
                         {SECTION_LABELS[item.section] || item.section}
                       </span>
-                      <span className="text-[11px] text-gray-500 font-semibold bg-gray-100 px-2 py-0.5 rounded-md">
-                        {item.category}
-                      </span>
+                      {item.categories && item.categories.length > 0 ? (
+                        <div className="flex flex-col gap-1 mt-1">
+                          {item.categories.map((c: string, i: number) => (
+                            <span key={i} className={`text-[11px] font-semibold px-2 py-0.5 rounded-md w-fit ${c === item.category ? "bg-[#009429]/10 text-[#007a22] ring-1 ring-[#009429]/20" : "bg-gray-100 text-gray-500"}`}>
+                              {c === item.category && <span className="text-[9px] uppercase mr-1 opacity-70">Primary</span>}{c}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-gray-500 font-semibold bg-[#009429]/10 text-[#007a22] ring-1 ring-[#009429]/20 px-2 py-0.5 rounded-md mt-1 w-fit">
+                          <span className="text-[9px] uppercase mr-1 opacity-70">Primary</span>{item.category}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">

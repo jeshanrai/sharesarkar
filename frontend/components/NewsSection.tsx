@@ -53,8 +53,8 @@ export default async function NewsSection() {
   if (mainNews.length === 0 && sidebarNews.length === 0) return null;
 
   return (
-    <section className="py-16 border-b border-gray-200">
-      <div className="sticky top-20 z-20 bg-white pt-2 pb-6">
+    <section className="pt-4 pb-16 border-b border-gray-200">
+      <div className="sticky top-20 z-20 bg-white pt-1 pb-1">
         <SectionHeader
           eyebrow="Latest News"
           title="What's moving Nepal's markets"
@@ -63,10 +63,10 @@ export default async function NewsSection() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start mt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10 items-start mt-2">
         <div className="lg:col-span-2">
           <ScrollReveal stagger={35}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-10 auto-rows-fr">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6 auto-rows-fr">
               {mainNews.map((news) => (
                 <div key={news.id} className="reveal bg-white/0 transition-all duration-700 ease-out h-full">
                   <NewsCard
