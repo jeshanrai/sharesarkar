@@ -21,6 +21,7 @@ const SECTIONS = [
   { value: "latest", label: "Latest News" },
   { value: "trending", label: "Trending" },
   { value: "featured", label: "Featured Articles" },
+  { value: "breaking", label: "Breaking News" },
 ];
 
 const SEED_CATEGORIES = ["Market", "Banking", "Hydropower", "IPO", "Insurance", "Analysis", "Education", "Regulation", "Breaking"];

@@ -8,7 +8,7 @@ import PageLayout from "@/components/PageLayout";
 import Breadcrumb from "@/components/Breadcrumb";
 import AdvertisementSlot from "@/components/AdvertisementSlot";
 import { resolveImageUrl, isBackendMedia } from "@/lib/resolveImageUrl";
-import { Search, Filter, Clock, ArrowRight, TrendingUp, X, Zap, Flame, Star, Newspaper } from "lucide-react";
+import { Search, Filter, Clock, ArrowRight, TrendingUp, X, Zap, Flame, Star, Newspaper, Menu, ChevronDown, ChevronUp } from "lucide-react";
 
 const SECTION_TABS = [
   { value: "all", label: "All", icon: Newspaper },
@@ -69,6 +69,7 @@ function NewsPageInner() {
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 12, total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [searchInput, setSearchInput] = useState(initialSearch);
@@ -168,21 +169,23 @@ function NewsPageInner() {
           <p className="text-gray-500 meta">Stay updated with Nepal stock market news, analysis, and insights</p>
         </div>
 
-        {/* Section Tabs */}
-        <div className="flex items-center gap-1 mb-6 overflow-x-auto pb-1 border-b border-gray-200 scrollbar-hide">
+        {/* DESKTOP: Section Tabs & Categories (Auto-fill one line) */}
+        <div className="hidden md:flex flex-wrap items-center content-start gap-x-2 gap-y-8 mb-8 border-b border-gray-200 pb-1 h-[50px] overflow-hidden">
+          {/* Sections */}
           {SECTION_TABS.map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeSection === tab.value;
+            const isActive = activeSection === tab.value && activeCategory === "All";
             return (
               <button
                 key={tab.value}
                 type="button"
                 onClick={() => {
                   setActiveSection(tab.value);
+                  setActiveCategory("All");
                   setPagination((p) => ({ ...p, page: 1 }));
-                  syncUrl({ section: tab.value });
+                  syncUrl({ section: tab.value, category: "" });
                 }}
-                className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px ${
+                className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2 ${
                   isActive
                     ? "border-brand-green text-brand-green"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -196,52 +199,101 @@ function NewsPageInner() {
               </button>
             );
           })}
-        </div>
 
-        {/* Search + Category Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <form onSubmit={handleSearch} className="flex-1 relative" role="search">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            <input
-              type="search"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search news articles..."
-              aria-label="Search news"
-              className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green transition-all"
-            />
-            {searchInput && (
-              <button
-                type="button"
-                onClick={clearSearch}
-                aria-label="Clear search"
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-700"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </form>
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            <Filter className="w-4 h-4 text-gray-400 shrink-0" />
-            {categories.map((cat) => (
+          <div className="w-px h-6 bg-gray-200 mx-1 shrink-0" />
+
+          {/* Categories (Fills the line, extra wrap to hidden area) */}
+          {categories.filter(c => c !== "All" && c !== "Breaking").map((cat) => {
+            const isActive = activeCategory === cat;
+            return (
               <button
                 key={cat}
                 type="button"
                 onClick={() => {
                   setActiveCategory(cat);
+                  setActiveSection("all");
                   setPagination((p) => ({ ...p, page: 1 }));
-                  syncUrl({ category: cat });
+                  syncUrl({ category: cat, section: "all" });
                 }}
-                className={`px-3 py-1.5 rounded-full eyebrow whitespace-nowrap transition-all ${
-                  activeCategory === cat
-                    ? "bg-brand-green text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                className={`flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2 ${
+                  isActive
+                    ? "border-brand-green text-brand-green"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
                 {cat}
               </button>
-            ))}
-          </div>
+            );
+          })}
+        </div>
+
+        {/* MOBILE: Hamburger Menu */}
+        <div className="md:hidden mb-6 relative z-20">
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl shadow-sm text-sm font-medium text-gray-700"
+          >
+             <span className="flex items-center gap-2">
+               <Menu className="w-4 h-4" /> 
+               {activeCategory !== "All" ? activeCategory : (SECTION_TABS.find(t => t.value === activeSection)?.label || "News Menu")}
+             </span>
+             {isMobileMenuOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          
+          {isMobileMenuOpen && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+              <div className="p-2 space-y-1 max-h-[60vh] overflow-y-auto">
+                 <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">Sections</div>
+                 {SECTION_TABS.map((tab) => {
+                   const Icon = tab.icon;
+                   const isActive = activeSection === tab.value && activeCategory === "All";
+                   return (
+                     <button
+                       key={tab.value}
+                       type="button"
+                       onClick={() => {
+                         setActiveSection(tab.value);
+                         setActiveCategory("All");
+                         setPagination((p) => ({ ...p, page: 1 }));
+                         syncUrl({ section: tab.value, category: "" });
+                         setIsMobileMenuOpen(false);
+                       }}
+                       className={`flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-sm ${
+                         isActive ? "bg-brand-green/10 text-brand-green font-medium" : "text-gray-700 hover:bg-gray-50"
+                       }`}
+                     >
+                       <Icon className={`w-4 h-4 ${isActive ? "text-brand-green" : "text-gray-400"}`} />
+                       {tab.label}
+                     </button>
+                   );
+                 })}
+                 
+                 <div className="h-px bg-gray-100 my-2 mx-2" />
+                 <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">Categories</div>
+                 {categories.filter(c => c !== "All" && c !== "Breaking").map((cat) => {
+                   const isActive = activeCategory === cat;
+                   return (
+                     <button
+                       key={cat}
+                       type="button"
+                       onClick={() => {
+                         setActiveCategory(cat);
+                         setActiveSection("all");
+                         setPagination((p) => ({ ...p, page: 1 }));
+                         syncUrl({ category: cat, section: "all" });
+                         setIsMobileMenuOpen(false);
+                       }}
+                       className={`block w-full text-left px-3 py-2.5 rounded-lg text-sm ${
+                         isActive ? "bg-brand-green/10 text-brand-green font-medium" : "text-gray-700 hover:bg-gray-50"
+                       }`}
+                     >
+                       {cat}
+                     </button>
+                   );
+                 })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Results info */}
