@@ -339,7 +339,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             }`}
           >
             <span className="font-bold text-gray-900 tracking-tight whitespace-nowrap">
-              Admin<span className="text-[#009429]">Pro</span>
+              Share<span className="text-[#009429]">Sanskar</span>
             </span>
           </div>
         </div>
