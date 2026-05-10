@@ -138,9 +138,9 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm text-gray-500 mt-1">
             {isAdmin ? "Welcome back! Here's an overview of your portal." : "Welcome back! Here's an overview of your articles."}
           </p>
@@ -153,15 +153,15 @@ export default function AdminDashboard() {
         </div>
         <Link
           href="/admin/news/new"
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#009429] text-white rounded-xl btn-text hover:bg-[#007a22] transition-all"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#009429] text-white rounded-xl btn-text hover:bg-[#007a22] transition-all shrink-0 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" /> New Article
         </Link>
       </div>
 
       {/* Stats Grid */}
-      <div className={`grid grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-2'} gap-4`}>
-        <Link href="/admin/news" className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-all group">
+      <div className={`grid grid-cols-2 ${isAdmin ? 'md:grid-cols-2 lg:grid-cols-4' : 'lg:grid-cols-2'} gap-3 sm:gap-4`}>
+        <Link href="/admin/news" className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-all group">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center group-hover:scale-110 transition-transform">
               <FileText className="w-5 h-5 text-blue-600" />
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
           </div>
         </Link>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
               <Eye className="w-5 h-5 text-purple-600" />
@@ -191,7 +191,7 @@ export default function AdminDashboard() {
         </div>
 
         {isAdmin && (
-          <Link href="/admin/ipo" className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-all group">
+          <Link href="/admin/ipo" className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-all group">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <BarChart3 className="w-5 h-5 text-green-600" />
@@ -207,7 +207,7 @@ export default function AdminDashboard() {
         )}
 
         {isAdmin && (
-          <Link href="/admin/subscribers" className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-all group">
+          <Link href="/admin/subscribers" className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-all group">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Mail className="w-5 h-5 text-orange-600" />
@@ -224,9 +224,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* Content Breakdown + Recent Articles */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Category Breakdown */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5">
           <h3 className="font-semibold text-gray-900 text-sm mb-4 flex items-center gap-2">
             <Newspaper className="w-4 h-4 text-gray-400" /> By Category
           </h3>
@@ -251,7 +251,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Section Breakdown */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5">
           <h3 className="font-semibold text-gray-900 text-sm mb-4 flex items-center gap-2">
             <ListChecks className="w-4 h-4 text-gray-400" /> By Section
           </h3>
@@ -271,7 +271,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5">
           <h3 className="font-semibold text-gray-900 text-sm mb-4 flex items-center gap-2">
             <Activity className="w-4 h-4 text-gray-400" /> Quick Actions
           </h3>
@@ -330,9 +330,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Articles + Top Viewed */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Recent */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-gray-400" /> Recent Articles
@@ -358,7 +358,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Top Viewed */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-gray-400" /> Most Viewed

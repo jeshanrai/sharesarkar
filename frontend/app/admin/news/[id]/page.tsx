@@ -26,11 +26,22 @@ const SECTIONS = [
 
 const SEED_CATEGORIES = ["Market", "Banking", "Hydropower", "IPO", "Insurance", "Analysis", "Education", "Regulation", "Breaking"];
 
+interface AuthorOption {
+  id: number;
+  username: string;
+  full_name: string;
+  is_active: boolean;
+}
+
+const DEFAULT_AUTHOR = "ShareSanskar Team";
+
 export default function EditArticlePage() {
   const router = useRouter();
   const params = useParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [role, setRole] = useState<"admin" | "author">("admin");
+  const [authorOptions, setAuthorOptions] = useState<string[]>([DEFAULT_AUTHOR]);
   const [form, setForm] = useState({
     title: "",
     slug: "",
@@ -78,6 +89,30 @@ export default function EditArticlePage() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // Determine role and load author dropdown options.
+  // Authors don't pick — the backend forces their own name on the row.
+  useEffect(() => {
+    const storedRole = (localStorage.getItem("admin_role") as "admin" | "author") || "admin";
+    setRole(storedRole);
+    if (storedRole !== "admin") return;
+
+    const token = localStorage.getItem("admin_token");
+    if (!token) return;
+    fetch(`${API_URL}/api/admin/authors`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: AuthorOption[]) => {
+        if (!Array.isArray(data)) return;
+        const names = data
+          .filter((a) => a.is_active)
+          .map((a) => a.full_name?.trim() || a.username)
+          .filter(Boolean);
+        setAuthorOptions([DEFAULT_AUTHOR, ...names]);
+      })
+      .catch(() => {
+        // Keep default option only.
+      });
   }, []);
 
   // Removed lockstep effect so user can manually select Primary Category
@@ -321,7 +356,33 @@ export default function EditArticlePage() {
               />
               <div>
                 <label htmlFor="article-author" className="block text-xs font-medium text-gray-600 mb-1.5">Author</label>
-                <input id="article-author" type="text" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20" />
+                {role === "admin" ? (
+                  <select
+                    id="article-author"
+                    value={form.author}
+                    onChange={(e) => setForm({ ...form, author: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 cursor-pointer bg-white"
+                  >
+                    {!authorOptions.includes(form.author) && form.author && (
+                      <option value={form.author}>{form.author}</option>
+                    )}
+                    {authorOptions.map((name) => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <>
+                    <input
+                      id="article-author"
+                      type="text"
+                      value={form.author}
+                      readOnly
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                    />
+                    <p className="text-[11px] text-gray-400 mt-1.5">Articles you create are attributed to your account.</p>
+                  </>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

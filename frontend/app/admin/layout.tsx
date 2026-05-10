@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   LogOut, LayoutDashboard, FileText, Settings, ExternalLink, Menu, Bell,
   Search, BarChart3, Users, UserPen, X, Clock, Mail,
-  TrendingUp, AlertCircle, Images, Megaphone, FolderTree,
+  TrendingUp, AlertCircle, Images, Megaphone, FolderTree, Video,
 } from "lucide-react";
 
 type UserRole = "admin" | "author";
@@ -49,6 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [role, setRole] = useState<UserRole>("admin");
   const [checking, setChecking] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Notifications
   const [showNotif, setShowNotif] = useState(false);
@@ -257,6 +259,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // Close mobile drawer when route changes
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname]);
+
   function timeAgo(dateStr: string): string {
     const d = new Date(dateStr.endsWith("Z") ? dateStr : dateStr + "Z");
     const diffMs = Date.now() - d.getTime();
@@ -301,6 +308,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/news", label: "News Management", icon: FileText },
     { href: "/admin/categories", label: "Categories", icon: FolderTree },
     { href: "/admin/media", label: "Media Library", icon: Images },
+    { href: "/admin/videos", label: "Videos", icon: Video },
   ];
 
   if (role === "admin") {
@@ -319,23 +327,47 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex">
+      {/* Mobile sidebar backdrop */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={`${
-          sidebarOpen ? "w-64" : "w-20"
-        } transition-all duration-300 ease-in-out bg-white border-r border-gray-200 shadow-[4px_0_24px_rgba(0,0,0,0.02)] fixed h-full z-20 overflow-hidden flex flex-col`}
+          sidebarOpen ? "lg:w-64" : "lg:w-20"
+        } w-64 transition-transform duration-300 ease-in-out lg:transition-all bg-white border-r border-gray-200 shadow-[4px_0_24px_rgba(0,0,0,0.02)] fixed h-full z-40 overflow-hidden flex flex-col ${
+          mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0`}
       >
         <div className="h-16 flex items-center px-4 border-b border-gray-100">
+          {/* Desktop collapse toggle */}
           <button
+            type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 mr-2 text-gray-500 hover:text-[#009429] hover:bg-green-50 rounded-lg transition-colors"
+            className="hidden lg:inline-flex p-2 mr-2 text-gray-500 hover:text-[#009429] hover:bg-green-50 rounded-lg transition-colors"
+            aria-label="Toggle sidebar"
           >
             <Menu className="w-5 h-5" />
           </button>
 
+          {/* Mobile close button */}
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="lg:hidden p-2 mr-2 text-gray-500 hover:text-[#009429] hover:bg-green-50 rounded-lg transition-colors"
+            aria-label="Close sidebar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
           <div
             className={`flex items-center gap-2 overflow-hidden transition-opacity duration-300 ${
-              sidebarOpen ? "opacity-100" : "opacity-0 w-0"
+              sidebarOpen ? "opacity-100" : "lg:opacity-0 lg:w-0"
             }`}
           >
             <span className="font-bold text-gray-900 tracking-tight whitespace-nowrap">
@@ -370,7 +402,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 />
                 <span
                   className={`font-medium text-sm whitespace-nowrap transition-opacity duration-300 ${
-                    sidebarOpen ? "opacity-100" : "opacity-0 lg:hidden"
+                    sidebarOpen ? "opacity-100" : "lg:opacity-0 lg:hidden"
                   }`}
                 >
                   {item.label}
@@ -385,13 +417,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main Content Area */}
       <div
         className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
-          sidebarOpen ? "ml-64" : "ml-20"
+          sidebarOpen ? "lg:ml-64" : "lg:ml-20"
         }`}
       >
         {/* Top Header */}
-        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30 flex items-center justify-between px-6 lg:px-8">
+        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-20 flex items-center justify-between px-3 sm:px-4 md:px-6 lg:px-8 gap-2">
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(true)}
+            className="lg:hidden p-2 text-gray-500 hover:text-[#009429] hover:bg-green-50 rounded-lg transition-colors shrink-0"
+            aria-label="Open sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
           {/* Search */}
-          <div className="flex items-center gap-4 flex-1">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
             <div className="relative max-w-md w-full hidden md:block" ref={searchRef}>
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
@@ -494,17 +536,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-3 md:gap-4 shrink-0">
             <Link
               href="/"
               target="_blank"
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-[#009429] hover:bg-green-50 rounded-lg transition-colors group"
+              className="flex items-center gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-[#009429] hover:bg-green-50 rounded-lg transition-colors group"
+              aria-label="View Site"
             >
               <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-[#009429] transition-colors" />
               <span className="hidden sm:inline">View Site</span>
             </Link>
 
-            <div className="w-px h-6 bg-gray-200 mx-1" />
+            <div className="hidden sm:block w-px h-6 bg-gray-200 mx-1" />
 
             {/* Notifications */}
             <div className="relative" ref={notifRef}>
@@ -521,7 +564,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </button>
 
               {showNotif && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden z-50">
+                <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-80 bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden z-50">
                   <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                     <p className="font-semibold text-gray-900 text-sm">Notifications</p>
                     {unreadCount > 0 && (
@@ -582,18 +625,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               )}
             </div>
 
-            <div className="flex items-center gap-3 ml-2">
-              <div
-                className={`w-9 h-9 rounded-full border flex items-center justify-center font-bold shadow-sm ${
-                  role === "admin"
-                    ? "bg-gradient-to-tr from-gray-100 to-gray-200 border-gray-300 text-gray-600"
-                    : "bg-gradient-to-tr from-blue-50 to-blue-100 border-blue-200 text-blue-600"
-                }`}
-              >
-                {user ? user.charAt(0).toUpperCase() : "A"}
-              </div>
-              <div className="hidden sm:block text-sm">
-                <p className="font-semibold text-gray-900 leading-none">{user}</p>
+            <div className="flex items-center gap-2 sm:gap-3 sm:ml-2">
+              {role === "admin" ? (
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
+                  <Image
+                    src="/assets/logos/svg/SS Icon only (Fill).svg"
+                    alt="ShareSanskar"
+                    width={36}
+                    height={36}
+                    className="w-full h-full object-contain p-1"
+                    priority
+                  />
+                </div>
+              ) : (
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border flex items-center justify-center font-bold text-sm shadow-sm shrink-0 bg-gradient-to-tr from-blue-50 to-blue-100 border-blue-200 text-blue-600">
+                  {user ? user.charAt(0).toUpperCase() : "A"}
+                </div>
+              )}
+              <div className="hidden md:block text-sm">
+                <p className="font-semibold text-gray-900 leading-none truncate max-w-[120px]">
+                  {role === "admin" ? "ShareSanskar" : user}
+                </p>
                 <p
                   className={`text-xs mt-1 ${
                     role === "admin" ? "text-gray-500" : "text-blue-500"
@@ -605,9 +657,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
 
             <button
+              type="button"
               onClick={handleLogout}
-              className="p-2 ml-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-2 sm:ml-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Logout"
+              aria-label="Logout"
             >
               <LogOut className="w-5 h-5" />
             </button>
@@ -615,7 +669,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6 lg:p-8 w-full max-w-7xl mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">{children}</div>
         </main>
       </div>

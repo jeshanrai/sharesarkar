@@ -217,25 +217,26 @@ export default function AuthorsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <UserPen className="w-6 h-6 text-[#009429]" />
-            Author Management
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <UserPen className="w-5 h-5 sm:w-6 sm:h-6 text-[#009429] shrink-0" />
+            <span className="truncate">Author Management</span>
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Create and manage author accounts with granular permissions.
           </p>
         </div>
         <button
+          type="button"
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#009429] text-white rounded-xl text-sm font-medium hover:bg-[#007a22] transition-all shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#009429] text-white rounded-xl text-sm font-medium hover:bg-[#007a22] transition-all shrink-0 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" /> New Author
         </button>
       </div>
 
       {/* Search */}
-      <div className="relative max-w-md">
+      <div className="relative w-full max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
@@ -248,7 +249,7 @@ export default function AuthorsPage() {
 
       {/* Authors Grid */}
       {filtered.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
+        <div className="text-center px-4 py-12 sm:py-20 bg-white rounded-2xl border border-gray-100">
           <UserPen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700 mb-2">
             {search ? "No authors match your search" : "No authors yet"}
@@ -266,30 +267,30 @@ export default function AuthorsPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
           {filtered.map((author) => (
             <div
               key={author.id}
-              className={`bg-white rounded-2xl border p-5 transition-all hover:shadow-md ${
+              className={`bg-white rounded-2xl border p-4 sm:p-5 transition-all hover:shadow-md ${
                 author.is_active ? "border-gray-100" : "border-red-100 bg-red-50/30"
               }`}
             >
               {/* Author Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-lg ${
+              <div className="flex items-start justify-between mb-4 gap-2">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 ${
                     author.is_active
                       ? "bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 border border-blue-200"
                       : "bg-gray-100 text-gray-400 border border-gray-200"
                   }`}>
                     {author.full_name ? author.full_name.charAt(0).toUpperCase() : author.username.charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                      <h3 className="meta text-gray-900">{author.full_name || author.username}</h3>
-                      <p className="eyebrow text-gray-500">@{author.username}</p>
+                  <div className="min-w-0">
+                      <h3 className="meta text-gray-900 truncate">{author.full_name || author.username}</h3>
+                      <p className="eyebrow text-gray-500 truncate">@{author.username}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => openEdit(author)}
                     className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -381,11 +382,11 @@ export default function AuthorsPage() {
 
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between gap-2 sticky top-0 bg-white z-10">
+              <div className="min-w-0">
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate">
                   {editingId ? "Edit Author" : "Create New Author"}
                 </h2>
                 <p className="text-xs text-gray-500 mt-0.5">
@@ -393,14 +394,16 @@ export default function AuthorsPage() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-6 space-y-5">
+            <form onSubmit={handleSave} className="p-4 sm:p-6 space-y-5">
               {error && (
                 <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />

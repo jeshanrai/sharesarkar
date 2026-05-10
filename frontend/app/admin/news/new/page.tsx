@@ -26,18 +26,29 @@ const SECTIONS = [
 
 const SEED_CATEGORIES = ["Market", "Banking", "Hydropower", "IPO", "Insurance", "Analysis", "Education", "Regulation", "Breaking"];
 
+interface AuthorOption {
+  id: number;
+  username: string;
+  full_name: string;
+  is_active: boolean;
+}
+
+const DEFAULT_AUTHOR = "ShareSanskar Team";
+
 export default function NewArticlePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefilledCategory = searchParams.get("category") || "";
   const [saving, setSaving] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
+  const [role, setRole] = useState<"admin" | "author">("admin");
+  const [authorOptions, setAuthorOptions] = useState<string[]>([DEFAULT_AUTHOR]);
   const [form, setForm] = useState({
     title: "",
     slug: "",
     excerpt: "",
     content: "",
-    author: "ShareSanskar Team",
+    author: DEFAULT_AUTHOR,
     image_url: "",
     category: prefilledCategory || "Market",
     categories: [prefilledCategory || "Market"] as string[],
@@ -56,6 +67,48 @@ export default function NewArticlePage() {
   });
   const [categorySuggestions, setCategorySuggestions] = useState<string[]>(SEED_CATEGORIES);
   const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
+
+  // Determine role and load author options for admin's dropdown.
+  // Authors don't pick — backend forces their own name on insert.
+  useEffect(() => {
+    const storedRole = (localStorage.getItem("admin_role") as "admin" | "author") || "admin";
+    setRole(storedRole);
+
+    if (storedRole === "author") {
+      const username = localStorage.getItem("admin_user") || "";
+      // Fetch own profile so we can display the full_name in the read-only field.
+      const token = localStorage.getItem("admin_token");
+      if (token) {
+        fetch(`${API_URL}/api/admin/me`, { headers: { Authorization: `Bearer ${token}` } })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            const display = data?.full_name?.trim() || username;
+            setForm((f) => ({ ...f, author: display }));
+          })
+          .catch(() => setForm((f) => ({ ...f, author: username })));
+      } else {
+        setForm((f) => ({ ...f, author: username }));
+      }
+      return;
+    }
+
+    // Admin: fetch active authors for the dropdown.
+    const token = localStorage.getItem("admin_token");
+    if (!token) return;
+    fetch(`${API_URL}/api/admin/authors`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: AuthorOption[]) => {
+        if (!Array.isArray(data)) return;
+        const names = data
+          .filter((a) => a.is_active)
+          .map((a) => a.full_name?.trim() || a.username)
+          .filter(Boolean);
+        setAuthorOptions([DEFAULT_AUTHOR, ...names]);
+      })
+      .catch(() => {
+        // Keep default option only.
+      });
+  }, []);
 
   // Pull existing categories & tags so editors get autocomplete from prior
   // articles. Falls back gracefully when the endpoint returns nothing.
@@ -286,7 +339,30 @@ export default function NewArticlePage() {
               />
               <div>
                 <label htmlFor="new-article-author" className="block text-xs font-medium text-gray-600 mb-1.5">Author</label>
-                <input id="new-article-author" type="text" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20" />
+                {role === "admin" ? (
+                  <select
+                    id="new-article-author"
+                    value={form.author}
+                    onChange={(e) => setForm({ ...form, author: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 cursor-pointer bg-white"
+                  >
+                    {authorOptions.map((name) => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <>
+                    <input
+                      id="new-article-author"
+                      type="text"
+                      value={form.author}
+                      readOnly
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                    />
+                    <p className="text-[11px] text-gray-400 mt-1.5">Articles you create are attributed to your account.</p>
+                  </>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
