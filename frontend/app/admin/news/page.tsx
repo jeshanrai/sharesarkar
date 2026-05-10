@@ -22,6 +22,7 @@ interface NewsItem {
   excerpt: string;
   image_url: string;
   category: string;
+  categories?: string[];
   section: string;
   sort_order: number;
   is_published: boolean;
