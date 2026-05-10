@@ -531,9 +531,24 @@ export default function ArticleClient({ idOrSlug, initialArticle }: ArticleClien
                   </span>
                 </Link>
 
-                {/* Advertisement slot — fills the space the related rail leaves
-                    in long articles. Renders nothing if no ads are configured. */}
-                <AdvertisementSlot placement="news_article" variant="card" limit={2} />
+                {/* Advertisement slot — hardcoded for now as requested */}
+                <aside aria-label="Advertisement" className="mt-8">
+                  <p className="eyebrow text-gray-400 mb-3 tracking-widest">Advertisement</p>
+                  <div className="flex flex-col gap-4">
+                    <div className="block group relative bg-gray-50 rounded-lg border border-gray-100 overflow-hidden hover:shadow-sm transition-shadow">
+                      <img 
+                        alt="first aid" 
+                        loading="lazy" 
+                        decoding="async" 
+                        className="w-full h-auto max-h-[220px] object-contain mx-auto" 
+                        src="http://localhost:5000/uploads/18374706-9a71-4d91-8a65-edc515990cff.webp"
+                      />
+                      <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/60 text-white/90">
+                        Ad
+                      </span>
+                    </div>
+                  </div>
+                </aside>
               </div>
             </aside>
           </div>
