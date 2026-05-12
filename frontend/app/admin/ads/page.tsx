@@ -10,9 +10,20 @@ import ConfirmModal from "@/components/ConfirmModal";
 import { MediaLibraryDialog } from "@/components/admin/MediaPicker";
 import { resolveImageUrl } from "@/lib/resolveImageUrl";
 
+import {
+  AD_PLACEMENTS,
+  AD_SIZE_LABEL,
+  AD_SIZE_DIMENSIONS,
+  PLACEMENT_LABEL,
+  PLACEMENT_HINT,
+  PLACEMENT_SIZE_COMPAT,
+  type AdPlacement,
+  type AdSize,
+} from "@/lib/adPlacements";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-type Placement = "news_listing" | "news_article" | "all_news";
+type Placement = AdPlacement;
 
 interface Ad {
   id: number;
@@ -21,23 +32,22 @@ interface Ad {
   link_url: string | null;
   alt_text: string;
   placement: Placement;
+  size: AdSize;
   is_active: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
 }
 
-const PLACEMENT_LABEL: Record<Placement, string> = {
-  news_listing: "News listing",
-  news_article: "Article sidebar",
-  all_news: "Both news pages",
-};
-
-const PLACEMENT_HINT: Record<Placement, string> = {
-  news_listing: "Shown below the article grid on /news",
-  news_article: "Shown below the related rail on /news/[article]",
-  all_news: "Shown below the article grid AND in the article sidebar",
-};
+// Placement options offered in the admin dropdown. Order matters —
+// reflects the visual top-to-bottom order on the article page.
+const PLACEMENT_OPTIONS: Placement[] = [
+  AD_PLACEMENTS.NEWS_LISTING,
+  AD_PLACEMENTS.ARTICLE_TOP,
+  AD_PLACEMENTS.ARTICLE_SIDEBAR,
+  AD_PLACEMENTS.ARTICLE_INLINE,
+  AD_PLACEMENTS.ARTICLE_FOOTER,
+];
 
 interface AdFormState {
   id: number | null;
@@ -46,6 +56,7 @@ interface AdFormState {
   link_url: string;
   alt_text: string;
   placement: Placement;
+  size: AdSize;
   is_active: boolean;
   sort_order: number;
 }
@@ -56,7 +67,9 @@ const EMPTY_FORM: AdFormState = {
   image_url: "",
   link_url: "",
   alt_text: "",
-  placement: "all_news",
+  placement: AD_PLACEMENTS.ARTICLE_SIDEBAR,
+  // Sidebar's first allowed size — picker re-validates on placement change.
+  size: "300x250",
   is_active: true,
   sort_order: 0,
 };
@@ -121,6 +134,7 @@ export default function AdminAdsPage() {
       link_url: ad.link_url || "",
       alt_text: ad.alt_text,
       placement: ad.placement,
+      size: ad.size || "300x250",
       is_active: ad.is_active,
       sort_order: ad.sort_order,
     });
@@ -143,6 +157,10 @@ export default function AdminAdsPage() {
     try {
       const fd = new FormData();
       fd.append("file", file);
+      // Backend rejects the upload if the file's pixel dimensions don't
+      // match this size, so the admin can't end up with a 728x90
+      // creative saved under a 300x250 slot.
+      fd.append("size", form.size);
       const res = await fetch(`${API_URL}/api/ads/upload`, {
         method: "POST",
         headers: authHeaders(),
@@ -182,6 +200,7 @@ export default function AdminAdsPage() {
         link_url: form.link_url.trim() || null,
         alt_text: form.alt_text.trim(),
         placement: form.placement,
+        size: form.size,
         is_active: form.is_active,
         sort_order: Number.isFinite(form.sort_order) ? form.sort_order : 0,
       };
@@ -262,7 +281,16 @@ export default function AdminAdsPage() {
         <StatCard label="Paused" value={ads.length - activeCount} accent="bg-orange-50 text-orange-700" />
         <StatCard
           label="Article placements"
-          value={ads.filter((a) => a.is_active && (a.placement === "news_article" || a.placement === "all_news")).length}
+          value={
+            ads.filter(
+              (a) =>
+                a.is_active &&
+                (a.placement === AD_PLACEMENTS.ARTICLE_TOP ||
+                  a.placement === AD_PLACEMENTS.ARTICLE_SIDEBAR ||
+                  a.placement === AD_PLACEMENTS.ARTICLE_INLINE ||
+                  a.placement === AD_PLACEMENTS.ARTICLE_FOOTER)
+            ).length
+          }
           accent="bg-blue-50 text-blue-700"
         />
       </div>
@@ -311,6 +339,9 @@ export default function AdminAdsPage() {
                       </span>
                       <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
                         {PLACEMENT_LABEL[ad.placement]}
+                      </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
+                        {ad.size}
                       </span>
                       <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
                         Order {ad.sort_order}
@@ -374,12 +405,9 @@ export default function AdminAdsPage() {
             </div>
 
             <div className="px-6 py-5 overflow-y-auto space-y-5">
-              {error && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 text-red-700 text-sm">
-                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
+              {/* Validation errors are surfaced in the sticky footer
+                  next to the Save button — see below. We don't repeat
+                  them here so the body stays focused on form input. */}
 
               <Field label="Name" hint="Internal label — readers never see this.">
                 <input
@@ -481,26 +509,59 @@ export default function AdminAdsPage() {
                 <Field label="Placement" hint={PLACEMENT_HINT[form.placement]}>
                   <select
                     value={form.placement}
-                    onChange={(e) => setForm((f) => ({ ...f, placement: e.target.value as Placement }))}
+                    onChange={(e) => {
+                      const nextPlacement = e.target.value as Placement;
+                      // Auto-reset size to the first allowed value when
+                      // the new placement doesn't support the current one.
+                      // Prevents the admin from saving an incompatible
+                      // (placement, size) tuple by accident.
+                      setForm((f) => {
+                        const allowed = PLACEMENT_SIZE_COMPAT[nextPlacement];
+                        const size = allowed.includes(f.size) ? f.size : allowed[0];
+                        return { ...f, placement: nextPlacement, size };
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
                   >
-                    <option value="all_news">{PLACEMENT_LABEL.all_news}</option>
-                    <option value="news_listing">{PLACEMENT_LABEL.news_listing}</option>
-                    <option value="news_article">{PLACEMENT_LABEL.news_article}</option>
+                    {PLACEMENT_OPTIONS.map((p) => (
+                      <option key={p} value={p}>
+                        {PLACEMENT_LABEL[p]}
+                      </option>
+                    ))}
                   </select>
                 </Field>
 
-                <Field label="Sort order" hint="Lower numbers render first when more than one ad is active.">
-                  <input
-                    type="number"
-                    value={form.sort_order}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, sort_order: parseInt(e.target.value, 10) || 0 }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
-                  />
+                <Field
+                  label="Size"
+                  hint={(() => {
+                    const { width, height } = AD_SIZE_DIMENSIONS[form.size];
+                    return `Upload must be exactly ${width}×${height} px. Filtered to sizes allowed in ${PLACEMENT_LABEL[form.placement]}.`;
+                  })()}
+                >
+                  <select
+                    value={form.size}
+                    onChange={(e) => setForm((f) => ({ ...f, size: e.target.value as AdSize }))}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
+                  >
+                    {PLACEMENT_SIZE_COMPAT[form.placement].map((s) => (
+                      <option key={s} value={s}>
+                        {AD_SIZE_LABEL[s]}
+                      </option>
+                    ))}
+                  </select>
                 </Field>
               </div>
+
+              <Field label="Sort order" hint="Lower numbers render first when more than one ad is active in the same placement.">
+                <input
+                  type="number"
+                  value={form.sort_order}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, sort_order: parseInt(e.target.value, 10) || 0 }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
+                />
+              </Field>
 
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
                 <input
@@ -516,22 +577,38 @@ export default function AdminAdsPage() {
               </label>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-2 bg-gray-50/50">
-              <button
-                type="button"
-                onClick={closeEditor}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-[#009429] text-white rounded-lg text-sm font-medium hover:bg-[#007a22] disabled:opacity-60"
-              >
-                <Save className="w-4 h-4" />
-                {saving ? "Saving…" : form.id ? "Save changes" : "Create advertisement"}
-              </button>
+            {/* Footer — sticky at the bottom of the modal. The error
+                region lives here (next to the Save button) so a failed
+                submit is visible without the admin having to scroll back
+                up. role="alert" mirrors the message to screen readers,
+                which is why the top banner also remains. */}
+            <div className="border-t border-gray-100 bg-gray-50/50">
+              {error && (
+                <div
+                  role="alert"
+                  className="mx-6 mt-4 flex items-start gap-2 p-3 rounded-lg bg-red-50 text-red-700 text-sm border border-red-100"
+                >
+                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+              <div className="px-6 py-4 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={closeEditor}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#009429] text-white rounded-lg text-sm font-medium hover:bg-[#007a22] disabled:opacity-60"
+                >
+                  <Save className="w-4 h-4" />
+                  {saving ? "Saving…" : form.id ? "Save changes" : "Create advertisement"}
+                </button>
+              </div>
             </div>
           </form>
         </div>

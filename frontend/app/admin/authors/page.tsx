@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   UserPen, Plus, X, Eye, EyeOff, Pencil, Trash2,
   Shield, FileText, Video, Send, Check, AlertCircle,
-  Search, ToggleLeft, ToggleRight, KeyRound
+  Search, ToggleLeft, ToggleRight, KeyRound, Megaphone
 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -20,6 +20,7 @@ interface Author {
   can_edit_own_news: boolean;
   can_publish: boolean;
   can_manage_videos: boolean;
+  can_manage_ads: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -33,6 +34,7 @@ const EMPTY_FORM = {
   can_edit_own_news: true,
   can_publish: false,
   can_manage_videos: false,
+  can_manage_ads: false,
 };
 
 export default function AuthorsPage() {
@@ -98,6 +100,7 @@ export default function AuthorsPage() {
       can_edit_own_news: author.can_edit_own_news,
       can_publish: author.can_publish,
       can_manage_videos: author.can_manage_videos,
+      can_manage_ads: author.can_manage_ads,
     });
     setError("");
     setSuccess("");
@@ -124,6 +127,7 @@ export default function AuthorsPage() {
         can_edit_own_news: form.can_edit_own_news,
         can_publish: form.can_publish,
         can_manage_videos: form.can_manage_videos,
+        can_manage_ads: form.can_manage_ads,
       };
 
       if (!editingId) {
@@ -356,6 +360,12 @@ export default function AuthorsPage() {
                   <Video className="w-3 h-3" />
                   Videos
                 </div>
+                <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-medium ${
+                  author.can_manage_ads ? "bg-amber-50 text-amber-700" : "bg-gray-50 text-gray-400"
+                }`}>
+                  <Megaphone className="w-3 h-3" />
+                  Ads
+                </div>
               </div>
 
               {/* Status toggle */}
@@ -496,6 +506,7 @@ export default function AuthorsPage() {
                     { key: "can_edit_own_news", label: "Edit Own News", desc: "Can edit their own articles", icon: Pencil, color: "green" },
                     { key: "can_publish", label: "Publish", desc: "Can publish articles directly (otherwise draft only)", icon: Send, color: "blue" },
                     { key: "can_manage_videos", label: "Manage Videos", desc: "Can create and manage video content", icon: Video, color: "purple" },
+                    { key: "can_manage_ads", label: "Manage Ads", desc: "Can create and manage advertisements", icon: Megaphone, color: "amber" },
                   ].map((perm) => {
                     const Icon = perm.icon;
                     const checked = form[perm.key as keyof typeof form] as boolean;

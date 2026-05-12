@@ -485,7 +485,7 @@ function NewsPageInner() {
           </>
         )}
 
-        <AdvertisementSlot placement="news_listing" variant="banner" limit={2} />
+        <AdvertisementSlot placement="news_listing" />
       </div>
     </PageLayout>
   );

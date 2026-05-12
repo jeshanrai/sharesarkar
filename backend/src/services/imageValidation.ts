@@ -210,3 +210,30 @@ export function validateAdImageBuffer(buf: Buffer): ValidatedAdImage {
     size: buf.length,
   };
 }
+
+/**
+ * Measure an image's pixel dimensions without applying the ad-mime /
+ * size caps used by `validateAdImageBuffer`. Used by the ads route to
+ * verify that an externally-hosted creative (or one picked from the
+ * media library after the upload-time check has passed) actually
+ * matches the size the admin declared.
+ *
+ * Throws an Error with an admin-facing message if the buffer can't
+ * be parsed as an image.
+ */
+export function measureImageBuffer(buf: Buffer): { width: number; height: number } {
+  if (!buf || buf.length === 0) {
+    throw new Error("Image is empty.");
+  }
+  let dimensions: { width?: number; height?: number };
+  try {
+    dimensions = imageSize(buf);
+  } catch {
+    throw new Error("Could not read image dimensions — file may be corrupt or not an image.");
+  }
+  const { width, height } = dimensions;
+  if (!width || !height) {
+    throw new Error("Could not determine image dimensions.");
+  }
+  return { width, height };
+}

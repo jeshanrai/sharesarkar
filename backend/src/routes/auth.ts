@@ -61,6 +61,7 @@ router.post("/login", async (req, res) => {
         can_edit_own_news: author.can_edit_own_news,
         can_publish: author.can_publish,
         can_manage_videos: author.can_manage_videos,
+        can_manage_ads: author.can_manage_ads,
       },
     });
     return;
@@ -86,7 +87,7 @@ router.get("/me", requireAnyAuth, async (req: AuthRequest, res) => {
 
   // Author
   const { rows } = await pool.query(
-    "SELECT id, username, full_name, email, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos, created_at FROM authors WHERE id = $1",
+    "SELECT id, username, full_name, email, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos, can_manage_ads, created_at FROM authors WHERE id = $1",
     [req.userId]
   );
   if (rows.length === 0) {
@@ -136,7 +137,7 @@ router.put("/me", requireAnyAuth, async (req: AuthRequest, res) => {
   const { rows } = await pool.query(
     `UPDATE authors SET full_name = $1, email = $2, updated_at = NOW()
      WHERE id = $3
-     RETURNING id, username, full_name, email, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos, created_at, updated_at`,
+     RETURNING id, username, full_name, email, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos, can_manage_ads, created_at, updated_at`,
     [full_name ?? old.full_name, email ?? old.email, req.userId]
   );
   res.json({ ...rows[0], role: "author" });
@@ -184,14 +185,14 @@ router.post("/me/password", requireAnyAuth, async (req: AuthRequest, res) => {
 // List all authors
 router.get("/authors", requireAuth, async (_req: AuthRequest, res) => {
   const { rows } = await pool.query(
-    "SELECT id, username, full_name, email, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos, created_at, updated_at FROM authors ORDER BY created_at DESC"
+    "SELECT id, username, full_name, email, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos, can_manage_ads, created_at, updated_at FROM authors ORDER BY created_at DESC"
   );
   res.json(rows);
 });
 
 // Create author
 router.post("/authors", requireAuth, async (req: AuthRequest, res) => {
-  const { username, full_name, email, password, can_create_news, can_edit_own_news, can_publish, can_manage_videos } = req.body;
+  const { username, full_name, email, password, can_create_news, can_edit_own_news, can_publish, can_manage_videos, can_manage_ads } = req.body;
 
   if (!username || !password) {
     res.status(400).json({ error: "Username and password are required" });
@@ -213,8 +214,8 @@ router.post("/authors", requireAuth, async (req: AuthRequest, res) => {
 
   const passwordHash = bcrypt.hashSync(password, 10);
   const { rows } = await pool.query(
-    `INSERT INTO authors (username, full_name, email, password_hash, can_create_news, can_edit_own_news, can_publish, can_manage_videos)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, username, full_name, email, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos, created_at`,
+    `INSERT INTO authors (username, full_name, email, password_hash, can_create_news, can_edit_own_news, can_publish, can_manage_videos, can_manage_ads)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, username, full_name, email, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos, can_manage_ads, created_at`,
     [
       username,
       full_name || "",
@@ -224,6 +225,7 @@ router.post("/authors", requireAuth, async (req: AuthRequest, res) => {
       can_edit_own_news ?? true,
       can_publish ?? false,
       can_manage_videos ?? false,
+      can_manage_ads ?? false,
     ]
   );
 
@@ -232,7 +234,7 @@ router.post("/authors", requireAuth, async (req: AuthRequest, res) => {
 
 // Update author (permissions, info, or password reset)
 router.put("/authors/:id", requireAuth, async (req: AuthRequest, res) => {
-  const { full_name, email, password, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos } = req.body;
+  const { full_name, email, password, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos, can_manage_ads } = req.body;
 
   const { rows: existing } = await pool.query("SELECT * FROM authors WHERE id = $1", [req.params.id]);
   if (existing.length === 0) {
@@ -249,9 +251,9 @@ router.put("/authors/:id", requireAuth, async (req: AuthRequest, res) => {
 
   const { rows } = await pool.query(
     `UPDATE authors SET full_name = $1, email = $2, password_hash = $3, is_active = $4,
-     can_create_news = $5, can_edit_own_news = $6, can_publish = $7, can_manage_videos = $8, updated_at = NOW()
-     WHERE id = $9
-     RETURNING id, username, full_name, email, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos, created_at, updated_at`,
+     can_create_news = $5, can_edit_own_news = $6, can_publish = $7, can_manage_videos = $8, can_manage_ads = $9, updated_at = NOW()
+     WHERE id = $10
+     RETURNING id, username, full_name, email, is_active, can_create_news, can_edit_own_news, can_publish, can_manage_videos, can_manage_ads, created_at, updated_at`,
     [
       full_name ?? old.full_name,
       email ?? old.email,
@@ -261,6 +263,7 @@ router.put("/authors/:id", requireAuth, async (req: AuthRequest, res) => {
       can_edit_own_news ?? old.can_edit_own_news,
       can_publish ?? old.can_publish,
       can_manage_videos ?? old.can_manage_videos,
+      can_manage_ads ?? old.can_manage_ads,
       req.params.id,
     ]
   );

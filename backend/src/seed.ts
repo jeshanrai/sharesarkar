@@ -370,6 +370,203 @@ Market experts suggest that the upward trend could continue in the coming weeks,
     console.log("IPO listings already seeded, skipping.");
   }
 
+  // --- Seed advertisements ---
+  //
+  // Demo creatives — two per placement so admins can see rotation
+  // working out of the box (the public route picks one at random per
+  // request via `ORDER BY sort_order ASC, RANDOM() LIMIT 1`). Sizes
+  // match the canonical IAB units enforced by the API. Creatives point
+  // at placehold.co — admins should swap them for real artwork from
+  // the media library once they have inventory.
+  //
+  // Non-destructive for admin-created ads (sort_order 0–89). For the
+  // demo rows themselves (sort_order 90–99) we delete-and-replace each
+  // run so seed edits (image URL swaps, GIF additions) propagate
+  // instead of being silently ignored by ON CONFLICT.
+  await pool.query("DELETE FROM advertisements WHERE sort_order >= 90");
+  // Ensure uploads directory exists for demo creatives we download
+  const uploadsDir = path.join(__dirname, "..", "uploads");
+  try {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  } catch (e) {
+    // ignore
+  }
+
+  async function downloadAndSaveImage(url: string, filenameBase: string) {
+    try {
+      const res: any = await (globalThis as any).fetch(url);
+      if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
+      const buffer = Buffer.from(await res.arrayBuffer());
+      const contentType = res.headers.get("content-type") || "image/jpeg";
+      const ext = contentType.includes("png") ? "png" : contentType.includes("gif") ? "gif" : "jpg";
+      const filename = `${filenameBase}.${ext}`;
+      const dest = path.join(uploadsDir, filename);
+      fs.writeFileSync(dest, buffer);
+      return `/uploads/${filename}`;
+    } catch (err) {
+      console.warn("Image download failed, leaving remote URL:", err?.message || err);
+      return url;
+    }
+  }
+  {
+    const adData: Array<{
+      name: string;
+      image_url: string;
+      link_url: string | null;
+      alt_text: string;
+      placement: string;
+      size: string;
+      sort_order: number;
+    }> = [
+      // Real photos via picsum.photos — returns JPEGs at exact pixel
+      // dimensions, so the server-side dimension validator accepts
+      // them. The `seed` path keeps each image stable across reruns.
+      // Admins should replace these with real creatives from the media
+      // library; the demo set just exists so slots aren't empty.
+      //
+      // GIFs use placehold.co's animated text endpoint since picsum
+      // doesn't serve animation — exists to verify the ad pipeline
+      // preserves animation (next/image is bypassed in
+      // AdvertisementSlot for this exact reason).
+
+      // ── news_listing (728×90 leaderboards) ──
+      {
+        name: "Demo · Brokerage Promo (Listing)",
+        image_url: "https://picsum.photos/seed/sharesanskar-brokerage/728/90",
+        link_url: "https://example.com/brokerage",
+        alt_text: "Open a brokerage account in 5 minutes",
+        placement: "news_listing",
+        size: "728x90",
+        sort_order: 90,
+      },
+      {
+        name: "Demo · Market Insights Newsletter (Listing)",
+        image_url: "https://picsum.photos/seed/sharesanskar-newsletter/728/90",
+        link_url: "https://example.com/newsletter",
+        alt_text: "Subscribe to the ShareSanskar Market Insights newsletter",
+        placement: "news_listing",
+        size: "728x90",
+        sort_order: 91,
+      },
+
+      // ── article_top (970×250 billboards) ──
+      {
+        name: "Demo · NEPSE Live Banner (Top)",
+        image_url: "https://picsum.photos/seed/sharesanskar-nepse/970/250",
+        link_url: "https://example.com/nepse-live",
+        alt_text: "NEPSE live — real-time market data",
+        placement: "article_top",
+        size: "970x250",
+        sort_order: 92,
+      },
+      {
+        name: "Demo · IPO Calendar (Top)",
+        image_url: "https://picsum.photos/seed/sharesanskar-ipo/970/250",
+        link_url: "https://example.com/ipo-calendar",
+        alt_text: "IPO calendar — never miss an offering",
+        placement: "article_top",
+        size: "970x250",
+        sort_order: 93,
+      },
+
+      // ── article_sidebar (300×250 medium rectangles) ──
+      {
+        name: "Demo · Portfolio Tracker (Sidebar)",
+        image_url: "https://picsum.photos/seed/sharesanskar-portfolio/300/250",
+        link_url: "https://example.com/portfolio",
+        alt_text: "Track your NEPSE portfolio in one place",
+        placement: "article_sidebar",
+        size: "300x250",
+        sort_order: 94,
+      },
+      {
+        // Animated GIF — verifies animation preservation through the
+        // ad pipeline.
+        name: "Demo · Stock Screener (Sidebar, animated)",
+        image_url: "https://placehold.co/300x250/7c3aed/ffffff/gif?text=Stock+Screener",
+        link_url: "https://example.com/screener",
+        alt_text: "Filter NEPSE stocks by sector, P/E, and dividend yield",
+        placement: "article_sidebar",
+        size: "300x250",
+        sort_order: 95,
+      },
+
+      // ── article_inline (728×90 leaderboards) ──
+      {
+        name: "Demo · Dividend Calculator (Inline)",
+        image_url: "https://picsum.photos/seed/sharesanskar-dividend/728/90",
+        link_url: "https://example.com/dividend-calculator",
+        alt_text: "Estimate your dividend income with our calculator",
+        placement: "article_inline",
+        size: "728x90",
+        sort_order: 96,
+      },
+      {
+        // Second animated GIF so an inline reader still sees motion
+        // when rotation lands on this entry.
+        name: "Demo · Compare Stocks (Inline, animated)",
+        image_url: "https://placehold.co/728x90/be185d/ffffff/gif?text=Compare+stocks+side+by+side",
+        link_url: "https://example.com/compare",
+        alt_text: "Compare two NEPSE stocks side by side",
+        placement: "article_inline",
+        size: "728x90",
+        sort_order: 97,
+      },
+
+      // ── article_footer (970×250 billboards) ──
+      {
+        name: "Demo · Mutual Funds Guide (Footer)",
+        image_url: "https://picsum.photos/seed/sharesanskar-mutual-funds/970/250",
+        link_url: "https://example.com/mutual-funds-guide",
+        alt_text: "A beginner's guide to mutual funds in Nepal",
+        placement: "article_footer",
+        size: "970x250",
+        sort_order: 98,
+      },
+      {
+        name: "Demo · Technical Analysis Course (Footer)",
+        image_url: "https://picsum.photos/seed/sharesanskar-technical/970/250",
+        link_url: "https://example.com/technical-analysis",
+        alt_text: "Master technical analysis with our free course",
+        placement: "article_footer",
+        size: "970x250",
+        sort_order: 99,
+      },
+    ];
+
+    let inserted = 0;
+    for (const ad of adData) {
+      // If demo ad points at a remote placeholder, download it into uploads
+      if (typeof ad.image_url === "string" && ad.image_url.startsWith("http")) {
+        const base = `${slugify(ad.name)}-${ad.size}-${ad.sort_order}`.replace(/[^a-z0-9-_.]/g, "");
+        try {
+          // download and replace image_url with local path when possible
+          // await is used so seed shows progress deterministically
+          // (the images are small placeholder images)
+          // eslint-disable-next-line no-await-in-loop
+          const localPath = await downloadAndSaveImage(ad.image_url, base);
+          ad.image_url = localPath;
+        } catch (e) {
+          // leave remote URL if download fails
+        }
+      }
+
+      const result = await pool.query(
+        `INSERT INTO advertisements
+           (name, image_url, link_url, alt_text, placement, size, is_active, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6, TRUE, $7)
+         ON CONFLICT (placement, sort_order) DO NOTHING`,
+        [ad.name, ad.image_url, ad.link_url, ad.alt_text, ad.placement, ad.size, ad.sort_order]
+      );
+      if (result.rowCount && result.rowCount > 0) inserted += 1;
+    }
+    if (inserted === 0) {
+      console.log("Advertisements already seeded, skipping.");
+    } else {
+      console.log(`Seeded ${inserted}/${adData.length} demo advertisements (existing rows preserved).`);
+    }
+  }
+
   console.log("Seed complete!");
   await pool.end();
 }

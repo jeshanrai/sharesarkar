@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS authors (
   can_edit_own_news BOOLEAN NOT NULL DEFAULT TRUE,
   can_publish BOOLEAN NOT NULL DEFAULT FALSE,
   can_manage_videos BOOLEAN NOT NULL DEFAULT FALSE,
+  can_manage_ads BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );

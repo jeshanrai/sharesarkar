@@ -302,6 +302,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
+  // Pull the author's permission flags so we can selectively expose
+  // admin-style surfaces (Ads, etc.) to authors who have them.
+  let canManageAds = role === "admin";
+  if (role === "author" && typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem("admin_permissions");
+      if (raw) {
+        const perms = JSON.parse(raw) as { can_manage_ads?: boolean };
+        canManageAds = Boolean(perms.can_manage_ads);
+      }
+    } catch {
+      // Malformed permissions blob — treat as no access.
+    }
+  }
+
   // Build nav items based on role
   const navItems: { href: string; label: string; icon: typeof LayoutDashboard }[] = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -311,11 +326,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/videos", label: "Videos", icon: Video },
   ];
 
+  if (canManageAds) {
+    navItems.push({ href: "/admin/ads", label: "Advertisements", icon: Megaphone });
+  }
+
   if (role === "admin") {
     navItems.push(
       { href: "/admin/authors", label: "Authors", icon: UserPen },
       { href: "/admin/ipo", label: "IPO Listings", icon: BarChart3 },
-      { href: "/admin/ads", label: "Advertisements", icon: Megaphone },
       { href: "/admin/subscribers", label: "Subscribers", icon: Users },
     );
   }

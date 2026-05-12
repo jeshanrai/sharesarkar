@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
@@ -56,6 +56,34 @@ function timeAgo(dateStr: string): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+// Split a block of editor HTML into top-level paragraph chunks for ad
+// injection. We close every <p>...</p> as its own chunk and keep any
+// non-paragraph blocks (figures, headings, embedded HTML) attached to
+// the surrounding chunk so the visual flow stays intact.
+//
+// Deliberately resilient: a body with no <p> tags returns a single
+// chunk, and the caller skips inline injection — better than mangling
+// short bulletins, copied press releases, or CMS content shaped like
+// raw <div>s.
+function splitHtmlByParagraph(html: string): string[] {
+  const closingP = /<\/p\s*>/gi;
+  const chunks: string[] = [];
+  let lastEnd = 0;
+  let match: RegExpExecArray | null;
+  while ((match = closingP.exec(html)) !== null) {
+    chunks.push(html.slice(lastEnd, match.index + match[0].length));
+    lastEnd = match.index + match[0].length;
+  }
+  // Trailing content after the final </p> (e.g. closing figure, h2) gets
+  // appended to the last chunk so we don't drop anything.
+  if (lastEnd < html.length) {
+    const tail = html.slice(lastEnd);
+    if (chunks.length === 0) chunks.push(tail);
+    else chunks[chunks.length - 1] += tail;
+  }
+  return chunks;
+}
+
 interface ArticleClientProps {
   /** Route param — either a numeric id or a slug. Resolved by the server page. */
   idOrSlug: string;
@@ -70,6 +98,11 @@ export default function ArticleClient({ idOrSlug, initialArticle }: ArticleClien
   const [error, setError] = useState(false);
   const [progress, setProgress] = useState(0);
   const [copied, setCopied] = useState(false);
+  // window.location.href is only available on the client; we resolve it
+  // post-mount so the server-rendered Facebook share href matches the
+  // client-rendered one (was an empty string on SSR and the resolved
+  // URL on hydration, which tripped React's mismatch warning).
+  const [currentUrl, setCurrentUrl] = useState("");
   const [toast, setToast] = useState<{ msg: string; trigger: number; variant: "default" | "success" }>({
     msg: "",
     trigger: 0,
@@ -154,6 +187,12 @@ export default function ArticleClient({ idOrSlug, initialArticle }: ArticleClien
     if (idOrSlug) load();
   }, [idOrSlug, initialArticle]);
 
+  // Capture window.location once mounted so server- and client-rendered
+  // share links agree. Re-runs on path change via the dependency.
+  useEffect(() => {
+    setCurrentUrl(window.location.href);
+  }, [idOrSlug]);
+
   // Reading progress bar
   useEffect(() => {
     function onScroll() {
@@ -218,6 +257,17 @@ export default function ArticleClient({ idOrSlug, initialArticle }: ArticleClien
   const isHtml = /<\/?(p|h[1-6]|ul|ol|li|blockquote|strong|em|b|i|u|a|img|br)[\s>]/i.test(articleContent);
   const paragraphs = isHtml ? [] : articleContent.split("\n").filter((p) => p.trim());
 
+  // Split HTML on closing </p> so we can inject an inline ad after a
+  // specific paragraph. Falls back to a single chunk when the body
+  // isn't paragraph-structured (short bulletins, press releases pasted
+  // as raw <div>s, etc.) — in that case we render the body untouched
+  // and skip the inline ad.
+  const htmlParagraphChunks = isHtml ? splitHtmlByParagraph(articleContent) : [];
+  const inlineAdAfterIndex = 2; // hardcoded: after paragraph 3 (0-indexed)
+  const MIN_PARAGRAPHS_FOR_INLINE_AD = 5;
+  const shouldInjectInlineAd =
+    isHtml && htmlParagraphChunks.length >= MIN_PARAGRAPHS_FOR_INLINE_AD;
+
   return (
     <PageLayout>
       {/* Reading progress bar */}
@@ -229,6 +279,12 @@ export default function ArticleClient({ idOrSlug, initialArticle }: ArticleClien
       </div>
 
       <article>
+        {/* Top banner ad — admin-managed, sits above the article header
+            band. Collapses cleanly when no creative is configured. */}
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          <AdvertisementSlot placement="article_top" />
+        </div>
+
         {/* ── Header band (full-bleed bg, content aligned to grid) ── */}
         <header className="border-b border-gray-200 bg-gray-50/60">
           <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10 lg:py-12">
@@ -382,16 +438,41 @@ export default function ArticleClient({ idOrSlug, initialArticle }: ArticleClien
                 ) : null;
               })()}
 
-              {/* Article body — drop-cap on first paragraph */}
+              {/* Article body — drop-cap on first paragraph. For HTML
+                  content with enough structure, inject an inline ad
+                  after the third paragraph; otherwise render the body
+                  in one piece. */}
               {isHtml ? (
-                <div
-                  className="prose-editorial"
-                  dangerouslySetInnerHTML={{ __html: articleContent }}
-                />
+                shouldInjectInlineAd ? (
+                  <div className="prose-editorial">
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: htmlParagraphChunks.slice(0, inlineAdAfterIndex + 1).join(""),
+                      }}
+                    />
+                    <AdvertisementSlot placement="article_inline" />
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: htmlParagraphChunks.slice(inlineAdAfterIndex + 1).join(""),
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="prose-editorial"
+                    dangerouslySetInnerHTML={{ __html: articleContent }}
+                  />
+                )
               ) : (
                 <div className="prose-editorial">
                   {paragraphs.map((p, i) => (
-                    <p key={i}>{p}</p>
+                    <Fragment key={i}>
+                      <p>{p}</p>
+                      {i === inlineAdAfterIndex &&
+                        paragraphs.length >= MIN_PARAGRAPHS_FOR_INLINE_AD && (
+                          <AdvertisementSlot placement="article_inline" />
+                        )}
+                    </Fragment>
                   ))}
                 </div>
               )}
@@ -410,7 +491,7 @@ export default function ArticleClient({ idOrSlug, initialArticle }: ArticleClien
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                   </a>
                   <a
-                    href={`https://www.facebook.com/sharer/sharer.php?u=${typeof window !== "undefined" ? encodeURIComponent(window.location.href) : ""}`}
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="p-2 text-gray-400 hover:text-[#1877f2] transition-colors"
@@ -531,27 +612,20 @@ export default function ArticleClient({ idOrSlug, initialArticle }: ArticleClien
                   </span>
                 </Link>
 
-                {/* Advertisement slot — hardcoded for now as requested */}
-                <aside aria-label="Advertisement" className="mt-8">
-                  <p className="eyebrow text-gray-400 mb-3 tracking-widest">Advertisement</p>
-                  <div className="flex flex-col gap-4">
-                    <div className="block group relative bg-gray-50 rounded-lg border border-gray-100 overflow-hidden hover:shadow-sm transition-shadow">
-                      <img 
-                        alt="first aid" 
-                        loading="lazy" 
-                        decoding="async" 
-                        className="w-full h-auto max-h-[220px] object-contain mx-auto" 
-                        src="http://localhost:5000/uploads/18374706-9a71-4d91-8a65-edc515990cff.webp"
-                      />
-                      <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/60 text-white/90">
-                        Ad
-                      </span>
-                    </div>
-                  </div>
-                </aside>
+                {/* Sidebar ad — admin-managed via /admin/ads. Renders
+                    nothing if no active creative is assigned to this
+                    placement. Sticky is desktop-only (CSS-only). */}
+                <AdvertisementSlot placement="article_sidebar" />
               </div>
             </aside>
           </div>
+        </div>
+
+        {/* Article footer ad — full container width so the 970×250
+            creative doesn't leave a blank 4-column gap on desktop.
+            Collapses cleanly when no ad is configured. */}
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 pb-10 lg:pb-14">
+          <AdvertisementSlot placement="article_footer" />
         </div>
       </article>
       <Toast message={toast.msg} trigger={toast.trigger} variant={toast.variant} />

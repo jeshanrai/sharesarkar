@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { resolveImageUrl } from "@/lib/resolveImageUrl";
+import {
+  AD_PLACEMENTS,
+  AD_SIZE_DIMENSIONS,
+  type AdPlacement,
+  type AdSize,
+} from "@/lib/adPlacements";
 
 interface Ad {
   id: number;
@@ -9,47 +15,54 @@ interface Ad {
   image_url: string;
   link_url: string | null;
   alt_text: string;
-  placement: "news_listing" | "news_article" | "all_news";
+  placement: AdPlacement;
+  size: AdSize;
   is_active: boolean;
   sort_order: number;
 }
 
 interface Props {
   /** Where on the site this slot lives — used to fetch matching ads. */
-  placement: "news_listing" | "news_article";
+  placement: AdPlacement;
   /**
-   * Layout variant. "banner" is full-width with letterboxed art;
-   * "card" is a tighter form for narrow sidebars.
+   * Desktop-only sticky positioning. CSS-only — no scroll listeners.
+   * Use for the article sidebar so the creative stays in view as the
+   * reader scrolls through long articles.
    */
-  variant?: "banner" | "card";
-  /**
-   * Maximum number of ads to render. Sidebars have less room than the
-   * listing footer, so callers cap independently.
-   */
-  limit?: number;
+  sticky?: boolean;
   className?: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+// Layout is slot-driven. The sidebar is a tight card; every other slot
+// is a banner-shaped strip. We re-derive it from the placement prop so
+// the renderer never carries extra state.
+function isCardSlot(p: AdPlacement): boolean {
+  return p === AD_PLACEMENTS.ARTICLE_SIDEBAR;
+}
+
 /**
- * Renders active advertisements for a given placement.
+ * Renders one active advertisement for a given placement.
  *
- * GIF animation note: we deliberately use a plain <img> tag rather than
- * next/image. The Next.js image optimizer strips animation from GIFs by
- * default, and the whole point of supporting GIFs here is the motion.
- * `unoptimized` would also work but plain <img> is one fewer moving part.
+ * The backend rotates inventory via `ORDER BY sort_order ASC, RANDOM()
+ * LIMIT 1`, so this component always receives at most one ad per
+ * request and never stacks creatives in a single slot.
  *
- * Fails silently if no ads are configured — the slot just disappears,
- * which is the right behavior for an empty newsroom inventory.
+ * GIF animation note: we deliberately use a plain <img> tag rather
+ * than next/image. The Next.js image optimizer strips animation from
+ * GIFs by default, and the whole point of supporting GIFs here is the
+ * motion. Plain <img> is one fewer moving part.
+ *
+ * Fails silently if no ad is configured for this slot — the component
+ * just disappears, which is the right behavior for an empty inventory.
  */
 export default function AdvertisementSlot({
   placement,
-  variant = "banner",
-  limit = 1,
+  sticky = false,
   className = "",
 }: Props) {
-  const [ads, setAds] = useState<Ad[]>([]);
+  const [ad, setAd] = useState<Ad | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -66,8 +79,8 @@ export default function AdvertisementSlot({
         }
         const json = await res.json();
         if (cancelled) return;
-        const data: Ad[] = Array.isArray(json?.data) ? json.data : [];
-        setAds(data.slice(0, Math.max(1, limit)));
+        const first: Ad | null = Array.isArray(json?.data) && json.data.length > 0 ? json.data[0] : null;
+        setAd(first);
         setLoaded(true);
       } catch {
         if (!cancelled) setLoaded(true);
@@ -77,45 +90,65 @@ export default function AdvertisementSlot({
     return () => {
       cancelled = true;
     };
-  }, [placement, limit]);
+  }, [placement]);
 
-  if (!loaded || ads.length === 0) return null;
+  // Collapse to nothing when no active ad exists for this slot — no
+  // reserved space, no skeleton, no spacer. Avoids hollow gaps in the
+  // layout (especially important for the inline slot).
+  if (!loaded || !ad) return null;
+
+  const card = isCardSlot(placement);
+  const stickyClass = sticky ? "lg:sticky lg:top-24" : "";
+
+  // Banners cap to the creative's natural width so a 728-wide ad doesn't
+  // float inside a 1280-wide column. The sidebar card is different —
+  // it should stretch to fill the rail column so it visually stacks
+  // with the Story Context card above it; the image inside still
+  // renders at its 300×250 natural size, just letterboxed within the
+  // wider card.
+  const naturalWidth = AD_SIZE_DIMENSIONS[ad.size]?.width;
+  const widthCap = !card && naturalWidth ? { maxWidth: `${naturalWidth}px` } : undefined;
 
   return (
     <aside
       aria-label="Advertisement"
-      className={`${variant === "banner" ? "mt-10 pt-8 border-t border-gray-100" : "mt-8"} ${className}`}
+      className={`${card ? "mt-8" : "mt-6"} ${stickyClass} ${className}`}
     >
-      <p className="eyebrow text-gray-400 mb-3 tracking-widest">Advertisement</p>
-      <div
-        className={
-          variant === "banner"
-            ? "grid grid-cols-1 gap-4 sm:gap-6"
-            : "flex flex-col gap-4"
-        }
-      >
-        {ads.map((ad) => (
-          <AdCreative key={ad.id} ad={ad} variant={variant} />
-        ))}
+      <div className={card ? "" : "mx-auto"} style={widthCap}>
+        {/* Minimal disclosure label — required for transparency on news
+            sites, but kept small and uppercase so it reads as inventory
+            metadata. Centered so it sits over the same axis as the
+            creative for banner placements. */}
+        <p
+          className={`text-[9px] uppercase tracking-widest text-gray-400 mb-1.5 ${
+            card ? "" : "text-center"
+          }`}
+        >
+          Advertisement
+        </p>
+        <AdCreative ad={ad} card={card} />
       </div>
     </aside>
   );
 }
 
-function AdCreative({ ad, variant }: { ad: Ad; variant: "banner" | "card" }) {
+function AdCreative({ ad, card }: { ad: Ad; card: boolean }) {
   const src = resolveImageUrl(ad.image_url);
   if (!src) return null;
 
-  const wrapperClass =
-    variant === "banner"
-      ? "block group relative bg-gray-50 rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
-      : "block group relative bg-gray-50 rounded-lg border border-gray-100 overflow-hidden hover:shadow-sm transition-shadow";
+  // Sidebar cards keep their subtle card chrome (they sit in a narrow
+  // rail). Banners render borderless and flush so they read as
+  // inventory, not editorial blocks.
+  const wrapperClass = card
+    ? "block group relative bg-gray-50 rounded-lg border border-gray-100 overflow-hidden hover:shadow-sm transition-shadow"
+    : "block relative overflow-hidden";
 
-  // Banners get a generous max-height; cards stay tight to fit a sidebar.
-  const imgClass =
-    variant === "banner"
-      ? "w-full h-auto max-h-[260px] object-contain mx-auto"
-      : "w-full h-auto max-h-[220px] object-contain mx-auto";
+  // Banners get a tight height cap so 970×250 creatives read as a
+  // slim strip rather than dominating the editorial column. Cards
+  // (sidebar) keep their existing caps — they're not the issue.
+  const imgClass = card
+    ? "w-full h-auto max-h-[160px] sm:max-h-[220px] object-contain mx-auto"
+    : "w-full h-auto max-h-[90px] lg:max-h-[70px] object-contain mx-auto";
 
   const content = (
     <>
@@ -127,7 +160,7 @@ function AdCreative({ ad, variant }: { ad: Ad; variant: "banner" | "card" }) {
         decoding="async"
         className={imgClass}
       />
-      <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/60 text-white/90">
+      <span className="absolute top-1.5 right-1.5 text-[8px] font-semibold uppercase tracking-wider px-1 py-0.5 rounded bg-black/50 text-white/80">
         Ad
       </span>
     </>
