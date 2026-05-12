@@ -39,9 +39,20 @@ const SOCIAL_FOLLOWS: { name: string; href: string; brand: string; brandHover: s
       </svg>
     ),
   },
+  {
+    name: "YouTube",
+    href: "https://youtube.com/@sharesanskar",
+    brand: "hover:text-white hover:bg-[#FF0000] hover:border-[#FF0000]",
+    brandHover: "group-hover:text-white",
+    icon: (
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+      </svg>
+    ),
+  },
 ];
 
-type Platform = "tiktok" | "instagram" | "facebook";
+type Platform = "tiktok" | "instagram" | "facebook" | "youtube";
 
 interface VideoRow {
   id: number;
@@ -55,6 +66,22 @@ interface VideoRow {
 function extractTikTokId(url: string): string | null {
   const m = url.match(/\/video\/(\d+)/);
   return m ? m[1] : null;
+}
+
+// YouTube can be a regular watch URL, a youtu.be short link, a /shorts/ reel,
+// or an /embed/ URL. Pull the 11-char video id out of whichever shape we got.
+function extractYouTubeId(url: string): string | null {
+  const patterns = [
+    /[?&]v=([A-Za-z0-9_-]{11})/,
+    /youtu\.be\/([A-Za-z0-9_-]{11})/,
+    /\/shorts\/([A-Za-z0-9_-]{11})/,
+    /\/embed\/([A-Za-z0-9_-]{11})/,
+  ];
+  for (const re of patterns) {
+    const m = url.match(re);
+    if (m) return m[1];
+  }
+  return null;
 }
 
 declare global {
@@ -148,7 +175,7 @@ export default function YouTubeSection() {
             <p className="eyebrow section-rule">Reels</p>
             <h2 className="headline-lg text-gray-900 mt-3 text-balance">ShareSanskar Shorts</h2>
             <p className="lead mt-3 text-gray-500 text-[0.9375rem] max-w-2xl">
-              Sixty-second market reads from our TikTok, Instagram and Facebook — swipe through the rail.
+              Sixty-second market reads from our TikTok, Instagram, Facebook and YouTube — swipe through the rail.
             </p>
           </div>
           <div className="flex items-center gap-2 sm:gap-2.5">
@@ -201,6 +228,7 @@ export default function YouTubeSection() {
             >
               {videos.map((v) => {
                 const tikTokId = v.platform === "tiktok" ? extractTikTokId(v.url) : null;
+                const youTubeId = v.platform === "youtube" ? extractYouTubeId(v.url) : null;
                 return (
                   <div
                     key={v.id}
@@ -214,6 +242,8 @@ export default function YouTubeSection() {
                         <InstagramEmbed permalink={v.url} />
                       ) : v.platform === "facebook" ? (
                         <FacebookEmbed url={v.url} />
+                      ) : v.platform === "youtube" && youTubeId ? (
+                        <YouTubeEmbed id={youTubeId} />
                       ) : null}
                     </div>
                     {v.caption && (
@@ -258,6 +288,21 @@ export default function YouTubeSection() {
         .reels-rail .fb-video iframe {
           width: 100% !important;
           max-width: 100% !important;
+        }
+        /* YouTube embeds get a 9:16 box so Shorts and standard videos
+           both fit the reels rail without letterboxing the card. */
+        .reels-rail .youtube-embed {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 9 / 16;
+          background: #000;
+        }
+        .reels-rail .youtube-embed iframe {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          border: 0;
         }
       `}</style>
     </>
@@ -309,6 +354,22 @@ function InstagramEmbed({ permalink }: { permalink: string }) {
         </a>
       </div>
     </blockquote>
+  );
+}
+
+// YouTube ships a plain iframe embed — no SDK required. We use the
+// standard /embed/<id> URL so Shorts and regular videos both render
+// in the same 9:16-friendly card.
+function YouTubeEmbed({ id }: { id: string }) {
+  return (
+    <div className="youtube-embed">
+      <iframe
+        src={`https://www.youtube.com/embed/${id}`}
+        title="YouTube video player"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+      />
+    </div>
   );
 }
 

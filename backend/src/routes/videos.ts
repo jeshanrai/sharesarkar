@@ -4,7 +4,7 @@ import { requireAuth, requireAnyAuth, type AuthRequest } from "../middleware/aut
 
 const router = Router();
 
-const VALID_PLATFORMS = ["tiktok", "instagram", "facebook"] as const;
+const VALID_PLATFORMS = ["tiktok", "instagram", "facebook", "youtube"] as const;
 type Platform = (typeof VALID_PLATFORMS)[number];
 
 interface VideoRow {

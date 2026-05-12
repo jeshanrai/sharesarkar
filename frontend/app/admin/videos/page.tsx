@@ -9,7 +9,7 @@ import {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-type Platform = "tiktok" | "instagram" | "facebook";
+type Platform = "tiktok" | "instagram" | "facebook" | "youtube";
 
 interface VideoRow {
   id: number;
@@ -26,12 +26,14 @@ const PLATFORM_LABEL: Record<Platform, string> = {
   tiktok: "TikTok",
   instagram: "Instagram",
   facebook: "Facebook",
+  youtube: "YouTube",
 };
 
 const PLATFORM_BADGE: Record<Platform, string> = {
   tiktok: "bg-black text-white",
   instagram: "bg-gradient-to-tr from-[#feda75] via-[#d62976] to-[#4f5bd5] text-white",
   facebook: "bg-[#1877F2] text-white",
+  youtube: "bg-[#FF0000] text-white",
 };
 
 const EMPTY_FORM: { platform: Platform; url: string; caption: string; sort_order: number; is_active: boolean } = {
@@ -187,7 +189,7 @@ export default function VideosPage() {
             <span className="truncate">Videos</span>
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Embed short-form videos from TikTok, Instagram or Facebook into the public Shorts rail.
+            Embed short-form videos from TikTok, Instagram, Facebook or YouTube into the public Shorts rail.
           </p>
         </div>
         <button
@@ -324,7 +326,7 @@ export default function VideosPage() {
                   {editingId ? "Edit Video" : "Add New Video"}
                 </h2>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Paste the public URL of a TikTok, Instagram or Facebook post.
+                  Paste the public URL of a TikTok, Instagram, Facebook or YouTube post.
                 </p>
               </div>
               <button
@@ -347,7 +349,7 @@ export default function VideosPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Platform</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {(Object.keys(PLATFORM_LABEL) as Platform[]).map((p) => (
                     <button
                       key={p}
@@ -379,6 +381,8 @@ export default function VideosPage() {
                       ? "https://www.tiktok.com/@user/video/123456..."
                       : form.platform === "instagram"
                       ? "https://www.instagram.com/reel/ABCDEF/"
+                      : form.platform === "youtube"
+                      ? "https://www.youtube.com/shorts/ABC123XYZ_0"
                       : "https://www.facebook.com/.../videos/..."
                   }
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429] transition-all"
