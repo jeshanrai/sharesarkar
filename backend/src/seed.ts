@@ -404,7 +404,7 @@ Market experts suggest that the upward trend could continue in the coming weeks,
       fs.writeFileSync(dest, buffer);
       return `/uploads/${filename}`;
     } catch (err) {
-      console.warn("Image download failed, leaving remote URL:", err?.message || err);
+      console.warn("Image download failed, leaving remote URL:", (err as any)?.message || err);
       return url;
     }
   }
