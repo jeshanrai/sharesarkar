@@ -100,19 +100,26 @@ export default function EditArticlePage() {
 
     const token = localStorage.getItem("admin_token");
     if (!token) return;
-    fetch(`${API_URL}/api/admin/authors`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: AuthorOption[]) => {
-        if (!Array.isArray(data)) return;
-        const names = data
-          .filter((a) => a.is_active)
-          .map((a) => a.full_name?.trim() || a.username)
-          .filter(Boolean);
-        setAuthorOptions([DEFAULT_AUTHOR, ...names]);
-      })
-      .catch(() => {
-        // Keep default option only.
-      });
+
+    // Load the admin's own default byline alongside the author list so the
+    // dropdown's first option mirrors whatever the admin set in /admin/settings.
+    Promise.all([
+      fetch(`${API_URL}/api/admin/me`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
+      fetch(`${API_URL}/api/admin/authors`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => []),
+    ]).then(([meData, authorData]) => {
+      const adminName = meData?.full_name?.trim() || DEFAULT_AUTHOR;
+      const names = Array.isArray(authorData)
+        ? authorData
+            .filter((a: AuthorOption) => a.is_active)
+            .map((a: AuthorOption) => a.full_name?.trim() || a.username)
+            .filter(Boolean)
+        : [];
+      setAuthorOptions([adminName, ...names.filter((n) => n !== adminName)]);
+    });
   }, []);
 
   // Removed lockstep effect so user can manually select Primary Category

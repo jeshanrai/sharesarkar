@@ -199,12 +199,19 @@ router.get("/", async (req, res) => {
   const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10)));
   const offset = (pageNum - 1) * limitNum;
 
-  let query = "SELECT * FROM news WHERE is_published = TRUE";
+  // Join authors so the byline always reflects the author's current
+  // full_name — admins editing /admin/authors should see the new name
+  // flow through to every article they own. Falls back to the denormalized
+  // n.author string for legacy/admin-written articles with no author_id.
+  let query = `SELECT n.*, COALESCE(a.full_name, n.author) AS author
+               FROM news n
+               LEFT JOIN authors a ON n.author_id = a.id
+               WHERE n.is_published = TRUE`;
   const params: (string | number)[] = [];
   let paramIdx = 1;
 
   if (section) {
-    query += ` AND section = $${paramIdx++}`;
+    query += ` AND n.section = $${paramIdx++}`;
     params.push(section as string);
   }
 
@@ -212,14 +219,14 @@ router.get("/", async (req, res) => {
     // Match either the primary `category` column or anything in the
     // `categories` array, so multi-category articles surface in every
     // category they belong to (not just their primary).
-    query += ` AND (category = $${paramIdx} OR $${paramIdx} = ANY(categories))`;
+    query += ` AND (n.category = $${paramIdx} OR $${paramIdx} = ANY(n.categories))`;
     params.push(category as string);
     paramIdx++;
   }
 
   const { tag } = req.query;
   if (tag && typeof tag === "string") {
-    query += ` AND $${paramIdx} = ANY(tags)`;
+    query += ` AND $${paramIdx} = ANY(n.tags)`;
     params.push(tag);
     paramIdx++;
   }
@@ -238,18 +245,21 @@ router.get("/", async (req, res) => {
       .slice(0, 5); // at most 5 terms
 
     for (const term of terms) {
-      query += ` AND (title ILIKE $${paramIdx} OR excerpt ILIKE $${paramIdx} OR category ILIKE $${paramIdx})`;
+      query += ` AND (n.title ILIKE $${paramIdx} OR n.excerpt ILIKE $${paramIdx} OR n.category ILIKE $${paramIdx})`;
       params.push(`%${term}%`);
       paramIdx++;
     }
   }
 
   // Get total count
-  const countQuery = query.replace("SELECT *", "SELECT COUNT(*) as total");
+  const countQuery = query.replace(
+    /SELECT n\.\*, COALESCE\(a\.full_name, n\.author\) AS author/,
+    "SELECT COUNT(*) as total"
+  );
   const { rows: countRows } = await pool.query(countQuery, params);
   const total = parseInt(countRows[0].total, 10);
 
-  query += ` ORDER BY sort_order ASC, created_at DESC LIMIT $${paramIdx++} OFFSET $${paramIdx++}`;
+  query += ` ORDER BY n.sort_order ASC, n.created_at DESC LIMIT $${paramIdx++} OFFSET $${paramIdx++}`;
   params.push(limitNum, offset);
 
   const { rows } = await pool.query(query, params);
@@ -263,14 +273,17 @@ router.get("/", async (req, res) => {
     if (finalRows.length < MIN_TRENDING) {
       const need = MIN_TRENDING - finalRows.length;
       const excludeIds: number[] = finalRows.map((r: any) => r.id).filter(Boolean);
-      let fallbackQuery = "SELECT * FROM news WHERE is_published = TRUE";
+      let fallbackQuery = `SELECT n.*, COALESCE(a.full_name, n.author) AS author
+                           FROM news n
+                           LEFT JOIN authors a ON n.author_id = a.id
+                           WHERE n.is_published = TRUE`;
       const fallbackParams: (string | number)[] = [];
       if (excludeIds.length > 0) {
         const placeholders = excludeIds.map((_, i) => `$${i + 1}`).join(",");
-        fallbackQuery += ` AND id NOT IN (${placeholders})`;
+        fallbackQuery += ` AND n.id NOT IN (${placeholders})`;
         fallbackParams.push(...excludeIds);
       }
-      fallbackQuery += ` ORDER BY sort_order ASC, created_at DESC LIMIT $${fallbackParams.length + 1}`;
+      fallbackQuery += ` ORDER BY n.sort_order ASC, n.created_at DESC LIMIT $${fallbackParams.length + 1}`;
       fallbackParams.push(need);
       const { rows: extra } = await pool.query(fallbackQuery, fallbackParams);
       finalRows = finalRows.concat(extra);
@@ -333,11 +346,17 @@ router.get("/:idOrSlug", async (req, res) => {
   let query: string;
   let queryParam: string | number;
 
+  // Join authors so the byline always reflects the author's current
+  // full_name. Falls back to n.author for articles with no linked author.
+  const baseSelect = `SELECT n.*, COALESCE(a.full_name, n.author) AS author
+                      FROM news n
+                      LEFT JOIN authors a ON n.author_id = a.id`;
+
   if (isNumeric) {
-    query = "SELECT * FROM news WHERE id = $1";
+    query = `${baseSelect} WHERE n.id = $1`;
     queryParam = parseInt(param, 10);
   } else {
-    query = "SELECT * FROM news WHERE slug = $1";
+    query = `${baseSelect} WHERE n.slug = $1`;
     queryParam = param;
   }
 
@@ -443,15 +462,21 @@ router.post("/", requireAnyAuth, async (req: AuthRequest, res) => {
     }
   }
 
-  // Determine author_id
+  // Determine author_id and byline string. Admins may pass an explicit
+  // `author` value from the dropdown (their own name or any active author's
+  // name); if they don't, fall back to their stored full_name from
+  // admin_users so the default byline tracks /admin/settings edits.
   let authorId: number | null = null;
-  let authorName = author || "ShareSanskar Team";
+  let authorName = typeof author === "string" && author.trim() ? author : "";
   if (req.userRole === "author") {
     authorId = req.userId!;
     const { rows: authorRows } = await pool.query("SELECT full_name FROM authors WHERE id = $1", [req.userId]);
     if (authorRows.length > 0 && authorRows[0].full_name) {
       authorName = authorRows[0].full_name;
     }
+  } else if (!authorName) {
+    const { rows: adminRows } = await pool.query("SELECT full_name FROM admin_users WHERE id = $1", [req.userId]);
+    authorName = adminRows[0]?.full_name || "ShareSanskar Team";
   }
 
   // Use admin-supplied slug if provided, otherwise derive from title

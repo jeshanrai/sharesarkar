@@ -92,22 +92,34 @@ export default function NewArticlePage() {
       return;
     }
 
-    // Admin: fetch active authors for the dropdown.
+    // Admin: load the admin's own default byline from /admin/me and active
+    // authors from /admin/authors. The admin's stored full_name (editable
+    // from /admin/settings) replaces the hardcoded "ShareSanskar Team"
+    // default option, so the dropdown reflects whatever the admin set.
     const token = localStorage.getItem("admin_token");
     if (!token) return;
-    fetch(`${API_URL}/api/admin/authors`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: AuthorOption[]) => {
-        if (!Array.isArray(data)) return;
-        const names = data
-          .filter((a) => a.is_active)
-          .map((a) => a.full_name?.trim() || a.username)
-          .filter(Boolean);
-        setAuthorOptions([DEFAULT_AUTHOR, ...names]);
-      })
-      .catch(() => {
-        // Keep default option only.
-      });
+
+    Promise.all([
+      fetch(`${API_URL}/api/admin/me`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
+      fetch(`${API_URL}/api/admin/authors`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => []),
+    ]).then(([meData, authorData]) => {
+      const adminName = meData?.full_name?.trim() || DEFAULT_AUTHOR;
+      const names = Array.isArray(authorData)
+        ? authorData
+            .filter((a: AuthorOption) => a.is_active)
+            .map((a: AuthorOption) => a.full_name?.trim() || a.username)
+            .filter(Boolean)
+        : [];
+      // De-dupe so the admin's byline doesn't appear twice if it happens
+      // to match an author's full_name.
+      const merged = [adminName, ...names.filter((n) => n !== adminName)];
+      setAuthorOptions(merged);
+      setForm((f) => ({ ...f, author: adminName }));
+    });
   }, []);
 
   // Pull existing categories & tags so editors get autocomplete from prior

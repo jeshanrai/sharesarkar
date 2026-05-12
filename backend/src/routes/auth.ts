@@ -73,7 +73,7 @@ router.post("/login", async (req, res) => {
 router.get("/me", requireAnyAuth, async (req: AuthRequest, res) => {
   if (req.userRole === "admin") {
     const { rows } = await pool.query(
-      "SELECT id, username, created_at FROM admin_users WHERE id = $1",
+      "SELECT id, username, full_name, created_at FROM admin_users WHERE id = $1",
       [req.userId]
     );
     if (rows.length === 0) {
@@ -101,8 +101,24 @@ router.put("/me", requireAnyAuth, async (req: AuthRequest, res) => {
   const { full_name, email } = req.body || {};
 
   if (req.userRole === "admin") {
-    // Admin profile is just username for now; nothing to update besides password.
-    res.json({ success: true });
+    // Admins can edit their display byline (full_name). Username is fixed.
+    const { rows: existing } = await pool.query(
+      "SELECT id, full_name FROM admin_users WHERE id = $1",
+      [req.userId]
+    );
+    if (existing.length === 0) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    const nextName = typeof full_name === "string" && full_name.trim()
+      ? full_name.trim().slice(0, 120)
+      : existing[0].full_name;
+    const { rows } = await pool.query(
+      `UPDATE admin_users SET full_name = $1 WHERE id = $2
+       RETURNING id, username, full_name, created_at`,
+      [nextName, req.userId]
+    );
+    res.json({ ...rows[0], role: "admin" });
     return;
   }
 

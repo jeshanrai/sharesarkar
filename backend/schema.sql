@@ -8,6 +8,9 @@ CREATE TABLE IF NOT EXISTS admin_users (
   id SERIAL PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
+  -- Display name used as the article byline when an admin publishes.
+  -- Editable from /admin/settings; defaults to the team byline.
+  full_name TEXT NOT NULL DEFAULT 'ShareSanskar',
   created_at TIMESTAMP DEFAULT NOW()
 );
 

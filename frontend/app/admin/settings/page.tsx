@@ -311,49 +311,48 @@ export default function AdminSettingsPage() {
                       <p className="text-[11px] text-gray-400 mt-1">Username cannot be changed.</p>
                     </div>
 
+                    <div>
+                      <label className="text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5" />
+                        {isAdmin ? "Author Name (Default Byline)" : "Author Name"}
+                      </label>
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        maxLength={120}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
+                        placeholder={isAdmin ? "e.g. ShareSanskar" : "Your full name"}
+                      />
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        {isAdmin
+                          ? "Shown as the byline on articles you publish (and selectable from the Author dropdown when creating news)."
+                          : "Shown as the byline on articles you publish."}
+                      </p>
+                    </div>
+
                     {!isAdmin && (
-                      <>
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-                            <User className="w-3.5 h-3.5" /> Full Name
-                          </label>
-                          <input
-                            type="text"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
-                            placeholder="Your full name"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-                            <Mail className="w-3.5 h-3.5" /> Email
-                          </label>
-                          <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
-                            placeholder="you@example.com"
-                          />
-                        </div>
-
-                        <button
-                          type="submit"
-                          disabled={profileSaving}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-[#009429] text-white rounded-xl text-sm font-medium hover:bg-[#007a22] disabled:opacity-60 transition-colors"
-                        >
-                          <Save className="w-4 h-4" /> {profileSaving ? "Saving..." : "Save Profile"}
-                        </button>
-                      </>
-                    )}
-
-                    {isAdmin && (
-                      <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-sm text-gray-600">
-                        Admin profile is fixed. Update your password from the Security tab.
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5" /> Email
+                        </label>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#009429]/20 focus:border-[#009429]"
+                          placeholder="you@example.com"
+                        />
                       </div>
                     )}
+
+                    <button
+                      type="submit"
+                      disabled={profileSaving}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-[#009429] text-white rounded-xl text-sm font-medium hover:bg-[#007a22] disabled:opacity-60 transition-colors"
+                    >
+                      <Save className="w-4 h-4" /> {profileSaving ? "Saving..." : "Save Profile"}
+                    </button>
                   </form>
                 </>
               )}
