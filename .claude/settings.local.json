@@ -11,7 +11,8 @@
       "Bash(git -C d:/ntcs/sharesanskar-main show HEAD:backend/tsconfig.json)",
       "Bash(node --input-type=module -e \"import bcrypt from 'bcryptjs'; console.log\\('admin123 ->', bcrypt.hashSync\\('admin123',10\\)\\); console.log\\('author123 ->', bcrypt.hashSync\\('author123',10\\)\\);\")",
       "PowerShell(npx tsc --noEmit -p backend/tsconfig.json 2>&1)",
-      "PowerShell(npx --prefix backend tsc --noEmit -p backend/tsconfig.json 2>&1)"
+      "PowerShell(npx --prefix backend tsc --noEmit -p backend/tsconfig.json 2>&1)",
+      "Bash(psql -U postgres -d sharesanskar -c \"SELECT id, title, image_url FROM news ORDER BY created_at DESC LIMIT 3\")"
     ]
   }
 }

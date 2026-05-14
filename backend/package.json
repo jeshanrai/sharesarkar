@@ -17,6 +17,7 @@
     "check-media": "tsx src/checkMedia.ts"
   },
   "dependencies": {
+    "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^8.0.0",
     "@types/sharp": "^0.31.1",
     "bcryptjs": "^2.4.3",
@@ -27,6 +28,7 @@
     "image-size": "^2.0.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.1.1",
+    "node-cron": "^4.2.1",
     "nodemailer": "^8.0.7",
     "pg": "^8.13.0",
     "sharp": "^0.34.5",

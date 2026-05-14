@@ -14,6 +14,7 @@ import adsRoutes from "./routes/ads.js";
 import categoryRoutes from "./routes/categories.js";
 import videoRoutes from "./routes/videos.js";
 import { startNepseScheduler } from "./services/nepse.js";
+import { applyEmailSettings } from "./services/newsletterScheduler.js";
 import { getStorage } from "./services/storage.js";
 
 const app = express();
@@ -134,6 +135,23 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+// Polite root response so anyone landing on the API server's root URL
+// (e.g. after clicking a relative link in an unsubscribe email) doesn't
+// see Express's bare "Cannot GET /" page. Redirects to the frontend.
+app.get("/", (_req, res) => {
+  const frontendUrl =
+    ((process.env.FRONTEND_URL || "").split(",")[0].trim().replace(/\/+$/, "")) ||
+    null;
+  if (frontendUrl) {
+    res.redirect(302, frontendUrl);
+    return;
+  }
+  res.json({
+    service: "sharesanskar-api",
+    message: "This is the API server. Visit the website instead.",
+  });
+});
+
 // ─── Global error handler ─────────────────────────────────────────────────────
 // Catches any error thrown (or passed to next()) inside route handlers and
 // converts it to a structured JSON response instead of an HTML stack trace.
@@ -186,11 +204,43 @@ function validateConfig(): void {
       "   Set a strong secret in .env before going to production.\n"
     );
   }
+
+  // Email deliverability sanity check. A common silent failure mode is
+  // sending via Gmail SMTP with a From: address whose domain has no
+  // matching SPF/DKIM records — the SMTP relay accepts the message but
+  // Gmail's inbox filters drop it. Warn explicitly so this isn't debugged
+  // for hours.
+  const smtpUser = process.env.SMTP_USER || "";
+  const from = process.env.EMAIL_FROM || process.env.SMTP_FROM || "";
+  const smtpHost = process.env.SMTP_HOST || "";
+  if (smtpHost && from) {
+    // Extract bare address from "Display Name <addr@host>" form
+    const fromAddrMatch = from.match(/<([^>]+)>/);
+    const fromAddr = fromAddrMatch ? fromAddrMatch[1] : from;
+    const fromDomain = fromAddr.split("@")[1]?.toLowerCase() ?? "";
+    const userDomain = smtpUser.split("@")[1]?.toLowerCase() ?? "";
+
+    if (smtpHost.includes("gmail.com") && fromDomain && fromDomain !== userDomain && fromDomain !== "gmail.com") {
+      console.warn(
+        "\n⚠️  [email] Possible deliverability issue:\n" +
+        `   SMTP_HOST is Gmail (${smtpHost}) but EMAIL_FROM/SMTP_FROM is "${from}".\n` +
+        `   Gmail will rewrite the envelope From to ${smtpUser}, and recipients'\n` +
+        `   spam filters will often quarantine messages whose From: domain has\n` +
+        `   no matching SPF/DKIM. Either set EMAIL_FROM to use the @${userDomain}\n` +
+        `   address you authenticated with, or configure SPF+DKIM for ${fromDomain}.\n`
+      );
+    }
+  }
 }
 
 app.listen(PORT, () => {
   validateConfig();
   console.log(`Server running on port ${PORT}`);
   startNepseScheduler();
+  // Newsletter scheduler honours the admin-configured weekly_digest_enabled
+  // toggle — if disabled in DB, this is a no-op until an admin enables it.
+  applyEmailSettings().catch((err) =>
+    console.error("[newsletter] Failed to apply email settings:", (err as Error).message)
+  );
 });
 

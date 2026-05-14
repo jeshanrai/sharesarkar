@@ -332,6 +332,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       { href: "/admin/authors", label: "Authors", icon: UserPen },
       { href: "/admin/ipo", label: "IPO Listings", icon: BarChart3 },
       { href: "/admin/subscribers", label: "Subscribers", icon: Users },
+      { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
     );
   }
   // Settings is available for both admin and author (Account + Security)
