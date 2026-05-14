@@ -1,22 +1,26 @@
 import { Router } from "express";
 import multer from "multer";
 import { createHash, randomUUID } from "crypto";
+import sharp from "sharp";
 import pool from "../db.js";
 import { requireAnyAuth, type AuthRequest } from "../middleware/auth.js";
 import { getStorage } from "../services/storage.js";
 import {
   validateImageBuffer,
-  MAX_FILE_BYTES,
+  MAX_EDITORIAL_GIF_BYTES,
 } from "../services/imageValidation.js";
+
 
 const router = Router();
 
 // In-memory storage so we can validate magic bytes / dimensions before
-// touching disk. 5 MB cap matches the validator — multer rejects bigger
-// files before we even buffer them.
+// touching disk. Multer uses the larger of the editorial caps (GIF, 8 MB)
+// so undersized GIFs reach the validator and get a friendly per-format
+// error message instead of multer's generic "file too large" rejection.
+// The validator itself applies the right per-mime cap downstream.
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_FILE_BYTES, files: 1 },
+  limits: { fileSize: MAX_EDITORIAL_GIF_BYTES, files: 1 },
 });
 
 interface MediaRow {
@@ -109,11 +113,63 @@ router.post("/", requireAnyAuth, upload.single("file"), async (req: AuthRequest,
 
   const storage = getStorage();
 
+  // ── Image resizing pipeline ──────────────────────────────────────────
+  // Resize images wider than 1920px (maintaining aspect ratio) and convert
+  // to WebP for better compression and CDN performance. If Sharp fails for
+  // any reason (corrupt image, unsupported format), we fall back to storing
+  // the original so uploads are never blocked.
+  //
+  // GIFs are stored as-is — Sharp's default reader only decodes the first
+  // frame, so resizing or re-encoding would silently strip the animation.
+  // The validator already caps GIFs at 1920 px / 8 MB, so the original is
+  // safe to ship to clients directly.
+  let uploadBuffer = file.buffer;
+  let uploadExt    = validated.ext;
+  let uploadMime   = validated.mime;
+  let uploadWidth  = validated.width;
+  let uploadHeight = validated.height;
+
+  if (validated.mime !== "image/gif") {
+    try {
+      let pipeline = sharp(file.buffer);
+
+      // Only downscale — never upscale small images
+      if (validated.width > 1920) {
+        pipeline = pipeline.resize(1920, undefined, {
+          withoutEnlargement: true,
+          fit: "inside",
+        });
+      }
+
+      // Convert to WebP unless it's already WebP.
+      if (validated.mime !== "image/webp") {
+        pipeline = pipeline.webp({ quality: 85 });
+        uploadExt  = "webp";
+        uploadMime = "image/webp";
+      }
+
+      const { data, info } = await pipeline.toBuffer({ resolveWithObject: true });
+      uploadBuffer = data;
+      uploadWidth  = info.width;
+      uploadHeight = info.height;
+    } catch (sharpErr) {
+      // Sharp failed — store the original unchanged. Log so it's visible.
+      console.warn("[media] Sharp processing failed, storing original:", (sharpErr as Error).message);
+      uploadBuffer = file.buffer;
+      uploadExt    = validated.ext;
+      uploadMime   = validated.mime;
+      uploadWidth  = validated.width;
+      uploadHeight = validated.height;
+    }
+  }
+
   // Dedup — if we already have a row for this exact byte content AND the
   // backing file still exists on disk, return it instead of writing a new
   // copy. We skip dangling rows so the user gets a fresh, working upload
   // instead of a broken URL handed back from a stale row.
-  const checksum = createHash("sha256").update(file.buffer).digest("hex");
+  // Note: checksum is computed on the POST-PROCESSED buffer so identical
+  // source images that were already resized+WebP'd hit the dedup cache.
+  const checksum = createHash("sha256").update(uploadBuffer).digest("hex");
   const existing = await pool.query<MediaRow>(
     "SELECT * FROM media WHERE checksum = $1 LIMIT 1",
     [checksum]
@@ -128,7 +184,7 @@ router.post("/", requireAnyAuth, upload.single("file"), async (req: AuthRequest,
     await pool.query("DELETE FROM media WHERE id = $1", [existing.rows[0].id]);
   }
 
-  const { key } = await storage.put(file.buffer, validated.ext, validated.mime);
+  const { key } = await storage.put(uploadBuffer, uploadExt, uploadMime);
 
   const id = randomUUID();
   const altText = typeof req.body?.alt_text === "string" ? req.body.alt_text.slice(0, 300) : "";
@@ -146,10 +202,10 @@ router.post("/", requireAnyAuth, upload.single("file"), async (req: AuthRequest,
         id,
         key,
         file.originalname?.slice(0, 255) || null,
-        validated.mime,
-        validated.size,
-        validated.width,
-        validated.height,
+        uploadMime,
+        uploadBuffer.length,
+        uploadWidth,
+        uploadHeight,
         checksum,
         altText,
         caption,

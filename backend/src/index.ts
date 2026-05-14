@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import stockRoutes from "./routes/stocks.js";
 import authRoutes from "./routes/auth.js";
 
@@ -43,6 +44,55 @@ app.use(
 app.use(express.json({ limit: bodyLimit }));
 app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 
+// ─── Rate limiting ────────────────────────────────────────────────────────────
+//
+// Three tiers:
+//   loginLimiter   — strict, per-IP brute-force protection on the login endpoint.
+//   publicLimiter  — moderate cap on unauthenticated read endpoints.
+//   writeLimiter   — relaxed cap for authenticated admin/write endpoints.
+//
+// All limiters use the standard X-RateLimit-* headers so the frontend can
+// display a friendly message before the user hits the wall.
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15-minute window
+  max: 20,                   // 20 attempts per window per IP
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many login attempts. Please try again in 15 minutes." },
+  skipSuccessfulRequests: true, // don't count successful logins against the limit
+});
+
+const publicLimiter = rateLimit({
+  windowMs: 60 * 1000,  // 1-minute window
+  max: 120,             // 120 req/min per IP — generous for read traffic
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please slow down and try again shortly." },
+});
+
+const writeLimiter = rateLimit({
+  windowMs: 60 * 1000,  // 1-minute window
+  max: 200,             // 200 req/min — authenticated users get more headroom
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please slow down and try again shortly." },
+});
+
+// Apply rate limiters before route handlers
+app.use("/api/admin/login", loginLimiter);
+app.use("/api/admin",       writeLimiter);
+app.use("/api/news",        publicLimiter);
+app.use("/api/ipo",         publicLimiter);
+app.use("/api/nepse",       publicLimiter);
+app.use("/api/categories",  publicLimiter);
+app.use("/api/subscribers", writeLimiter);
+app.use("/api/media",       writeLimiter);
+app.use("/api/ads",         writeLimiter);
+app.use("/api/videos",      writeLimiter);
+app.use("/api/stocks",      publicLimiter);
+
+// ─── Route registration ───────────────────────────────────────────────────────
 app.use("/api/stocks", stockRoutes);
 app.use("/api/admin", authRoutes);
 
@@ -84,9 +134,12 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// Convert body-parser's "PayloadTooLargeError" into a clean JSON 413 so the
-// admin UI can show the API's error message instead of an HTML stack trace.
-app.use((err: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+// ─── Global error handler ─────────────────────────────────────────────────────
+// Catches any error thrown (or passed to next()) inside route handlers and
+// converts it to a structured JSON response instead of an HTML stack trace.
+// Express requires the 4-argument signature to identify this as an error handler.
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  // PayloadTooLargeError → clean 413
   if (
     err &&
     typeof err === "object" &&
@@ -98,10 +151,46 @@ app.use((err: unknown, _req: express.Request, res: express.Response, next: expre
     });
     return;
   }
-  next(err);
+
+  // Log unhandled server errors with a stack trace for debugging
+  console.error("[server error]", err);
+
+  const status =
+    err && typeof err === "object" && "status" in err
+      ? (err as { status: number }).status
+      : 500;
+  const message =
+    err && typeof err === "object" && "message" in err
+      ? (err as { message: string }).message
+      : "Internal server error";
+
+  res.status(status).json({ error: message });
 });
 
+// ─── Startup config validation ────────────────────────────────────────────────
+// Called after dotenv has had a chance to populate process.env (which happens
+// when index.ts's top-level code runs, AFTER all static imports are evaluated).
+function validateConfig(): void {
+  const secret = process.env.JWT_SECRET;
+  const DEFAULT = "sharesanskar-admin-secret-change-in-production";
+  if (!secret || secret === DEFAULT) {
+    if (process.env.NODE_ENV === "production") {
+      console.error(
+        "\n❌ [startup] FATAL: JWT_SECRET is not set or is the default placeholder.\n" +
+        "   Set a strong, unique secret via the JWT_SECRET environment variable.\n"
+      );
+      process.exit(1);
+    }
+    console.warn(
+      "\n⚠️  [startup] JWT_SECRET is missing or is the default placeholder.\n" +
+      "   Set a strong secret in .env before going to production.\n"
+    );
+  }
+}
+
 app.listen(PORT, () => {
+  validateConfig();
   console.log(`Server running on port ${PORT}`);
   startNepseScheduler();
 });
+

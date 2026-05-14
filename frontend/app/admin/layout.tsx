@@ -207,21 +207,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const handle = setTimeout(async () => {
       try {
         const storedRole = localStorage.getItem("admin_role") as UserRole;
-        const term = searchQuery.toLowerCase();
         const results: { news: NewsItem[]; ipos: IPOItem[] } = { news: [], ipos: [] };
 
-        const newsRes = await fetch(`${API_URL}/api/news/admin/all`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Server-side full-text search — no longer loads the entire article table
+        const newsRes = await fetch(
+          `${API_URL}/api/news/admin/search?q=${encodeURIComponent(searchQuery)}&limit=5`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         if (newsRes.ok) {
-          const news: NewsItem[] = await newsRes.json();
-          results.news = news
-            .filter(
-              (n) =>
-                n.title.toLowerCase().includes(term) ||
-                n.category.toLowerCase().includes(term)
-            )
-            .slice(0, 5);
+          const data = await newsRes.json();
+          results.news = (data.news || []).slice(0, 5);
         }
 
         if (storedRole === "admin") {
@@ -230,6 +225,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           });
           if (ipoRes.ok) {
             const ipos: IPOItem[] = await ipoRes.json();
+            const term = searchQuery.toLowerCase();
             results.ipos = ipos
               .filter(
                 (i) =>
@@ -248,6 +244,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return () => clearTimeout(handle);
   }, [searchQuery]);
+
 
   // Outside-click for popovers
   useEffect(() => {

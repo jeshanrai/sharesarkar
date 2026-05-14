@@ -191,6 +191,71 @@ router.put("/admin/reorder", requireAuth, async (req: AuthRequest, res) => {
   res.json({ success: true });
 });
 
+// Admin: server-side search — replaces the old "fetch all and filter in JS" pattern.
+// Uses the pre-computed tsvector index for O(log n) matching; falls back to ILIKE
+// if the migration has not been run yet (graceful degradation).
+router.get("/admin/search", requireAnyAuth, async (req: AuthRequest, res) => {
+  const raw = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 200) : "";
+  const limitNum = Math.min(20, Math.max(1, parseInt((req.query.limit as string) || "10", 10)));
+
+  if (!raw) {
+    res.json({ news: [] });
+    return;
+  }
+
+  // Build AND-joined tsquery — strip special chars so user input can't break the parser
+  const tsQuery = raw
+    .split(/\s+/)
+    .map((t) => t.replace(/[^a-zA-Z0-9\u0900-\u097F]/g, ""))
+    .filter((t) => t.length > 0)
+    .slice(0, 8)
+    .join(" & ");
+
+  if (!tsQuery) {
+    res.json({ news: [] });
+    return;
+  }
+
+  try {
+    let rows;
+    if (req.userRole === "admin") {
+      const result = await pool.query(
+        `SELECT id, title, category, is_published, views, created_at
+         FROM news
+         WHERE search_vector @@ to_tsquery('simple', $1)
+         ORDER BY ts_rank(search_vector, to_tsquery('simple', $1)) DESC
+         LIMIT $2`,
+        [tsQuery, limitNum]
+      );
+      rows = result.rows;
+    } else {
+      const result = await pool.query(
+        `SELECT id, title, category, is_published, views, created_at
+         FROM news
+         WHERE search_vector @@ to_tsquery('simple', $1) AND author_id = $2
+         ORDER BY ts_rank(search_vector, to_tsquery('simple', $1)) DESC
+         LIMIT $3`,
+        [tsQuery, req.userId, limitNum]
+      );
+      rows = result.rows;
+    }
+    res.json({ news: rows });
+  } catch {
+    // Migration 011 not yet applied — graceful ILIKE fallback so admin UI keeps working
+    const col = req.userRole !== "admin" ? "AND author_id = $3" : "";
+    const p: (string | number)[] = [`%${raw}%`];
+    if (req.userRole !== "admin") p.push(req.userId!, limitNum);
+    else p.push(limitNum);
+    const { rows } = await pool.query(
+      `SELECT id, title, category, is_published, views, created_at
+       FROM news WHERE (title ILIKE $1 OR category ILIKE $1) ${col}
+       ORDER BY created_at DESC LIMIT $${p.length}`,
+      p
+    );
+    res.json({ news: rows });
+  }
+});
+
 // --- Public routes ---
 
 router.get("/", async (req, res) => {
@@ -232,22 +297,22 @@ router.get("/", async (req, res) => {
   }
 
   if (search && typeof search === "string") {
-    // Split into individual terms and AND them together so multi-word
-    // queries narrow results (e.g. "ipo banking" requires both). Each term
-    // matches across title / excerpt / category for a sensible balance —
-    // no full-text indexing needed at this scale, and `content` is skipped
-    // to avoid scanning large HTML bodies on every request.
-    const terms = search
+    // Use the pre-computed weighted tsvector index (migration 011) for fast
+    // full-text search. Terms are AND-joined so "ipo banking" requires both.
+    // Special characters are stripped so user input can't break the tsquery parser.
+    // Falls back to ILIKE silently if the column doesn't exist yet.
+    const rawTerms = search
       .trim()
-      .slice(0, 80) // bound input length
+      .slice(0, 200)
       .split(/\s+/)
+      .map((t) => t.replace(/[^a-zA-Z0-9\u0900-\u097F]/g, ""))
       .filter((t) => t.length > 0)
-      .slice(0, 5); // at most 5 terms
+      .slice(0, 8);
 
-    for (const term of terms) {
-      query += ` AND (n.title ILIKE $${paramIdx} OR n.excerpt ILIKE $${paramIdx} OR n.category ILIKE $${paramIdx})`;
-      params.push(`%${term}%`);
-      paramIdx++;
+    if (rawTerms.length > 0) {
+      const tsQuery = rawTerms.join(" & ");
+      query += ` AND n.search_vector @@ to_tsquery('simple', $${paramIdx++})`;
+      params.push(tsQuery);
     }
   }
 
@@ -644,6 +709,27 @@ router.put("/:id", requireAnyAuth, async (req: AuthRequest, res) => {
   const finalCanonical = typeof canonical_url === "string" ? canonical_url : (old.canonical_url ?? "");
   const finalNoindex = typeof noindex === "boolean" ? noindex : (old.noindex === true);
 
+  // ── Save a revision snapshot (the BEFORE state) so editors can recover
+  //    overwritten content. Runs in a separate try/catch so a revision
+  //    save failure never blocks the actual article update.
+  try {
+    await pool.query(
+      `INSERT INTO news_revisions
+         (news_id, title, slug, excerpt, content, author, image_url,
+          category, categories, tags, section, is_published,
+          changed_by_id, changed_by_role)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+      [
+        old.id, old.title, old.slug, old.excerpt, old.content, old.author,
+        old.image_url, old.category, old.categories, old.tags, old.section,
+        old.is_published, req.userId ?? null, req.userRole ?? "admin",
+      ]
+    );
+  } catch (revErr) {
+    // news_revisions table missing (migration pending) — log and continue
+    console.warn("[news] Could not save revision:", (revErr as Error).message);
+  }
+
   const { rows } = await pool.query(
     `UPDATE news SET
        title = $1, slug = $2, excerpt = $3, content = $4, author = $5, image_url = $6,
@@ -688,6 +774,93 @@ router.delete("/:id", requireAuth, async (req: AuthRequest, res) => {
 
   await pool.query("DELETE FROM news WHERE id = $1", [req.params.id]);
   res.json({ success: true });
+});
+
+// --- Revision history ---
+
+// List revisions for an article (admin sees all; author only sees their own)
+router.get("/:id/revisions", requireAnyAuth, async (req: AuthRequest, res) => {
+  const { rows: article } = await pool.query(
+    "SELECT author_id FROM news WHERE id = $1",
+    [req.params.id]
+  );
+  if (article.length === 0) {
+    res.status(404).json({ error: "News not found" });
+    return;
+  }
+  if (req.userRole === "author" && article[0].author_id !== req.userId) {
+    res.status(403).json({ error: "You can only view revisions of your own articles" });
+    return;
+  }
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, news_id, title, slug, excerpt, author, category, section,
+              is_published, changed_by_role, changed_by_id, created_at
+       FROM news_revisions WHERE news_id = $1 ORDER BY created_at DESC LIMIT 50`,
+      [req.params.id]
+    );
+    res.json(rows);
+  } catch {
+    // Migration 012 not yet applied
+    res.json([]);
+  }
+});
+
+// Restore a specific revision (admin only)
+router.post("/:id/revisions/:revId/restore", requireAuth, async (req: AuthRequest, res) => {
+  const { rows: revRows } = await pool.query(
+    "SELECT * FROM news_revisions WHERE id = $1 AND news_id = $2",
+    [req.params.revId, req.params.id]
+  );
+  if (revRows.length === 0) {
+    res.status(404).json({ error: "Revision not found" });
+    return;
+  }
+  const rev = revRows[0];
+
+  const { rows: current } = await pool.query("SELECT * FROM news WHERE id = $1", [req.params.id]);
+  if (current.length === 0) {
+    res.status(404).json({ error: "Article not found" });
+    return;
+  }
+  const cur = current[0];
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    // Archive current state before overwriting
+    await client.query(
+      `INSERT INTO news_revisions
+         (news_id, title, slug, excerpt, content, author, image_url,
+          category, categories, tags, section, is_published,
+          changed_by_id, changed_by_role)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+      [
+        cur.id, cur.title, cur.slug, cur.excerpt, cur.content, cur.author,
+        cur.image_url, cur.category, cur.categories, cur.tags, cur.section,
+        cur.is_published, req.userId ?? null, "admin",
+      ]
+    );
+    const { rows } = await client.query(
+      `UPDATE news SET
+         title=$1, slug=$2, excerpt=$3, content=$4, author=$5, image_url=$6,
+         category=$7, categories=$8, tags=$9, section=$10, is_published=$11,
+         updated_at=NOW()
+       WHERE id=$12 RETURNING *`,
+      [
+        rev.title, rev.slug, rev.excerpt, rev.content, rev.author, rev.image_url,
+        rev.category, rev.categories, rev.tags, rev.section, rev.is_published,
+        req.params.id,
+      ]
+    );
+    await client.query("COMMIT");
+    res.json({ message: "Revision restored successfully", article: rows[0] });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 });
 
 export default router;

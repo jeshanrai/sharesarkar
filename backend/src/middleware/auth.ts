@@ -1,7 +1,16 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-export const JWT_SECRET = process.env.JWT_SECRET || "sharesanskar-admin-secret-change-in-production";
+// In ESM, static imports are evaluated before the importing module's own code,
+// so process.env is not fully populated from dotenv at this point.
+// Validation of JWT_SECRET is performed in index.ts inside validateConfig(),
+// which runs synchronously after app.listen() — by that point dotenv has run.
+export const JWT_SECRET =
+  process.env.JWT_SECRET || "sharesanskar-admin-secret-change-in-production";
+
+/** The well-known placeholder that ships with the repo — never use in production. */
+export const JWT_DEFAULT_PLACEHOLDER = "sharesanskar-admin-secret-change-in-production";
+
 
 export type UserRole = "admin" | "author";
 

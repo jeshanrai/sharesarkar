@@ -1,6 +1,7 @@
 import { Router } from "express";
 import pool from "../db.js";
 import { requireAuth, AuthRequest } from "../middleware/auth.js";
+import { sendSubscriptionConfirmation, sendBulkMail } from "../services/email.js";
 
 const router = Router();
 
@@ -47,9 +48,17 @@ router.post("/", async (req, res) => {
   const messages: Record<string, string> = {
     newsletter: "Subscribed! You'll receive weekly insights.",
     ipo_alerts: "You'll get IPO WhatsApp alerts.",
-    signals: "Signals activated!",
+    signals:    "Signals activated!",
   };
   res.status(201).json({ success: true, message: messages[type] });
+
+  // Send confirmation email in the background — don't await so the response
+  // is immediate even if the SMTP relay is slow.
+  if (email) {
+    sendSubscriptionConfirmation(email, type).catch((err: unknown) =>
+      console.warn("[subscribers] Confirmation email failed:", (err as Error).message)
+    );
+  }
 });
 
 router.get("/admin/all", requireAuth, async (req: AuthRequest, res) => {
@@ -84,6 +93,44 @@ router.delete("/:id", requireAuth, async (req: AuthRequest, res) => {
   }
   await pool.query("DELETE FROM subscribers WHERE id = $1", [id]);
   res.json({ success: true });
+});
+
+// ─── Admin: broadcast newsletter ──────────────────────────────────────────────
+// Sends `body_html` to all email subscribers of the given `subscription_type`
+// (defaults to "newsletter"). Batches in groups of 50 to be polite to the relay.
+router.post("/admin/send-newsletter", requireAuth, async (req: AuthRequest, res) => {
+  const subject   = typeof req.body?.subject   === "string" ? req.body.subject.trim()   : "";
+  const body_html = typeof req.body?.body_html === "string" ? req.body.body_html.trim() : "";
+  const type      = ALLOWED_TYPES.has(req.body?.subscription_type)
+    ? req.body.subscription_type
+    : "newsletter";
+
+  if (!subject || !body_html) {
+    res.status(400).json({ error: "subject and body_html are required" });
+    return;
+  }
+
+  // Fetch all email subscribers for this type
+  const { rows } = await pool.query(
+    "SELECT email FROM subscribers WHERE subscription_type = $1 AND email IS NOT NULL",
+    [type]
+  );
+  const emails = rows.map((r: { email: string }) => r.email).filter(Boolean);
+
+  if (emails.length === 0) {
+    res.json({ sent: 0, failed: 0, message: "No email subscribers found for this type." });
+    return;
+  }
+
+  // Send immediately — for large lists consider moving to a background job
+  const { sent, failed } = await sendBulkMail(emails, subject, body_html);
+
+  res.json({
+    sent,
+    failed,
+    total: emails.length,
+    message: `Newsletter sent to ${sent} of ${emails.length} subscribers.`,
+  });
 });
 
 export default router;
